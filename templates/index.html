@@ -536,9 +536,8 @@
         
         <!-- Gender Filter -->
         <div class="gender-filter">
-            <button class="gender-btn active" data-gender="all">All</button>
             <button class="gender-btn" data-gender="male">Male</button>
-            <button class="gender-btn" data-gender="female">Female</button>
+            <button class="gender-btn active" data-gender="female">Female</button>
         </div>
         
         <!-- Reference Image Section -->
@@ -626,7 +625,10 @@ Prompt: High fashion editorial..."></textarea>
             
             <!-- Bulk Actions -->
             <div class="bulk-actions" id="bulk-actions" style="display: none;">
-                <span class="selected-count" id="selected-count">0 selected</span>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <button class="btn btn-secondary" id="select-all-btn">Select All</button>
+                    <span class="selected-count" id="selected-count">0 selected</span>
+                </div>
                 <button class="btn btn-danger" id="delete-selected-btn">Delete Selected</button>
             </div>
             
@@ -762,12 +764,33 @@ Prompt: High fashion editorial..."></textarea>
             // Generate
             generateBtn.addEventListener('click', generateImages);
             
-            // Delete selected
-            document.getElementById('delete-selected-btn').addEventListener('click', () => {
+            // Select All
+            document.getElementById('select-all-btn').addEventListener('click', () => {
+                promptsData.forEach(prompt => selectedPrompts.add(prompt.id));
+                renderPrompts();
+            });
+            
+            // Delete Selected
+            document.getElementById('delete-selected-btn').addEventListener('click', async () => {
                 if (selectedPrompts.size > 0) {
-                    showConfirmModal(`Delete ${selectedPrompts.size} selected prompts?`, () => {
-                        bulkDeletePrompts();
-                    });
+                    const ids = Array.from(selectedPrompts);
+                    try {
+                        const response = await fetch('/api/prompts/bulk-delete', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({ids})
+                        });
+                        const data = await response.json();
+                        if (data.success) {
+                            selectedPrompts.clear();
+                            loadPrompts();
+                        } else {
+                            alert('Failed to delete');
+                        }
+                    } catch (error) {
+                        console.error('Error:', error);
+                        alert('Error: ' + error.message);
+                    }
                 }
             });
             
@@ -877,10 +900,21 @@ Prompt: High fashion editorial..."></textarea>
             });
             
             document.querySelectorAll('.icon-btn.delete').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    showConfirmModal('Delete this prompt?', () => {
-                        deletePrompt(parseInt(btn.dataset.id));
-                    });
+                btn.addEventListener('click', async () => {
+                    const id = parseInt(btn.dataset.id);
+                    try {
+                        const response = await fetch(`/api/prompts/${id}`, {method: 'DELETE'});
+                        const data = await response.json();
+                        if (data.success) {
+                            selectedPrompts.delete(id);
+                            loadPrompts();
+                        } else {
+                            alert('Failed to delete');
+                        }
+                    } catch (error) {
+                        console.error('Error:', error);
+                        alert('Error: ' + error.message);
+                    }
                 });
             });
             
@@ -954,11 +988,17 @@ Prompt: High fashion editorial..."></textarea>
         
         async function deletePrompt(id) {
             try {
-                await fetch(`/api/prompts/${id}`, {method: 'DELETE'});
-                selectedPrompts.delete(id);
-                loadPrompts();
+                const response = await fetch(`/api/prompts/${id}`, {method: 'DELETE'});
+                const data = await response.json();
+                if (data.success) {
+                    selectedPrompts.delete(id);
+                    loadPrompts();
+                } else {
+                    alert('Failed to delete prompt');
+                }
             } catch (error) {
                 console.error('Error deleting prompt:', error);
+                alert('Error deleting prompt: ' + error.message);
             }
         }
         
@@ -966,16 +1006,21 @@ Prompt: High fashion editorial..."></textarea>
             const ids = Array.from(selectedPrompts);
             
             try {
-                await fetch('/api/prompts/bulk-delete', {
+                const response = await fetch('/api/prompts/bulk-delete', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ids})
                 });
-                
-                selectedPrompts.clear();
-                loadPrompts();
+                const data = await response.json();
+                if (data.success) {
+                    selectedPrompts.clear();
+                    loadPrompts();
+                } else {
+                    alert('Failed to delete prompts');
+                }
             } catch (error) {
                 console.error('Error bulk deleting:', error);
+                alert('Error deleting prompts: ' + error.message);
             }
         }
         

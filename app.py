@@ -252,19 +252,41 @@ def generate_images():
             if reference_path and os.path.exists(reference_path):
                 cmd.extend(['-i', reference_path])
             
-            # Add API key from environment if available
-            gemini_key = os.environ.get('GEMINI_API_KEY')
+            # Get API key - check env first, then try to load from .env file
+            gemini_key = os.environ.get('GEMINI_API_KEY', '')
+            
+            # If not in env, try loading from .env file in the app directory
+            if not gemini_key:
+                env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
+                if os.path.exists(env_path):
+                    with open(env_path) as f:
+                        for line in f:
+                            line = line.strip()
+                            if line.startswith('GEMINI_API_KEY='):
+                                gemini_key = line.split('=', 1)[1].strip()
+                                break
+            
+            # Always pass API key to command if available
             if gemini_key:
                 cmd.extend(['--api-key', gemini_key])
+            else:
+                print(f"WARNING: No GEMINI_API_KEY found!", flush=True)
             
-            # Run the generation with 10 minute timeout
+            # Run the generation with 10 minute timeout - pass env with API key
+            run_env = os.environ.copy()
+            run_env['GEMINI_API_KEY'] = gemini_key
+            
             result = subprocess.run(
                 cmd,
                 capture_output=True,
                 text=True,
                 timeout=600,
-                env={**os.environ}
+                env=run_env
             )
+            
+            # Log output for debugging
+            print(f"Generation output: {result.stdout}", flush=True)
+            print(f"Generation error: {result.stderr}", flush=True)
             
             if result.returncode == 0 and os.path.exists(output_path):
                 results.append({
