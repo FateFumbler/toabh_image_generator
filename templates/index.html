@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TOABH AI Image Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+        }
+        
+        body {
+            background: #f5f5f5;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2rem;
+        }
+        
+        .section {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        .section h2 {
+            color: #444;
+            margin-bottom: 16px;
+            font-size: 1.2rem;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        
+        /* Gender Filter */
+        .gender-filter {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .gender-btn {
+            padding: 10px 30px;
+            border: 2px solid #ddd;
+            background: white;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+        
+        .gender-btn.active {
+            background: #007bff;
+            border-color: #007bff;
+            color: white;
+        }
+        
+        .gender-btn:hover:not(.active) {
+            border-color: #007bff;
+        }
+        
+        /* Reference Image */
+        .reference-upload {
+            text-align: center;
+        }
+        
+        .upload-area {
+            border: 2px dashed #ddd;
+            border-radius: 12px;
+            padding: 40px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .upload-area:hover {
+            border-color: #007bff;
+            background: #f8f9fa;
+        }
+        
+        .upload-area p {
+            color: #666;
+            margin-bottom: 10px;
+        }
+        
+        .preview-container {
+            display: none;
+            margin-top: 20px;
+        }
+        
+        .preview-container.has-image {
+            display: block;
+        }
+        
+        .preview-image {
+            max-width: 300px;
+            max-height: 300px;
+            border-radius: 8px;
+            display: block;
+            margin: 0 auto;
+        }
+        
+        .clear-btn {
+            display: block;
+            margin: 15px auto 0;
+            padding: 8px 20px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        
+        /* Forms */
+        .form-group {
+            margin-bottom: 16px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            color: #555;
+            font-weight: 500;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+        
+        .btn-primary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        /* Bulk Add */
+        .bulk-textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 13px;
+            resize: vertical;
+        }
+        
+        /* Category Filters */
+        .category-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .category-btn {
+            padding: 8px 20px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .category-btn.active {
+            background: #28a745;
+            border-color: #28a745;
+            color: white;
+        }
+        
+        .category-btn:hover:not(.active) {
+            border-color: #28a745;
+        }
+        
+        /* Filter Tabs */
+        .filter-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .filter-tab {
+            padding: 10px 25px;
+            border: none;
+            background: #f0f0f0;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .filter-tab.active {
+            background: #007bff;
+            color: white;
+        }
+        
+        /* Prompt Cards */
+        .prompt-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+        }
+        
+        .prompt-card {
+            border: 1px solid #eee;
+            border-radius: 10px;
+            padding: 16px;
+            background: white;
+            transition: all 0.2s;
+        }
+        
+        .prompt-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .prompt-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+        
+        .prompt-card-title {
+            font-weight: 600;
+            color: #333;
+            flex: 1;
+        }
+        
+        .prompt-card-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        .prompt-card-preview {
+            color: #666;
+            font-size: 13px;
+            line-height: 1.5;
+            margin-bottom: 10px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .prompt-card-meta {
+            display: flex;
+            gap: 10px;
+            font-size: 12px;
+            color: #888;
+        }
+        
+        .badge {
+            padding: 3px 10px;
+            border-radius: 12px;
+            background: #e9ecef;
+            color: #495057;
+        }
+        
+        .badge.female {
+            background: #ffe4e6;
+            color: #be123c;
+        }
+        
+        .badge.male {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .icon-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 5px;
+            font-size: 18px;
+            transition: transform 0.2s;
+        }
+        
+        .icon-btn:hover {
+            transform: scale(1.1);
+        }
+        
+        .icon-btn.heart {
+            color: #ddd;
+        }
+        
+        .icon-btn.heart.active {
+            color: #e91e63;
+        }
+        
+        .icon-btn.delete {
+            color: #dc3545;
+        }
+        
+        .checkbox-wrapper {
+            display: flex;
+            align-items: center;
+        }
+        
+        .checkbox-wrapper input {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        
+        /* Bulk Actions */
+        .bulk-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .selected-count {
+            color: #666;
+        }
+        
+        /* Generate Section */
+        .generate-section {
+            text-align: center;
+            padding: 30px;
+        }
+        
+        .generate-btn {
+            padding: 15px 50px;
+            font-size: 1.1rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .generate-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .generate-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .generate-btn.generating {
+            background: #ffc107;
+        }
+        
+        /* Results */
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+        }
+        
+        .result-item {
+            position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #f5f5f5;
+        }
+        
+        .result-item img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+        
+        .result-item .download-btn {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .result-item .download-btn:hover {
+            background: rgba(0,0,0,0.9);
+        }
+        
+        /* Status Messages */
+        .status-message {
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: none;
+        }
+        
+        .status-message.show {
+            display: block;
+        }
+        
+        .status-message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status-message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal.show {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 400px;
+            text-align: center;
+        }
+        
+        .modal-content h3 {
+            margin-bottom: 15px;
+        }
+        
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        
+        /* Spinner */
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Hidden file input */
+        #reference-input {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 style="display: flex; align-items: center; justify-content: center; gap: 15px;">
+            <img src="/static/toabh_logo.jpg" alt="TOABH" style="height: 50px;">
+            <span>AI Image Generator</span>
+        </h1>
+        
+        <!-- Gender Filter -->
+        <div class="gender-filter">
+            <button class="gender-btn active" data-gender="all">All</button>
+            <button class="gender-btn" data-gender="male">Male</button>
+            <button class="gender-btn" data-gender="female">Female</button>
+        </div>
+        
+        <!-- Reference Image Section -->
+        <div class="section">
+            <h2>📸 Reference Image</h2>
+            <div class="reference-upload">
+                <div class="upload-area" id="upload-area">
+                    <p>Click to upload reference image</p>
+                    <p style="font-size: 12px; color: #999;">Supports: PNG, JPG, JPEG, GIF, WEBP</p>
+                </div>
+                <input type="file" id="reference-input" accept="image/*">
+                <div class="preview-container" id="preview-container">
+                    <img src="" alt="Preview" class="preview-image" id="preview-image">
+                    <button class="clear-btn" id="clear-reference">Remove Image</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Add Custom Prompt -->
+        <div class="section">
+            <h2>➕ Add Custom Prompt</h2>
+            <div class="form-group">
+                <label>Theme Name</label>
+                <input type="text" id="prompt-theme" placeholder="e.g., Casual Portrait">
+            </div>
+            <div class="form-group">
+                <label>Prompt Text</label>
+                <textarea id="prompt-text" placeholder="Describe the image you want to generate..."></textarea>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Gender</label>
+                    <select id="prompt-gender">
+                        <option value="Female">Female</option>
+                        <option value="Male">Male</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <select id="prompt-category">
+                        <option value="Polaroids">Polaroids</option>
+                        <option value="Portfolio">Portfolio</option>
+                        <option value="Indian">Indian</option>
+                        <option value="Swimwear / Lingerie">Swimwear / Lingerie</option>
+                    </select>
+                </div>
+            </div>
+            <button class="btn btn-primary" id="add-prompt-btn">Add Prompt</button>
+        </div>
+        
+        <!-- Bulk Prompt Add -->
+        <div class="section">
+            <h2>📋 Bulk Add Prompts</h2>
+            <div class="status-message" id="bulk-status"></div>
+            <textarea class="bulk-textarea" id="bulk-text" placeholder="Paste your prompts here in the format:
+
+Theme: Casual Polaroid
+Gender: Female
+Category: Polaroids
+Prompt: A natural polaroid style photo...
+
+Theme: Designer Couture
+Gender: Female
+Category: Portfolio
+Prompt: High fashion editorial..."></textarea>
+            <button class="btn btn-primary" id="bulk-add-btn" style="margin-top: 15px;">Add All Prompts</button>
+        </div>
+        
+        <!-- Category Filters -->
+        <div class="section">
+            <h2>🏷️ Filter by Category</h2>
+            <div class="category-filters">
+                <button class="category-btn active" data-category="all">All Prompts</button>
+                <button class="category-btn" data-category="Polaroids">Polaroids</button>
+                <button class="category-btn" data-category="Portfolio">Portfolio</button>
+                <button class="category-btn" data-category="Indian">Indian</button>
+                <button class="category-btn" data-category="Swimwear / Lingerie">Swimwear / Lingerie</button>
+            </div>
+            
+            <!-- Filter Tabs -->
+            <div class="filter-tabs">
+                <button class="filter-tab active" data-filter="all">All Prompts</button>
+                <button class="filter-tab" data-filter="favorites">❤️ Favorites</button>
+            </div>
+            
+            <!-- Bulk Actions -->
+            <div class="bulk-actions" id="bulk-actions" style="display: none;">
+                <span class="selected-count" id="selected-count">0 selected</span>
+                <button class="btn btn-danger" id="delete-selected-btn">Delete Selected</button>
+            </div>
+            
+            <!-- Prompt Library -->
+            <div class="prompt-grid" id="prompt-grid">
+                <!-- Prompt cards will be loaded here -->
+            </div>
+        </div>
+        
+        <!-- Generate Images -->
+        <div class="section generate-section">
+            <h2>🎨 Generate Images</h2>
+            
+            <!-- Resolution & Aspect Ratio Options -->
+            <div style="display: flex; gap: 20px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap;">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label style="display: block; margin-bottom: 6px; color: #555; font-weight: 500;">Resolution</label>
+                    <select id="resolution" style="padding: 10px 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;">
+                        <option value="1K">1K (1024x1024)</option>
+                        <option value="2K">2K (1536x1536)</option>
+                        <option value="4K">4K (2048x2048)</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label style="display: block; margin-bottom: 6px; color: #555; font-weight: 500;">Aspect Ratio</label>
+                    <select id="aspect-ratio" style="padding: 10px 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;">
+                        <option value="1:1">1:1 (Square)</option>
+                        <option value="4:3">4:3 (Portrait)</option>
+                        <option value="3:4">3:4 (Portrait)</option>
+                        <option value="16:9">16:9 (Landscape)</option>
+                        <option value="9:16">9:16 (Story)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="status-message" id="generate-status"></div>
+            <p style="margin-bottom: 20px; color: #666;">Select prompts above, then click generate to create images</p>
+            <button class="generate-btn" id="generate-btn" disabled>Generate Images</button>
+        </div>
+        
+        <!-- Results Section -->
+        <div class="section">
+            <h2>📷 Generated Images</h2>
+            <div class="results-grid" id="results-grid">
+                <!-- Generated images will appear here -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Confirmation Modal -->
+    <div class="modal" id="confirm-modal">
+        <div class="modal-content">
+            <h3>Confirm Delete</h3>
+            <p id="confirm-message">Are you sure you want to delete the selected prompts?</p>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" id="cancel-delete">Cancel</button>
+                <button class="btn btn-danger" id="confirm-delete">Delete</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // State
+        let currentGender = 'all';
+        let currentCategory = 'all';
+        let showFavorites = false;
+        let selectedPrompts = new Set();
+        let referenceFilename = '';
+        let promptsData = [];
+        let deleteCallback = null;
+        
+        // DOM Elements
+        const uploadArea = document.getElementById('upload-area');
+        const referenceInput = document.getElementById('reference-input');
+        const previewContainer = document.getElementById('preview-container');
+        const previewImage = document.getElementById('preview-image');
+        const clearReferenceBtn = document.getElementById('clear-reference');
+        const promptGrid = document.getElementById('prompt-grid');
+        const resultsGrid = document.getElementById('results-grid');
+        const generateBtn = document.getElementById('generate-btn');
+        const bulkActions = document.getElementById('bulk-actions');
+        const selectedCount = document.getElementById('selected-count');
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadPrompts();
+            loadResults();
+            setupEventListeners();
+        });
+        
+        function setupEventListeners() {
+            // Gender filter
+            document.querySelectorAll('.gender-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.gender-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentGender = btn.dataset.gender;
+                    loadPrompts();
+                });
+            });
+            
+            // Category filter
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentCategory = btn.dataset.category;
+                    loadPrompts();
+                });
+            });
+            
+            // Filter tabs
+            document.querySelectorAll('.filter-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    showFavorites = tab.dataset.filter === 'favorites';
+                    loadPrompts();
+                });
+            });
+            
+            // Reference image upload
+            uploadArea.addEventListener('click', () => referenceInput.click());
+            referenceInput.addEventListener('change', handleReferenceUpload);
+            clearReferenceBtn.addEventListener('click', clearReference);
+            
+            // Add prompt
+            document.getElementById('add-prompt-btn').addEventListener('click', addSinglePrompt);
+            
+            // Bulk add
+            document.getElementById('bulk-add-btn').addEventListener('click', addBulkPrompts);
+            
+            // Generate
+            generateBtn.addEventListener('click', generateImages);
+            
+            // Delete selected
+            document.getElementById('delete-selected-btn').addEventListener('click', () => {
+                if (selectedPrompts.size > 0) {
+                    showConfirmModal(`Delete ${selectedPrompts.size} selected prompts?`, () => {
+                        bulkDeletePrompts();
+                    });
+                }
+            });
+            
+            // Modal
+            document.getElementById('cancel-delete').addEventListener('click', hideConfirmModal);
+            document.getElementById('confirm-delete').addEventListener('click', () => {
+                hideConfirmModal();
+                if (deleteCallback) deleteCallback();
+            });
+        }
+        
+        // Reference Image
+        async function handleReferenceUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const formData = new FormData();
+            formData.append('image', file);
+            
+            try {
+                const response = await fetch('/api/upload-reference', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    referenceFilename = data.filename;
+                    previewImage.src = data.url;
+                    previewContainer.classList.add('has-image');
+                    uploadArea.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Upload error:', error);
+            }
+        }
+        
+        async function clearReference() {
+            if (referenceFilename) {
+                await fetch('/api/clear-reference', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({filename: referenceFilename})
+                });
+            }
+            referenceFilename = '';
+            previewContainer.classList.remove('has-image');
+            uploadArea.style.display = 'block';
+            referenceInput.value = '';
+        }
+        
+        // Prompts
+        async function loadPrompts() {
+            let url = '/api/prompts?';
+            if (currentGender !== 'all') url += `gender=${currentGender}&`;
+            if (currentCategory !== 'all') url += `category=${currentCategory}&`;
+            if (showFavorites) url += 'favorites=true';
+            
+            try {
+                const response = await fetch(url);
+                promptsData = await response.json();
+                renderPrompts();
+            } catch (error) {
+                console.error('Error loading prompts:', error);
+            }
+        }
+        
+        function renderPrompts() {
+            promptGrid.innerHTML = promptsData.map(prompt => `
+                <div class="prompt-card" data-id="${prompt.id}">
+                    <div class="prompt-card-header">
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" class="prompt-checkbox" data-id="${prompt.id}" 
+                                ${selectedPrompts.has(prompt.id) ? 'checked' : ''}>
+                        </div>
+                        <span class="prompt-card-title">${escapeHtml(prompt.theme)}</span>
+                        <div class="prompt-card-actions">
+                            <button class="icon-btn heart ${prompt.favorite ? 'active' : ''}" data-id="${prompt.id}" title="Favorite">
+                                ${prompt.favorite ? '❤️' : '🤍'}
+                            </button>
+                            <button class="icon-btn delete" data-id="${prompt.id}" title="Delete">🗑️</button>
+                        </div>
+                    </div>
+                    <p class="prompt-card-preview">${escapeHtml(prompt.prompt_text)}</p>
+                    <div class="prompt-card-meta">
+                        <span class="badge ${prompt.gender.toLowerCase()}">${prompt.gender}</span>
+                        <span class="badge">${prompt.category}</span>
+                    </div>
+                </div>
+            `).join('');
+            
+            // Re-attach event listeners
+            document.querySelectorAll('.prompt-checkbox').forEach(cb => {
+                cb.addEventListener('change', (e) => {
+                    const id = parseInt(e.target.dataset.id);
+                    if (e.target.checked) {
+                        selectedPrompts.add(id);
+                    } else {
+                        selectedPrompts.delete(id);
+                    }
+                    updateBulkActions();
+                });
+            });
+            
+            document.querySelectorAll('.icon-btn.heart').forEach(btn => {
+                btn.addEventListener('click', () => toggleFavorite(parseInt(btn.dataset.id)));
+            });
+            
+            document.querySelectorAll('.icon-btn.delete').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    showConfirmModal('Delete this prompt?', () => {
+                        deletePrompt(parseInt(btn.dataset.id));
+                    });
+                });
+            });
+            
+            updateBulkActions();
+        }
+        
+        function updateBulkActions() {
+            if (selectedPrompts.size > 0) {
+                bulkActions.style.display = 'flex';
+                selectedCount.textContent = `${selectedPrompts.size} selected`;
+                generateBtn.disabled = false;
+            } else {
+                bulkActions.style.display = 'none';
+                generateBtn.disabled = true;
+            }
+        }
+        
+        async function addSinglePrompt() {
+            const theme = document.getElementById('prompt-theme').value.trim();
+            const prompt_text = document.getElementById('prompt-text').value.trim();
+            const gender = document.getElementById('prompt-gender').value;
+            const category = document.getElementById('prompt-category').value;
+            
+            if (!theme || !prompt_text) {
+                alert('Please fill in all fields');
+                return;
+            }
+            
+            try {
+                await fetch('/api/prompts', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({theme, prompt_text, gender, category})
+                });
+                
+                // Clear form
+                document.getElementById('prompt-theme').value = '';
+                document.getElementById('prompt-text').value = '';
+                
+                loadPrompts();
+            } catch (error) {
+                console.error('Error adding prompt:', error);
+            }
+        }
+        
+        async function addBulkPrompts() {
+            const text = document.getElementById('bulk-text').value.trim();
+            
+            if (!text) {
+                alert('Please paste some prompts');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/prompts/bulk', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({text})
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    showStatus('bulk-status', `success`, `${data.count} prompts added successfully`);
+                    document.getElementById('bulk-text').value = '';
+                    loadPrompts();
+                }
+            } catch (error) {
+                console.error('Error adding bulk prompts:', error);
+            }
+        }
+        
+        async function deletePrompt(id) {
+            try {
+                await fetch(`/api/prompts/${id}`, {method: 'DELETE'});
+                selectedPrompts.delete(id);
+                loadPrompts();
+            } catch (error) {
+                console.error('Error deleting prompt:', error);
+            }
+        }
+        
+        async function bulkDeletePrompts() {
+            const ids = Array.from(selectedPrompts);
+            
+            try {
+                await fetch('/api/prompts/bulk-delete', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ids})
+                });
+                
+                selectedPrompts.clear();
+                loadPrompts();
+            } catch (error) {
+                console.error('Error bulk deleting:', error);
+            }
+        }
+        
+        async function toggleFavorite(id) {
+            const prompt = promptsData.find(p => p.id === id);
+            if (!prompt) return;
+            
+            try {
+                await fetch(`/api/prompts/${id}/favorite`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({favorite: !prompt.favorite})
+                });
+                
+                loadPrompts();
+            } catch (error) {
+                console.error('Error toggling favorite:', error);
+            }
+        }
+        
+        // Image Generation
+        async function generateImages() {
+            const promptIds = Array.from(selectedPrompts);
+            const resolution = document.getElementById('resolution').value;
+            const aspectRatio = document.getElementById('aspect-ratio').value;
+            
+            if (promptIds.length === 0) {
+                alert('Please select at least one prompt');
+                return;
+            }
+            
+            generateBtn.disabled = true;
+            generateBtn.innerHTML = '<span class="spinner"></span>Generating...';
+            generateBtn.classList.add('generating');
+            
+            try {
+                const response = await fetch('/generate', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        prompt_ids: promptIds,
+                        reference_filename: referenceFilename,
+                        resolution: resolution,
+                        aspect_ratio: aspectRatio
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const successCount = data.results.filter(r => r.success).length;
+                    showStatus('generate-status', 'success', `Images generated successfully! (${successCount}/${data.results.length})`);
+                    loadResults();
+                    
+                    // Clear selections
+                    selectedPrompts.clear();
+                    updateBulkActions();
+                } else {
+                    showStatus('generate-status', 'error', data.error || 'Generation failed');
+                }
+            } catch (error) {
+                console.error('Generation error:', error);
+                showStatus('generate-status', 'error', 'Generation failed: ' + error.message);
+            } finally {
+                generateBtn.disabled = false;
+                generateBtn.innerHTML = 'Generate Images';
+                generateBtn.classList.remove('generating');
+            }
+        }
+        
+        async function loadResults() {
+            try {
+                const response = await fetch('/api/outputs');
+                const files = await response.json();
+                
+                resultsGrid.innerHTML = files.map(file => `
+                    <div class="result-item">
+                        <img src="${file.url}" alt="${file.filename}">
+                        <a href="${file.url}" download="${file.filename}" class="download-btn">Download</a>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading results:', error);
+            }
+        }
+        
+        // Utilities
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function showStatus(elementId, type, message) {
+            const el = document.getElementById(elementId);
+            el.className = `status-message show ${type}`;
+            el.textContent = message;
+            
+            setTimeout(() => {
+                el.classList.remove('show');
+            }, 5000);
+        }
+        
+        function showConfirmModal(message, callback) {
+            document.getElementById('confirm-message').textContent = message;
+            deleteCallback = callback;
+            document.getElementById('confirm-modal').classList.add('show');
+        }
+        
+        function hideConfirmModal() {
+            document.getElementById('confirm-modal').classList.remove('show');
+            deleteCallback = null;
+        }
+    </script>
+</body>
+</html>
