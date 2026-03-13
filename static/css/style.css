@@ -1041,3 +1041,75 @@ body {
         grid-template-columns: 1fr;
     }
 }
+
+/* Category Modal Styles */
+.add-cat-group {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.add-cat-group .text-input {
+    flex: 1;
+}
+
+.categories-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.category-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 16px;
+    background: var(--surface-hover);
+    border-radius: var(--radius);
+}
+
+.category-item span {
+    font-weight: 500;
+}
+
+.char-select-group {
+    display: flex;
+    gap: 10px;
+}
+
+.char-select-group .select-input {
+    flex: 1;
+}
+
+.char-select-group .text-input {
+    flex: 1;
+}
+
+.btn-group {
+    display: flex;
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+
+.btn-group .btn {
+    border-radius: 0;
+    border: none;
+    padding: 6px 12px;
+}
+
+.btn-group .btn:first-child {
+    border-top-left-radius: var(--radius);
+    border-bottom-left-radius: var(--radius);
+}
+
+.btn-group .btn:last-child {
+    border-top-right-radius: var(--radius);
+    border-bottom-right-radius: var(--radius);
+}
+
+.mr-2 {
+    margin-right: 12px;
+}

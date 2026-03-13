@@ -30,6 +30,14 @@
                     <i class="fas fa-wand-magic"></i>
                     <span>Generate</span>
                 </a>
+                <a href="#categories-modal" class="nav-item" id="sidebar-manage-cats">
+                    <i class="fas fa-tags"></i>
+                    <span>Categories</span>
+                </a>
+                <a href="#characters-modal" class="nav-item" id="sidebar-manage-chars">
+                    <i class="fas fa-user-friends"></i>
+                    <span>Characters</span>
+                </a>
                 <a href="#results-section" class="nav-item" data-section="results">
                     <i class="fas fa-images"></i>
                     <span>Results</span>
@@ -107,7 +115,12 @@
                     <div class="card-body">
                         <div class="model-input-group">
                             <label>Character/Look Name (for reference images)</label>
-                            <input type="text" id="model-name" class="text-input" placeholder="e.g., shweta_portfolio, model_001" value="default_model">
+                            <div class="char-select-group">
+                                <select id="model-name-select" class="select-input">
+                                    <!-- Characters will be listed here -->
+                                </select>
+                                <input type="text" id="model-name" class="text-input" placeholder="Or type new name..." value="default_model">
+                            </div>
                         </div>
                         <div class="upload-zone" id="upload-zone">
                             <input type="file" id="ref-upload" multiple accept="image/*" style="display: none;">
@@ -127,9 +140,13 @@
                 </div>
 
                 <!-- Bulk Actions -->
-                <div class="bulk-actions-bar" id="bulk-actions-bar" style="display: none;">
+                <div class="bulk-actions-bar" id="bulk-actions-bar">
                     <span id="selected-count">0 selected</span>
                     <div class="bulk-actions">
+                        <div class="btn-group mr-2">
+                            <button class="btn btn-secondary btn-sm" id="select-all-btn">All</button>
+                            <button class="btn btn-secondary btn-sm" id="deselect-all-btn">None</button>
+                        </div>
                         <button class="btn btn-danger btn-sm" id="bulk-delete-btn">
                             <i class="fas fa-trash"></i> Delete Selected
                         </button>
@@ -364,6 +381,46 @@ Outdoor: Walking through autumn forest..." required></textarea>
             <div class="modal-footer">
                 <button class="btn btn-secondary modal-cancel">Cancel</button>
                 <button class="btn btn-primary" id="save-bulk-btn">Add Prompts</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manage Categories Modal -->
+    <div class="modal" id="categories-modal">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Manage Categories</h3>
+                <button class="modal-close"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="add-cat-group">
+                    <input type="text" id="new-cat-name" class="text-input" placeholder="New category name...">
+                    <button class="btn btn-primary" id="save-cat-btn">Add</button>
+                </div>
+                <div class="categories-list" id="categories-list">
+                    <!-- Categories will be listed here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manage Characters Modal -->
+    <div class="modal" id="characters-modal">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Manage Characters</h3>
+                <button class="modal-close"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="add-cat-group">
+                    <input type="text" id="new-char-name" class="text-input" placeholder="New character name...">
+                    <button class="btn btn-primary" id="save-char-btn">Add</button>
+                </div>
+                <div class="categories-list" id="characters-list">
+                    <!-- Characters will be listed here -->
+                </div>
             </div>
         </div>
     </div>

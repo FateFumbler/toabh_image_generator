@@ -13,7 +13,7 @@ from werkzeug.utils import secure_filename
 from PIL import Image
 
 from config import Config
-from database import db, init_db, Prompt, GeneratedImage, ReferenceImage
+from database import db, init_db, Prompt, GeneratedImage, ReferenceImage, Category, Character
 
 # Import flux_gen for image generation
 sys.path.insert(0, '/home/Fate/.openclaw/workspace/scripts')
@@ -647,7 +647,73 @@ def get_models():
 
 @app.route('/api/categories', methods=['GET'])
 def get_categories():
-    return jsonify(Config.CATEGORIES)
+    categories = Category.query.all()
+    return jsonify([c.to_dict() for c in categories])
+
+@app.route('/api/categories', methods=['POST'])
+def add_category():
+    data = request.json
+    name = data.get('name', '').strip()
+    if not name:
+        return jsonify({'error': 'Name is required'}), 400
+    
+    if Category.query.filter_by(name=name).first():
+        return jsonify({'error': 'Category already exists'}), 400
+    
+    category = Category(name=name)
+    db.session.add(category)
+    db.session.commit()
+    return jsonify(category.to_dict()), 201
+
+@app.route('/api/categories/<int:category_id>', methods=['DELETE'])
+def delete_category(category_id):
+    category = Category.query.get_or_404(category_id)
+    db.session.delete(category)
+    db.session.commit()
+    return jsonify({'deleted': True})
+
+# ============ Character Routes ============
+
+@app.route('/api/characters', methods=['GET'])
+def get_characters():
+    characters = Character.query.all()
+    return jsonify([c.to_dict() for c in characters])
+
+@app.route('/api/characters', methods=['POST'])
+def add_character():
+    data = request.json
+    name = data.get('name', '').strip()
+    if not name:
+        return jsonify({'error': 'Name is required'}), 400
+    
+    if Character.query.filter_by(name=name).first():
+        return jsonify({'error': 'Character already exists'}), 400
+    
+    character = Character(name=name)
+    db.session.add(character)
+    db.session.commit()
+    return jsonify(character.to_dict()), 201
+
+@app.route('/api/characters/<int:character_id>', methods=['DELETE'])
+def delete_character(character_id):
+    character = Character.query.get_or_404(character_id)
+    
+    # Delete associated reference images
+    ref_images = ReferenceImage.query.filter_by(model_name=character.name).all()
+    for img in ref_images:
+        try:
+            if os.path.exists(img.file_path):
+                os.remove(img.file_path)
+            thumb_path = img.file_path.rsplit('.', 1)[0] + '_thumb.' + img.file_path.rsplit('.', 1)[1]
+            if os.path.exists(thumb_path):
+                os.remove(thumb_path)
+        except:
+            pass
+        db.session.delete(img)
+    
+    db.session.delete(character)
+    db.session.commit()
+    return jsonify({'deleted': True})
 
 @app.route('/api/resolutions', methods=['GET'])
 def get_resolutions():

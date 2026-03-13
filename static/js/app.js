@@ -31,8 +31,10 @@ function initializeApp() {
 function setupNavigation() {
     document.querySelectorAll('.nav-item').forEach(item => {
         item.addEventListener('click', (e) => {
-            e.preventDefault();
             const section = item.dataset.section;
+            if (!section) return; // For modal triggers like Categories
+            
+            e.preventDefault();
             
             // Update nav active state
             document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
@@ -49,6 +51,20 @@ function setupNavigation() {
             if (section === 'generate') updateQueueList();
         });
     });
+
+    // Sidebar Categories Link
+    document.getElementById('sidebar-manage-cats')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        document.getElementById('categories-modal').classList.add('open');
+        renderCategoriesList();
+    });
+
+    // Sidebar Characters Link
+    document.getElementById('sidebar-manage-chars')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        document.getElementById('characters-modal').classList.add('open');
+        renderCharactersList();
+    });
     
     document.getElementById('refresh-btn').addEventListener('click', () => {
         loadPrompts();
@@ -62,12 +78,26 @@ function setupFilters() {
     
     genderFilter.addEventListener('change', loadPrompts);
     categoryFilter.addEventListener('change', loadPrompts);
+
+    // Select All / Deselect All
+    document.getElementById('select-all-btn').addEventListener('click', () => {
+        promptsData.forEach(p => selectedPrompts.add(p.id));
+        renderPrompts();
+        updateQueueList();
+    });
+
+    document.getElementById('deselect-all-btn').addEventListener('click', () => {
+        promptsData.forEach(p => selectedPrompts.delete(p.id));
+        renderPrompts();
+        updateQueueList();
+    });
 }
 
 function setupReferenceUpload() {
     const uploadZone = document.getElementById('upload-zone');
     const fileInput = document.getElementById('ref-upload');
     const modelNameInput = document.getElementById('model-name');
+    const modelNameSelect = document.getElementById('model-name-select');
     
     uploadZone.addEventListener('click', () => fileInput.click());
     
@@ -90,6 +120,14 @@ function setupReferenceUpload() {
         handleFiles(e.target.files);
     });
     
+    modelNameSelect.addEventListener('change', () => {
+        if (modelNameSelect.value) {
+            modelNameInput.value = modelNameSelect.value;
+            currentModelName = modelNameSelect.value;
+            loadReferenceImages();
+        }
+    });
+
     modelNameInput.addEventListener('change', () => {
         currentModelName = modelNameInput.value || 'default_model';
         loadReferenceImages();
@@ -199,6 +237,12 @@ function setupPromptModals() {
         loadModelNames();
     });
     
+    // Categories Modal
+    document.getElementById('save-cat-btn').addEventListener('click', addCategory);
+    
+    // Characters Modal
+    document.getElementById('save-char-btn').addEventListener('click', addCharacter);
+    
     document.querySelectorAll('.modal-close, .modal-cancel').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.modal').forEach(m => m.classList.remove('open'));
@@ -248,12 +292,194 @@ async function loadModelNames() {
     }
 }
 
+// Categories State
+let categoriesData = [];
+let charactersData = [];
+
 async function loadInitialData() {
     await loadAvailableModels();
+    await loadCategories();
+    await loadCharacters();
     await loadPrompts();
     await loadReferenceImages();
     await loadStats();
     await loadModelNames();
+}
+
+async function loadCategories() {
+    try {
+        const response = await fetch('/api/categories');
+        categoriesData = await response.json();
+        updateCategoryDropdowns();
+        renderCategoriesList();
+    } catch (error) {
+        console.error('Error loading categories:', error);
+    }
+}
+
+async function loadCharacters() {
+    try {
+        const response = await fetch('/api/characters');
+        charactersData = await response.json();
+        updateCharacterDropdowns();
+        renderCharactersList();
+    } catch (error) {
+        console.error('Error loading characters:', error);
+    }
+}
+
+function updateCategoryDropdowns() {
+    const selects = [
+        document.getElementById('category-filter'),
+        document.querySelector('select[name="category"]'),
+        document.querySelector('#bulk-add-form select[name="category"]')
+    ];
+    
+    selects.forEach(select => {
+        if (!select) return;
+        const isFilter = select.id === 'gender-filter' || select.id === 'category-filter';
+        const currentValue = select.value;
+        
+        let html = isFilter ? '<option value="all">All</option>' : '';
+        html += categoriesData.map(cat => `<option value="${cat.name}">${cat.name}</option>`).join('');
+        
+        select.innerHTML = html;
+        if (currentValue) select.value = currentValue;
+    });
+}
+
+function updateCharacterDropdowns() {
+    const selects = [
+        document.getElementById('model-name-select'),
+        document.getElementById('gen-model-select'),
+        document.getElementById('modal-model-select')
+    ];
+    
+    selects.forEach(select => {
+        if (!select) return;
+        const currentValue = select.value;
+        
+        let html = '<option value="">Select Character...</option>';
+        html += charactersData.map(char => `<option value="${char.name}">${char.name}</option>`).join('');
+        
+        select.innerHTML = html;
+        if (currentValue) select.value = currentValue;
+    });
+}
+
+function renderCategoriesList() {
+    const list = document.getElementById('categories-list');
+    if (!list) return;
+    
+    if (categoriesData.length === 0) {
+        list.innerHTML = '<p class="empty-state">No categories yet</p>';
+        return;
+    }
+    
+    list.innerHTML = categoriesData.map(cat => `
+        <div class="category-item">
+            <span>${escapeHtml(cat.name)}</span>
+            <button class="icon-btn delete" onclick="deleteCategory(${cat.id})" title="Delete Category">🗑️</button>
+        </div>
+    `).join('');
+}
+
+function renderCharactersList() {
+    const list = document.getElementById('characters-list');
+    if (!list) return;
+    
+    if (charactersData.length === 0) {
+        list.innerHTML = '<p class="empty-state">No characters yet</p>';
+        return;
+    }
+    
+    list.innerHTML = charactersData.map(char => `
+        <div class="category-item">
+            <span>${escapeHtml(char.name)}</span>
+            <button class="icon-btn delete" onclick="deleteCharacter(${char.id})" title="Delete Character">🗑️</button>
+        </div>
+    `).join('');
+}
+
+async function addCategory() {
+    const input = document.getElementById('new-cat-name');
+    const name = input.value.trim();
+    
+    if (!name) return;
+    
+    try {
+        const response = await fetch('/api/categories', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name })
+        });
+        
+        if (response.ok) {
+            input.value = '';
+            await loadCategories();
+            showToast('Category added', 'success');
+        } else {
+            const data = await response.json();
+            showToast(data.error || 'Failed to add category', 'error');
+        }
+    } catch (error) {
+        console.error('Error adding category:', error);
+    }
+}
+
+async function addCharacter() {
+    const input = document.getElementById('new-char-name');
+    const name = input.value.trim();
+    
+    if (!name) return;
+    
+    try {
+        const response = await fetch('/api/characters', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name })
+        });
+        
+        if (response.ok) {
+            input.value = '';
+            await loadCharacters();
+            showToast('Character added', 'success');
+        } else {
+            const data = await response.json();
+            showToast(data.error || 'Failed to add character', 'error');
+        }
+    } catch (error) {
+        console.error('Error adding character:', error);
+    }
+}
+
+async function deleteCategory(id) {
+    if (!confirm('Delete this category? This will not delete prompts in this category.')) return;
+    
+    try {
+        const response = await fetch(`/api/categories/${id}`, { method: 'DELETE' });
+        if (response.ok) {
+            await loadCategories();
+            showToast('Category deleted', 'success');
+        }
+    } catch (error) {
+        console.error('Error deleting category:', error);
+    }
+}
+
+async function deleteCharacter(id) {
+    if (!confirm('Delete this character? This will also DELETE all associated reference images!')) return;
+    
+    try {
+        const response = await fetch(`/api/characters/${id}`, { method: 'DELETE' });
+        if (response.ok) {
+            await loadCharacters();
+            loadReferenceImages();
+            showToast('Character and images deleted', 'success');
+        }
+    } catch (error) {
+        console.error('Error deleting character:', error);
+    }
 }
 
 async function loadPrompts() {
@@ -420,13 +646,18 @@ function attachFavoritesListeners() {
 function updateBulkActions() {
     const bulkBar = document.getElementById('bulk-actions-bar');
     const selectedCount = document.getElementById('selected-count');
+    const deleteBtn = document.getElementById('bulk-delete-btn');
+    const generateBtn = document.getElementById('select-generate-btn');
     
-    if (selectedPrompts.size > 0) {
-        bulkBar.style.display = 'flex';
-        selectedCount.textContent = `${selectedPrompts.size} selected`;
-    } else {
-        bulkBar.style.display = 'none';
-    }
+    selectedCount.textContent = `${selectedPrompts.size} selected`;
+    
+    // Always show the bar so "Select All" is reachable
+    bulkBar.style.display = 'flex';
+    
+    // Disable actions if none selected
+    const noneSelected = selectedPrompts.size === 0;
+    deleteBtn.disabled = noneSelected;
+    generateBtn.disabled = noneSelected;
 }
 
 async function addSinglePrompt() {
@@ -916,3 +1147,5 @@ function showToast(message, type = 'success') {
 // Make functions globally available
 window.deleteReferenceImage = deleteReferenceImage;
 window.deleteGeneratedImage = deleteGeneratedImage;
+window.deleteCategory = deleteCategory;
+window.deleteCharacter = deleteCharacter;
