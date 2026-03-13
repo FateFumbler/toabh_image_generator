@@ -2,8 +2,12 @@ __pycache__/
 *.pyc
 *.pyo
 *.db
-output/
-uploads/
+instance/
+static/uploads/
+static/generated/
 .env
 *.log
 .DS_Store
+node_modules/
+dist/
+build/

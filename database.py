@@ -1,0 +1,90 @@
+from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
+import os
+
+db = SQLAlchemy()
+
+class Prompt(db.Model):
+    __tablename__ = 'prompts'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    theme = db.Column(db.String(200), nullable=False)
+    prompt_text = db.Column(db.Text, nullable=False)
+    gender = db.Column(db.String(20), nullable=False)  # 'male' or 'female'
+    category = db.Column(db.String(50), nullable=False)
+    favorite = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    model_name = db.Column(db.String(100), nullable=True)
+    model_reference_directory = db.Column(db.String(500), nullable=True)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'theme': self.theme,
+            'prompt_text': self.prompt_text,
+            'gender': self.gender,
+            'category': self.category,
+            'favorite': self.favorite,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'model_name': self.model_name,
+            'model_reference_directory': self.model_reference_directory
+        }
+
+class GeneratedImage(db.Model):
+    __tablename__ = 'generated_images'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    prompt_id = db.Column(db.Integer, db.ForeignKey('prompts.id'), nullable=False)
+    file_path = db.Column(db.String(500), nullable=False)
+    model_used = db.Column(db.String(50), nullable=False)
+    resolution = db.Column(db.String(20), nullable=False)
+    aspect_ratio = db.Column(db.String(20), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    prompt = db.relationship('Prompt', backref='generated_images')
+    
+    def to_dict(self):
+        # Get relative path from static folder
+        static_idx = self.file_path.find('/static/')
+        url_path = self.file_path[static_idx:] if static_idx != -1 else self.file_path
+        
+        return {
+            'id': self.id,
+            'prompt_id': self.prompt_id,
+            'file_path': url_path,
+            'model_used': self.model_used,
+            'resolution': self.resolution,
+            'aspect_ratio': self.aspect_ratio,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+
+class ReferenceImage(db.Model):
+    __tablename__ = 'reference_images'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    model_name = db.Column(db.String(100), nullable=False)
+    file_path = db.Column(db.String(500), nullable=False)
+    file_name = db.Column(db.String(200), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def to_dict(self):
+        # Get relative path from static folder
+        static_idx = self.file_path.find('/static/')
+        url_path = self.file_path[static_idx:] if static_idx != -1 else self.file_path
+        
+        return {
+            'id': self.id,
+            'model_name': self.model_name,
+            'file_path': url_path,
+            'file_name': self.file_name,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+
+def init_db(app):
+    db.init_app(app)
+    with app.app_context():
+        db.create_all()
+        
+        # Create upload directories
+        os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+        os.makedirs(app.config['GENERATED_FOLDER'], exist_ok=True)
