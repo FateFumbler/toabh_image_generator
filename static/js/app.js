@@ -29,6 +29,7 @@ function initializeApp() {
     setupReferenceUpload();
     setupPromptModals();
     setupGeneration();
+    setupLightbox();
     loadInitialData();
     
     // Refresh results button
@@ -1020,6 +1021,28 @@ function attachPromptListeners() {
         });
     });
     
+    // Make entire prompt card clickable (except buttons)
+    document.querySelectorAll('.prompt-card').forEach(card => {
+        card.addEventListener('click', (e) => {
+            // Ignore clicks on action buttons, checkboxes, and their containers
+            if (e.target.closest('.prompt-card-actions') || 
+                e.target.closest('.prompt-checkbox') ||
+                e.target.tagName === 'BUTTON' ||
+                e.target.tagName === 'INPUT') {
+                return;
+            }
+            
+            const id = parseInt(card.dataset.id);
+            if (selectedPrompts.has(id)) {
+                selectedPrompts.delete(id);
+            } else {
+                selectedPrompts.add(id);
+            }
+            renderPrompts();
+            updateQueueList();
+        });
+    });
+    
     // Edit button handler
     document.querySelectorAll('.icon-btn.edit').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -1046,6 +1069,28 @@ function attachFavoritesListeners() {
                 selectedPrompts.add(id);
             } else {
                 selectedPrompts.delete(id);
+            }
+            renderFavorites();
+            updateQueueList();
+        });
+    });
+    
+    // Make entire prompt card clickable in favorites (except buttons)
+    document.querySelectorAll('#favorites-section .prompt-card').forEach(card => {
+        card.addEventListener('click', (e) => {
+            // Ignore clicks on action buttons, checkboxes, and their containers
+            if (e.target.closest('.prompt-card-actions') || 
+                e.target.closest('.prompt-checkbox') ||
+                e.target.tagName === 'BUTTON' ||
+                e.target.tagName === 'INPUT') {
+                return;
+            }
+            
+            const id = parseInt(card.dataset.id);
+            if (selectedPrompts.has(id)) {
+                selectedPrompts.delete(id);
+            } else {
+                selectedPrompts.add(id);
             }
             renderFavorites();
             updateQueueList();
@@ -1282,6 +1327,46 @@ function setupGeneration() {
     document.getElementById('bulk-delete-btn').addEventListener('click', bulkDeletePrompts);
 }
 
+// Lightbox Setup
+function setupLightbox() {
+    const lightbox = document.getElementById('lightbox');
+    const lightboxClose = document.getElementById('lightbox-close');
+    const lightboxOverlay = document.querySelector('.lightbox-overlay');
+    
+    // Close on button click
+    lightboxClose?.addEventListener('click', closeLightbox);
+    
+    // Close on overlay click
+    lightboxOverlay?.addEventListener('click', closeLightbox);
+    
+    // Close on Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && lightbox.classList.contains('open')) {
+            closeLightbox();
+        }
+    });
+}
+
+function openLightbox(imageSrc, promptNumber, downloadSrc) {
+    const lightbox = document.getElementById('lightbox');
+    const lightboxImage = document.getElementById('lightbox-image');
+    const lightboxPromptNumber = document.getElementById('lightbox-prompt-number');
+    const lightboxDownload = document.getElementById('lightbox-download');
+    
+    lightboxImage.src = imageSrc;
+    lightboxPromptNumber.textContent = promptNumber || '';
+    lightboxDownload.href = downloadSrc || imageSrc;
+    
+    lightbox.classList.add('open');
+    document.body.style.overflow = 'hidden'; // Prevent scrolling
+}
+
+function closeLightbox() {
+    const lightbox = document.getElementById('lightbox');
+    lightbox.classList.remove('open');
+    document.body.style.overflow = ''; // Restore scrolling
+}
+
 function updateQueueList() {
     const queueList = document.getElementById('queue-list');
     const queueCount = document.getElementById('queue-count');
@@ -1502,7 +1587,7 @@ async function loadResults() {
                     <div class="results-grid">
                         ${imgs.map((img, idx) => `
                             <div class="result-item">
-                                <img src="${img.file_path}" alt="Generated">
+                                <img src="${img.file_path}" alt="Generated" onclick="openLightbox('${img.file_path}', '${img.prompt_number || ''}', '${img.file_path}')" style="cursor: pointer;">
                                 <div class="result-meta">
                                     ${img.prompt_number ? `<span class="badge prompt-number-badge">${img.prompt_number}</span>` : ''}
                                     <span class="badge model-tag">${img.model_used.toUpperCase()}</span>

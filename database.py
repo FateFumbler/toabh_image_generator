@@ -64,6 +64,7 @@ class GeneratedImage(db.Model):
     aspect_ratio = db.Column(db.String(20), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     prompt_number = db.Column(db.String(10), nullable=True)
+    character_name = db.Column(db.String(100), nullable=True)  # Store character name for grouping
     
     prompt = db.relationship('Prompt', backref='generated_images')
     
@@ -80,7 +81,8 @@ class GeneratedImage(db.Model):
             'model_used': self.model_used,
             'resolution': self.resolution,
             'aspect_ratio': self.aspect_ratio,
-            'created_at': self.created_at.isoformat() if self.created_at else None
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'character_name': self.character_name if self.character_name else 'Ungrouped'
         }
 
 class ReferenceImage(db.Model):

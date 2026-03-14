@@ -576,7 +576,8 @@ def generate_single_image(prompt, model, resolution, aspect_ratio, selected_mode
         model_used=model,
         resolution=resolution,
         aspect_ratio=aspect_ratio,
-        prompt_number=prompt.prompt_number
+        prompt_number=prompt.prompt_number,
+        character_name=actual_model_name if actual_model_name and actual_model_name != 'default_model' else None
     )
     db.session.add(gen_img)
     db.session.commit()
@@ -632,8 +633,9 @@ def get_generated_images():
         img_dict['prompt_theme'] = img.prompt.theme if img.prompt else None
         img_dict['prompt_gender'] = img.prompt.gender if img.prompt else None
         img_dict['prompt_number'] = img.prompt.prompt_number if img.prompt else None
-        # Add character/reference name for grouping
-        img_dict['character_name'] = img.prompt.model_name if img.prompt and img.prompt.model_name else "Ungrouped"
+        # Use stored character_name only if explicitly set (not None), otherwise fallback to prompt.model_name
+        if not img.character_name:
+            img_dict['character_name'] = img.prompt.model_name if img.prompt and img.prompt.model_name else "Ungrouped"
         result.append(img_dict)
     
     return jsonify(result)
