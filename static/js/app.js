@@ -542,7 +542,7 @@ function updateCategoryDropdowns() {
         if (currentValue) select.value = currentValue;
     });
     
-    // Update category toggle buttons dynamically
+    // Update category toggle buttons dynamically for Prompts section
     const categoryToggle = document.getElementById('category-toggle');
     if (categoryToggle && categoriesData.length > 0) {
         // Keep "All" button, add dynamic categories
@@ -554,6 +554,21 @@ function updateCategoryDropdowns() {
         });
         categoryToggle.innerHTML = toggleHtml;
     }
+    
+    // Update Favorites category filter buttons dynamically
+    updateFavoritesCategoryFilters();
+}
+
+function updateFavoritesCategoryFilters() {
+    const favoritesCategoryToggle = document.getElementById('favorites-category-toggle');
+    if (!favoritesCategoryToggle || categoriesData.length === 0) return;
+    
+    let toggleHtml = '';
+    toggleHtml += `<button class="filter-btn ${favoritesCategoryFilter === 'all' ? 'active' : ''}" data-category="all">All</button>`;
+    categoriesData.forEach(cat => {
+        toggleHtml += `<button class="filter-btn ${favoritesCategoryFilter === cat.name ? 'active' : ''}" data-category="${cat.name}">${cat.name}</button>`;
+    });
+    favoritesCategoryToggle.innerHTML = toggleHtml;
 }
 
 function updateCharacterDropdowns() {
