@@ -100,7 +100,7 @@ function setupFilters() {
         if (e.target.classList.contains('toggle-btn')) {
             categoryToggle.querySelectorAll('.toggle-btn').forEach(btn => btn.classList.remove('active'));
             e.target.classList.add('active');
-            currentCategoryFilter = e.target.dataset.value;
+            currentCategoryFilter = e.target.textContent;
             // Update hidden select for API compatibility
             document.getElementById('category-filter').value = currentCategoryFilter;
             loadPrompts();
@@ -217,7 +217,7 @@ function setupFavoritesFilters() {
         if (e.target.classList.contains('filter-btn')) {
             favoritesFilters.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
             e.target.classList.add('active');
-            favoritesCategoryFilter = e.target.dataset.category;
+            favoritesCategoryFilter = e.target.textContent;
             renderFavorites();
         }
     });
@@ -960,7 +960,7 @@ function renderPrompts() {
                     data-id="${prompt.id}" 
                     ${selectedPrompts.has(prompt.id) ? 'checked' : ''}>
                 <span class="prompt-card-number">${prompt.prompt_number || ''}</span>
-                <span class="prompt-card-title">${escapeHtml(prompt.theme)}</span>
+                <span class="prompt-card-title" title="${escapeHtml(prompt.theme)}">${escapeHtml(prompt.theme)}</span>
                 <div class="prompt-card-actions">
                     <button class="icon-btn edit" data-id="${prompt.id}" title="Edit">
                         <i class="fas fa-pencil-alt"></i>
@@ -1051,7 +1051,7 @@ function createFavoriteCard(prompt) {
                     data-id="${prompt.id}" 
                     ${selectedPrompts.has(prompt.id) ? 'checked' : ''}>
                 <span class="prompt-card-number">${prompt.prompt_number || ''}</span>
-                <span class="prompt-card-title">${escapeHtml(prompt.theme)}</span>
+                <span class="prompt-card-title" title="${escapeHtml(prompt.theme)}">${escapeHtml(prompt.theme)}</span>
                 <div class="prompt-card-actions">
                     <button class="icon-btn heart active" data-id="${prompt.id}" title="Remove from favorites">❤️</button>
                     <button class="icon-btn queue-btn" data-id="${prompt.id}" title="Add to queue">➕</button>
