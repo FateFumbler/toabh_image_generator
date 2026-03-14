@@ -1327,11 +1327,17 @@ function setupGeneration() {
     document.getElementById('bulk-delete-btn').addEventListener('click', bulkDeletePrompts);
 }
 
+// Lightbox State
+let currentImageGroup = []; // Array of images in current character group
+let currentImageIndex = 0;
+
 // Lightbox Setup
 function setupLightbox() {
     const lightbox = document.getElementById('lightbox');
     const lightboxClose = document.getElementById('lightbox-close');
     const lightboxOverlay = document.querySelector('.lightbox-overlay');
+    const prevBtn = document.getElementById('lightbox-prev');
+    const nextBtn = document.getElementById('lightbox-next');
     
     // Close on button click
     lightboxClose?.addEventListener('click', closeLightbox);
@@ -1339,23 +1345,97 @@ function setupLightbox() {
     // Close on overlay click
     lightboxOverlay?.addEventListener('click', closeLightbox);
     
-    // Close on Escape key
+    // Previous button
+    prevBtn?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        navigateLightbox(-1);
+    });
+    
+    // Next button
+    nextBtn?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        navigateLightbox(1);
+    });
+    
+    // Keyboard navigation
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && lightbox.classList.contains('open')) {
+        if (!lightbox.classList.contains('open')) return;
+        
+        if (e.key === 'Escape') {
             closeLightbox();
+        } else if (e.key === 'ArrowLeft') {
+            navigateLightbox(-1);
+        } else if (e.key === 'ArrowRight') {
+            navigateLightbox(1);
         }
     });
 }
 
-function openLightbox(imageSrc, promptNumber, downloadSrc) {
+// Navigate through images in the lightbox
+function navigateLightbox(direction) {
+    if (currentImageGroup.length === 0) return;
+    
+    // Calculate new index with wrapping
+    currentImageIndex = (currentImageIndex + direction + currentImageGroup.length) % currentImageGroup.length;
+    
+    // Update lightbox with new image
+    const img = currentImageGroup[currentImageIndex];
+    updateLightboxImage(img.file_path, img.prompt_number || '', img.file_path);
+}
+
+// Update the lightbox image without reopening
+function updateLightboxImage(imageSrc, promptNumber, downloadSrc) {
+    const lightboxImage = document.getElementById('lightbox-image');
+    const lightboxPromptNumber = document.getElementById('lightbox-prompt-number');
+    const lightboxDownload = document.getElementById('lightbox-download');
+    const prevBtn = document.getElementById('lightbox-prev');
+    const nextBtn = document.getElementById('lightbox-next');
+    
+    lightboxImage.src = imageSrc;
+    lightboxPromptNumber.textContent = promptNumber;
+    lightboxDownload.href = downloadSrc || imageSrc;
+    
+    // Show/hide navigation buttons based on group size
+    if (currentImageGroup.length > 1) {
+        prevBtn?.classList.add('visible');
+        nextBtn?.classList.add('visible');
+    } else {
+        prevBtn?.classList.remove('visible');
+        nextBtn?.classList.remove('visible');
+    }
+}
+
+function openLightbox(imageSrc, promptNumber, downloadSrc, imageGroup = null) {
     const lightbox = document.getElementById('lightbox');
     const lightboxImage = document.getElementById('lightbox-image');
     const lightboxPromptNumber = document.getElementById('lightbox-prompt-number');
     const lightboxDownload = document.getElementById('lightbox-download');
+    const prevBtn = document.getElementById('lightbox-prev');
+    const nextBtn = document.getElementById('lightbox-next');
+    
+    // Set up image group for navigation
+    if (imageGroup && imageGroup.length > 0) {
+        currentImageGroup = imageGroup;
+        currentImageIndex = imageGroup.findIndex(img => img.file_path === imageSrc);
+        if (currentImageIndex === -1) currentImageIndex = 0;
+    } else {
+        // Fallback: single image
+        currentImageGroup = [{ file_path: imageSrc, prompt_number: promptNumber }];
+        currentImageIndex = 0;
+    }
     
     lightboxImage.src = imageSrc;
     lightboxPromptNumber.textContent = promptNumber || '';
     lightboxDownload.href = downloadSrc || imageSrc;
+    
+    // Show/hide navigation buttons based on group size
+    if (currentImageGroup.length > 1) {
+        prevBtn?.classList.add('visible');
+        nextBtn?.classList.add('visible');
+    } else {
+        prevBtn?.classList.remove('visible');
+        nextBtn?.classList.remove('visible');
+    }
     
     lightbox.classList.add('open');
     document.body.style.overflow = 'hidden'; // Prevent scrolling
@@ -1587,7 +1667,7 @@ async function loadResults() {
                     <div class="results-grid">
                         ${imgs.map((img, idx) => `
                             <div class="result-item">
-                                <img src="${img.file_path}" alt="Generated" onclick="openLightbox('${img.file_path}', '${img.prompt_number || ''}', '${img.file_path}')" style="cursor: pointer;">
+                                <img src="${img.file_path}" alt="Generated" onclick="openLightbox('${img.file_path}', '${img.prompt_number || ''}', '${img.file_path}', ${JSON.stringify(imgs).replace(/"/g, '&quot;')})" style="cursor: pointer;">
                                 <div class="result-meta">
                                     ${img.prompt_number ? `<span class="badge prompt-number-badge">${img.prompt_number}</span>` : ''}
                                     <span class="badge model-tag">${img.model_used.toUpperCase()}</span>
