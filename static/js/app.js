@@ -600,11 +600,131 @@ function renderCategoriesList() {
     }
     
     list.innerHTML = categoriesData.map(cat => `
-        <div class="category-item">
-            <span>${escapeHtml(cat.name)}</span>
-            <button class="icon-btn delete" onclick="deleteCategory(${cat.id})" title="Delete Category">🗑️</button>
+        <div class="category-item" data-id="${cat.id}">
+            <span class="category-name-display">${escapeHtml(cat.name)}</span>
+            <div class="category-item-actions">
+                <button class="icon-btn edit" onclick="editCategoryName(${cat.id})" title="Edit Category Name">✏️</button>
+                <button class="icon-btn delete" onclick="deleteCategory(${cat.id})" title="Delete Category">🗑️</button>
+            </div>
         </div>
     `).join('');
+}
+
+// Edit category name - makes it inline editable
+function editCategoryName(categoryId) {
+    const categoryItem = document.querySelector(`.category-item[data-id="${categoryId}"]`);
+    if (!categoryItem) return;
+    
+    const nameDisplay = categoryItem.querySelector('.category-name-display');
+    const currentName = nameDisplay.textContent;
+    
+    // Replace text with input
+    nameDisplay.innerHTML = `<input type="text" class="category-name-input" value="${escapeHtml(currentName)}">`;
+    
+    // Replace edit button with save/cancel
+    const actions = categoryItem.querySelector('.category-item-actions');
+    actions.innerHTML = `
+        <button class="icon-btn save" onclick="saveCategoryName(${categoryId})" title="Save">💾</button>
+        <button class="icon-btn cancel" onclick="cancelEditCategory(${categoryId}, '${escapeHtml(currentName)}')" title="Cancel">✖️</button>
+    `;
+    
+    // Focus the input and select all text
+    const input = nameDisplay.querySelector('input');
+    input.focus();
+    input.select();
+    
+    // Handle Enter key to save
+    input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            saveCategoryName(categoryId);
+        }
+    });
+    
+    // Handle Escape key to cancel
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            cancelEditCategory(categoryId, currentName);
+        }
+    });
+}
+
+// Cancel editing category name
+function cancelEditCategory(categoryId, originalName) {
+    const categoryItem = document.querySelector(`.category-item[data-id="${categoryId}"]`);
+    if (!categoryItem) return;
+    
+    const nameDisplay = categoryItem.querySelector('.category-name-display');
+    nameDisplay.textContent = originalName;
+    
+    const actions = categoryItem.querySelector('.category-item-actions');
+    actions.innerHTML = `
+        <button class="icon-btn edit" onclick="editCategoryName(${categoryId})" title="Edit Category Name">✏️</button>
+        <button class="icon-btn delete" onclick="deleteCategory(${categoryId})" title="Delete Category">🗑️</button>
+    `;
+}
+
+// Save category name
+async function saveCategoryName(categoryId) {
+    const categoryItem = document.querySelector(`.category-item[data-id="${categoryId}"]`);
+    if (!categoryItem) return;
+    
+    const input = categoryItem.querySelector('.category-name-input');
+    const newName = input.value.trim();
+    
+    if (!newName) {
+        showToast('Category name cannot be empty', 'error');
+        return;
+    }
+    
+    // Find current name to check if changed
+    const currentCategory = categoriesData.find(c => c.id === categoryId);
+    if (!currentCategory) return;
+    
+    if (newName === currentCategory.name) {
+        // No change, just cancel edit mode
+        cancelEditCategory(categoryId, currentCategory.name);
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/categories/${categoryId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: newName })
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            
+            // Update local data
+            const idx = categoriesData.findIndex(c => c.id === categoryId);
+            if (idx !== -1) {
+                categoriesData[idx].name = result.name;
+            }
+            
+            // Re-render the categories list
+            renderCategoriesList();
+            
+            // Update dropdowns and toggle buttons
+            updateCategoryDropdowns();
+            
+            // Reload prompts to reflect the new category names
+            loadPrompts();
+            loadFavorites();
+            
+            let message = `Category renamed to "${newName}"`;
+            if (result.prompts_updated > 0) {
+                message += ` (${result.prompts_updated} prompts updated)`;
+            }
+            showToast(message, 'success');
+        } else {
+            const data = await response.json();
+            showToast(data.error || 'Failed to rename category', 'error');
+        }
+    } catch (error) {
+        console.error('Error saving category name:', error);
+        showToast('Failed to rename category', 'error');
+    }
 }
 
 function renderCharactersList() {
@@ -1907,3 +2027,6 @@ window.saveCharacterName = saveCharacterName;
 window.uploadMoreImages = uploadMoreImages;
 window.deleteCharReferenceImage = deleteCharReferenceImage;
 window.toggleGenderSection = toggleGenderSection;
+window.editCategoryName = editCategoryName;
+window.saveCategoryName = saveCategoryName;
+window.cancelEditCategory = cancelEditCategory;

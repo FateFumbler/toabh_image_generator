@@ -708,6 +708,36 @@ def add_category():
     db.session.commit()
     return jsonify(category.to_dict()), 201
 
+@app.route('/api/categories/<int:category_id>', methods=['PUT'])
+def update_category(category_id):
+    category = Category.query.get_or_404(category_id)
+    data = request.json
+    new_name = data.get('name', '').strip()
+    
+    if not new_name:
+        return jsonify({'error': 'Name is required'}), 400
+    
+    if Category.query.filter(Category.name == new_name, Category.id != category_id).first():
+        return jsonify({'error': 'Category name already exists'}), 400
+    
+    old_name = category.name
+    
+    # Update the category name
+    category.name = new_name
+    db.session.commit()
+    
+    # Update all prompts that have this category
+    prompts_updated = Prompt.query.filter(Prompt.category == old_name).all()
+    for prompt in prompts_updated:
+        prompt.category = new_name
+    db.session.commit()
+    
+    return jsonify({
+        'id': category.id,
+        'name': category.name,
+        'prompts_updated': len(prompts_updated)
+    })
+
 @app.route('/api/categories/<int:category_id>', methods=['DELETE'])
 def delete_category(category_id):
     category = Category.query.get_or_404(category_id)

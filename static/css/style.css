@@ -1288,8 +1288,54 @@ body {
     border-radius: var(--radius);
 }
 
-.category-item span {
+.category-item span,
+.category-name-display {
     font-weight: 500;
+}
+
+.category-item-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.category-name-input {
+    padding: 6px 10px;
+    border: 2px solid var(--primary);
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-family: inherit;
+    background: var(--surface);
+    color: var(--text);
+    width: 180px;
+}
+
+.category-name-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+/* Style for icon buttons in category list */
+.category-item .icon-btn {
+    padding: 4px 6px;
+    font-size: 14px;
+}
+
+.category-item .icon-btn.save {
+    color: #22c55e;
+}
+
+.category-item .icon-btn.save:hover {
+    background: rgba(34, 197, 94, 0.15);
+}
+
+.category-item .icon-btn.cancel {
+    color: #ef4444;
+}
+
+.category-item .icon-btn.cancel:hover {
+    background: rgba(239, 68, 68, 0.15);
 }
 
 .char-select-group {
