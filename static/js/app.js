@@ -136,6 +136,66 @@ function setupFilters() {
     
     // Favorites Category Filter Buttons
     setupFavoritesFilters();
+    
+    // Setup category scroll navigation
+    setupCategoryScroll();
+}
+
+// Setup horizontal scroll for category bars with navigation arrows
+function setupCategoryScroll() {
+    // Main category toggle (in filters bar)
+    const categoryToggle = document.getElementById('category-toggle');
+    const categoryLeftBtn = document.querySelector('.category-scroll-left');
+    const categoryRightBtn = document.querySelector('.category-scroll-right');
+    
+    if (categoryToggle && categoryLeftBtn && categoryRightBtn) {
+        const scrollAmount = 200;
+        
+        categoryLeftBtn.addEventListener('click', () => {
+            categoryToggle.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+        });
+        
+        categoryRightBtn.addEventListener('click', () => {
+            categoryToggle.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+        });
+        
+        // Update arrow visibility based on scroll position
+        const updateCategoryArrows = () => {
+            const { scrollLeft, scrollWidth, clientWidth } = categoryToggle;
+            categoryLeftBtn.disabled = scrollLeft <= 0;
+            categoryRightBtn.disabled = scrollLeft + clientWidth >= scrollWidth - 1;
+        };
+        
+        categoryToggle.addEventListener('scroll', updateCategoryArrows);
+        updateCategoryArrows(); // Initial check
+    }
+    
+    // Favorites category filters
+    const favoritesScroll = document.querySelector('.filter-btn-scroll');
+    const favoritesLeftBtn = document.querySelector('.favorites-scroll-left');
+    const favoritesRightBtn = document.querySelector('.favorites-scroll-right');
+    
+    if (favoritesScroll && favoritesLeftBtn && favoritesRightBtn) {
+        const scrollAmount = 200;
+        
+        favoritesLeftBtn.addEventListener('click', () => {
+            favoritesScroll.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+        });
+        
+        favoritesRightBtn.addEventListener('click', () => {
+            favoritesScroll.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+        });
+        
+        // Update arrow visibility based on scroll position
+        const updateFavoritesArrows = () => {
+            const { scrollLeft, scrollWidth, clientWidth } = favoritesScroll;
+            favoritesLeftBtn.disabled = scrollLeft <= 0;
+            favoritesRightBtn.disabled = scrollLeft + clientWidth >= scrollWidth - 1;
+        };
+        
+        favoritesScroll.addEventListener('scroll', updateFavoritesArrows);
+        updateFavoritesArrows(); // Initial check
+    }
 }
 
 // Get filtered prompts based on current search query

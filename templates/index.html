@@ -129,12 +129,20 @@
                     <!-- Category Toggle -->
                     <div class="filter-group">
                         <label>Category:</label>
-                        <div class="toggle-buttons" id="category-toggle">
-                            <button class="toggle-btn active" data-value="all">All</button>
-                            <button class="toggle-btn" data-value="Polaroids">Polaroids</button>
-                            <button class="toggle-btn" data-value="Portfolio">Portfolio</button>
-                            <button class="toggle-btn" data-value="Indian">Indian</button>
-                            <button class="toggle-btn" data-value="Swimwear/Lingerie">Swimwear/Lingerie</button>
+                        <div class="category-nav-wrapper">
+                            <button class="category-nav-btn category-scroll-left" aria-label="Scroll left">
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                            <div class="toggle-buttons" id="category-toggle">
+                                <button class="toggle-btn active" data-value="all">All</button>
+                                <button class="toggle-btn" data-value="Polaroids">Polaroids</button>
+                                <button class="toggle-btn" data-value="Portfolio">Portfolio</button>
+                                <button class="toggle-btn" data-value="Indian">Indian</button>
+                                <button class="toggle-btn" data-value="Swimwear/Lingerie">Swimwear/Lingerie</button>
+                            </div>
+                            <button class="category-nav-btn category-scroll-right" aria-label="Scroll right">
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
                         </div>
                     </div>
                     
@@ -194,15 +202,25 @@
                 <!-- Category Filter Buttons -->
                 <div class="favorites-filters">
                     <div class="filter-buttons" id="favorites-category-filters">
-                        <button class="filter-btn active" data-category="all">All</button>
-                        <button class="filter-btn" data-category="Portfolio">Portfolio</button>
-                        <button class="filter-btn" data-category="Beauty">Beauty</button>
-                        <button class="filter-btn" data-category="Runway">Runway</button>
-                        <button class="filter-btn" data-category="Fashion">Fashion</button>
-                        <button class="filter-btn" data-category="Commercial">Commercial</button>
-                        <button class="filter-btn" data-category="Polaroids">Polaroids</button>
-                        <button class="filter-btn" data-category="Indian">Indian</button>
-                        <button class="filter-btn" data-category="Swimwear/Lingerie">Swimwear/Lingerie</button>
+                        <div class="filter-buttons-inner">
+                            <button class="category-nav-btn favorites-scroll-left" aria-label="Scroll left">
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                            <div class="filter-btn-scroll">
+                                <button class="filter-btn active" data-category="all">All</button>
+                                <button class="filter-btn" data-category="Portfolio">Portfolio</button>
+                                <button class="filter-btn" data-category="Beauty">Beauty</button>
+                                <button class="filter-btn" data-category="Runway">Runway</button>
+                                <button class="filter-btn" data-category="Fashion">Fashion</button>
+                                <button class="filter-btn" data-category="Commercial">Commercial</button>
+                                <button class="filter-btn" data-category="Polaroids">Polaroids</button>
+                                <button class="filter-btn" data-category="Indian">Indian</button>
+                                <button class="filter-btn" data-category="Swimwear/Lingerie">Swimwear/Lingerie</button>
+                            </div>
+                            <button class="category-nav-btn favorites-scroll-right" aria-label="Scroll right">
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
                 
