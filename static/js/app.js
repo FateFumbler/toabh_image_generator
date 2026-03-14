@@ -10,6 +10,13 @@ let currentModel = 'flux';
 let currentResolution = '1k';
 let currentAspectRatio = '1:1';
 let currentModelName = 'default_model';
+let currentGenderFilter = 'all';
+let currentCategoryFilter = 'all';
+let currentSearchQuery = '';
+
+// Favorites state
+let favoritesCategoryFilter = 'all';
+let favoritesDataByGender = { male: [], female: [] };
 
 // DOM Elements
 document.addEventListener('DOMContentLoaded', () => {
@@ -73,15 +80,49 @@ function setupNavigation() {
 }
 
 function setupFilters() {
-    const genderFilter = document.getElementById('gender-filter');
-    const categoryFilter = document.getElementById('category-filter');
+    // Gender Toggle Buttons
+    const genderToggle = document.getElementById('gender-toggle');
+    genderToggle.addEventListener('click', (e) => {
+        if (e.target.classList.contains('toggle-btn')) {
+            genderToggle.querySelectorAll('.toggle-btn').forEach(btn => btn.classList.remove('active'));
+            e.target.classList.add('active');
+            currentGenderFilter = e.target.dataset.value;
+            // Update hidden select for API compatibility
+            document.getElementById('gender-filter').value = currentGenderFilter;
+            loadPrompts();
+        }
+    });
     
-    genderFilter.addEventListener('change', loadPrompts);
-    categoryFilter.addEventListener('change', loadPrompts);
+    // Category Toggle Buttons
+    const categoryToggle = document.getElementById('category-toggle');
+    categoryToggle.addEventListener('click', (e) => {
+        if (e.target.classList.contains('toggle-btn')) {
+            categoryToggle.querySelectorAll('.toggle-btn').forEach(btn => btn.classList.remove('active'));
+            e.target.classList.add('active');
+            currentCategoryFilter = e.target.dataset.value;
+            // Update hidden select for API compatibility
+            document.getElementById('category-filter').value = currentCategoryFilter;
+            loadPrompts();
+        }
+    });
+    
+    // Search Input with debounce
+    const searchInput = document.getElementById('search-input');
+    let searchTimeout;
+    searchInput.addEventListener('input', (e) => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            currentSearchQuery = e.target.value.toLowerCase().trim();
+            renderPrompts();
+            updateBulkActions();
+        }, 300);
+    });
 
     // Select All / Deselect All
     document.getElementById('select-all-btn').addEventListener('click', () => {
-        promptsData.forEach(p => selectedPrompts.add(p.id));
+        // Filter prompts by current search before selecting
+        const filteredPrompts = getFilteredPrompts();
+        filteredPrompts.forEach(p => selectedPrompts.add(p.id));
         renderPrompts();
         updateQueueList();
     });
@@ -90,6 +131,34 @@ function setupFilters() {
         promptsData.forEach(p => selectedPrompts.delete(p.id));
         renderPrompts();
         updateQueueList();
+    });
+    
+    // Favorites Category Filter Buttons
+    setupFavoritesFilters();
+}
+
+// Get filtered prompts based on current search query
+function getFilteredPrompts() {
+    if (!currentSearchQuery) return promptsData;
+    
+    return promptsData.filter(prompt => {
+        const themeMatch = prompt.theme && prompt.theme.toLowerCase().includes(currentSearchQuery);
+        const promptNumMatch = prompt.prompt_number && prompt.prompt_number.toLowerCase().includes(currentSearchQuery);
+        return themeMatch || promptNumMatch;
+    });
+}
+
+function setupFavoritesFilters() {
+    const favoritesFilters = document.getElementById('favorites-category-filters');
+    if (!favoritesFilters) return;
+    
+    favoritesFilters.addEventListener('click', (e) => {
+        if (e.target.classList.contains('filter-btn')) {
+            favoritesFilters.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            e.target.classList.add('active');
+            favoritesCategoryFilter = e.target.dataset.category;
+            renderFavorites();
+        }
     });
 }
 
@@ -237,6 +306,10 @@ function setupPromptModals() {
         loadModelNames();
     });
     
+    // Edit Prompt Modal - Save button
+    const saveEditBtn = document.getElementById('save-edit-btn');
+    saveEditBtn.addEventListener('click', saveEditPrompt);
+    
     // Categories Modal
     document.getElementById('save-cat-btn').addEventListener('click', addCategory);
     
@@ -269,6 +342,67 @@ function setupPromptModals() {
     confirmDeleteBtn.addEventListener('click', () => {
         deleteModal.classList.remove('open');
     });
+}
+
+// Open edit modal with prompt data
+function openEditModal(id) {
+    const prompt = promptsData.find(p => p.id === id);
+    if (!prompt) return;
+    
+    document.getElementById('edit-prompt-id').value = id;
+    document.getElementById('edit-prompt-number').value = prompt.prompt_number || '';
+    document.getElementById('edit-theme').value = prompt.theme || '';
+    document.getElementById('edit-prompt-text').value = prompt.prompt_text || '';
+    document.getElementById('edit-category').value = prompt.category || 'Portfolio';
+    
+    document.getElementById('edit-prompt-modal').classList.add('open');
+}
+
+// Save edited prompt
+async function saveEditPrompt() {
+    const id = parseInt(document.getElementById('edit-prompt-id').value);
+    const theme = document.getElementById('edit-theme').value.trim();
+    const promptText = document.getElementById('edit-prompt-text').value.trim();
+    const category = document.getElementById('edit-category').value;
+    
+    if (!theme || !promptText) {
+        showToast('Please fill all required fields', 'error');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/prompts/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                theme: theme,
+                prompt_text: promptText,
+                category: category
+            })
+        });
+        
+        if (response.ok) {
+            const updated = await response.json();
+            
+            // Update local data
+            const idx = promptsData.findIndex(p => p.id === id);
+            if (idx !== -1) {
+                promptsData[idx] = { ...promptsData[idx], ...updated };
+            }
+            
+            // Re-render prompts
+            renderPrompts();
+            
+            // Close modal
+            document.getElementById('edit-prompt-modal').classList.remove('open');
+            showToast('Prompt updated successfully', 'success');
+        } else {
+            showToast('Failed to update prompt', 'error');
+        }
+    } catch (error) {
+        console.error('Error updating prompt:', error);
+        showToast('Failed to update prompt', 'error');
+    }
 }
 
 async function loadModelNames() {
@@ -346,6 +480,19 @@ function updateCategoryDropdowns() {
         select.innerHTML = html;
         if (currentValue) select.value = currentValue;
     });
+    
+    // Update category toggle buttons dynamically
+    const categoryToggle = document.getElementById('category-toggle');
+    if (categoryToggle && categoriesData.length > 0) {
+        // Keep "All" button, add dynamic categories
+        const allBtn = categoryToggle.querySelector('.toggle-btn[data-value="all"]');
+        let toggleHtml = '';
+        toggleHtml += `<button class="toggle-btn ${currentCategoryFilter === 'all' ? 'active' : ''}" data-value="all">All</button>`;
+        categoriesData.forEach(cat => {
+            toggleHtml += `<button class="toggle-btn ${currentCategoryFilter === cat.name ? 'active' : ''}" data-value="${cat.name}">${cat.name}</button>`;
+        });
+        categoryToggle.innerHTML = toggleHtml;
+    }
 }
 
 function updateCharacterDropdowns() {
@@ -389,16 +536,181 @@ function renderCharactersList() {
     if (!list) return;
     
     if (charactersData.length === 0) {
-        list.innerHTML = '<p class="empty-state">No characters yet</p>';
+        list.innerHTML = '<div class="empty-state"><i class="fas fa-user-friends"></i><p>No characters yet</p></div>';
         return;
     }
     
     list.innerHTML = charactersData.map(char => `
-        <div class="category-item">
-            <span>${escapeHtml(char.name)}</span>
-            <button class="icon-btn delete" onclick="deleteCharacter(${char.id})" title="Delete Character">🗑️</button>
+        <div class="character-card" data-id="${char.id}">
+            <div class="character-card-header">
+                <div class="character-card-title">
+                    <span class="char-name-display">${escapeHtml(char.name)}</span>
+                </div>
+                <div class="character-card-actions">
+                    <button class="icon-btn save" onclick="saveCharacterName(${char.id})" title="Save Name" style="display: none;">💾</button>
+                    <button class="icon-btn delete" onclick="deleteCharacter(${char.id})" title="Delete Character">🗑️</button>
+                </div>
+            </div>
+            <div class="character-card-body">
+                <div class="character-images-grid" id="char-images-${char.id}">
+                    ${renderCharacterImages(char)}
+                </div>
+            </div>
+            <div class="character-card-footer">
+                <span class="image-count">${char.image_count || 0}/8 reference images</span>
+                <button class="btn btn-secondary btn-sm" onclick="document.getElementById('char-upload-${char.id}').click()">
+                    <i class="fas fa-plus"></i> Add Images
+                </button>
+                <input type="file" id="char-upload-${char.id}" multiple accept="image/*" style="display: none;" 
+                    onchange="uploadMoreImages(${char.id}, this.files)">
+            </div>
         </div>
     `).join('');
+    
+    // Add inline editing for character names
+    document.querySelectorAll('.character-card-title').forEach(title => {
+        title.addEventListener('dblclick', (e) => {
+            const card = e.target.closest('.character-card');
+            const nameSpan = card.querySelector('.char-name-display');
+            const currentName = nameSpan.textContent;
+            const saveBtn = card.querySelector('.icon-btn.save');
+            
+            nameSpan.innerHTML = `<input type="text" class="char-name-input" value="${escapeHtml(currentName)}">`;
+            saveBtn.style.display = 'block';
+            
+            const input = nameSpan.querySelector('input');
+            input.focus();
+            input.select();
+            
+            input.addEventListener('keypress', (ev) => {
+                if (ev.key === 'Enter') {
+                    saveCharacterName(parseInt(card.dataset.id));
+                }
+            });
+            
+            input.addEventListener('blur', () => {
+                saveCharacterName(parseInt(card.dataset.id));
+            });
+        });
+    });
+}
+
+function renderCharacterImages(char) {
+    let html = '';
+    const images = char.reference_images || [];
+    
+    images.forEach(img => {
+        html += `
+            <div class="character-image-thumb">
+                <img src="${img.file_path}" alt="Reference">
+                <button class="remove-btn" onclick="deleteCharReferenceImage(${char.id}, ${img.id})">×</button>
+            </div>
+        `;
+    });
+    
+    // Add "add" button if less than 8 images
+    if (images.length < 8) {
+        html += `
+            <div class="add-image-btn" onclick="document.getElementById('char-upload-${char.id}').click()">
+                <i class="fas fa-plus"></i>
+            </div>
+        `;
+    }
+    
+    return html;
+}
+
+async function saveCharacterName(charId) {
+    const card = document.querySelector(`.character-card[data-id="${charId}"]`);
+    if (!card) return;
+    
+    const input = card.querySelector('.char-name-input');
+    const newName = input ? input.value.trim() : card.querySelector('.char-name-display').textContent.trim();
+    
+    if (!newName) {
+        showToast('Character name cannot be empty', 'error');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/characters/${charId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: newName })
+        });
+        
+        if (response.ok) {
+            const updated = await response.json();
+            card.querySelector('.char-name-display').textContent = updated.name;
+            card.querySelector('.icon-btn.save').style.display = 'none';
+            await loadCharacters();
+            await loadModelNames();
+            showToast('Character name updated', 'success');
+        } else {
+            const data = await response.json();
+            showToast(data.error || 'Failed to update character', 'error');
+        }
+    } catch (error) {
+        console.error('Error saving character name:', error);
+        showToast('Failed to update character', 'error');
+    }
+}
+
+async function uploadMoreImages(charId, files) {
+    if (!files || files.length === 0) return;
+    
+    const char = charactersData.find(c => c.id === charId);
+    if (!char) return;
+    
+    const formData = new FormData();
+    formData.append('name', char.name);
+    for (let i = 0; i < files.length; i++) {
+        formData.append('files', files[i]);
+    }
+    
+    try {
+        const response = await fetch(`/api/characters/${charId}`, {
+            method: 'PUT',
+            body: formData
+        });
+        
+        if (response.ok) {
+            const updated = await response.json();
+            // Update local data
+            const idx = charactersData.findIndex(c => c.id === charId);
+            if (idx !== -1) {
+                charactersData[idx] = updated;
+            }
+            renderCharactersList();
+            showToast(`Added ${files.length} images`, 'success');
+        } else {
+            showToast('Failed to upload images', 'error');
+        }
+    } catch (error) {
+        console.error('Error uploading images:', error);
+        showToast('Failed to upload images', 'error');
+    }
+}
+
+async function deleteCharReferenceImage(charId, imageId) {
+    if (!confirm('Delete this reference image?')) return;
+    
+    try {
+        const response = await fetch(`/api/reference-images/${imageId}`, { method: 'DELETE' });
+        if (response.ok) {
+            // Update local data
+            const char = charactersData.find(c => c.id === charId);
+            if (char && char.reference_images) {
+                char.reference_images = char.reference_images.filter(img => img.id !== imageId);
+                char.image_count = (char.image_count || 1) - 1;
+            }
+            renderCharactersList();
+            showToast('Image deleted', 'success');
+        }
+    } catch (error) {
+        console.error('Error deleting reference:', error);
+        showToast('Failed to delete image', 'error');
+    }
 }
 
 async function addCategory() {
@@ -429,20 +741,36 @@ async function addCategory() {
 
 async function addCharacter() {
     const input = document.getElementById('new-char-name');
+    const fileInput = document.getElementById('char-ref-upload');
     const name = input.value.trim();
     
-    if (!name) return;
+    if (!name && fileInput.files.length === 0) {
+        showToast('Please enter a name or select images', 'error');
+        return;
+    }
+    
+    // Use the name from input, or generate one from first image filename
+    const charName = name || fileInput.files[0]?.name.split('.')[0] || 'new_character';
+    
+    const formData = new FormData();
+    formData.append('name', charName);
+    
+    // Add files if any
+    for (let i = 0; i < fileInput.files.length; i++) {
+        formData.append('files', fileInput.files[i]);
+    }
     
     try {
         const response = await fetch('/api/characters', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name })
+            body: formData
         });
         
         if (response.ok) {
             input.value = '';
+            fileInput.value = '';
             await loadCharacters();
+            await loadModelNames();
             showToast('Character added', 'success');
         } else {
             const data = await response.json();
@@ -450,6 +778,7 @@ async function addCharacter() {
         }
     } catch (error) {
         console.error('Error adding character:', error);
+        showToast('Failed to add character', 'error');
     }
 }
 
@@ -499,10 +828,26 @@ async function loadFavorites() {
     try {
         const response = await fetch('/api/prompts?favorites=true');
         favoritesData = await response.json();
+        
+        // Update favorites count badge in tab
+        updateFavoritesCountBadge();
+        
         renderFavorites();
     } catch (error) {
         console.error('Error loading favorites:', error);
     }
+}
+
+function updateFavoritesCountBadge() {
+    const badge = document.getElementById('favorites-count-badge');
+    if (badge) {
+        badge.textContent = `(${favoritesData.length})`;
+    }
+}
+
+function filterFavoritesByCategory(favorites) {
+    if (favoritesCategoryFilter === 'all') return favorites;
+    return favorites.filter(fav => fav.category === favoritesCategoryFilter);
 }
 
 async function loadStats() {
@@ -520,19 +865,30 @@ async function loadStats() {
 function renderPrompts() {
     const grid = document.getElementById('prompts-grid');
     
-    if (promptsData.length === 0) {
-        grid.innerHTML = '<div class="empty-state"><i class="fas fa-lightbulb"></i><p>No prompts yet. Add some!</p></div>';
+    // Filter prompts by search query
+    const displayPrompts = getFilteredPrompts();
+    
+    if (displayPrompts.length === 0) {
+        if (currentSearchQuery) {
+            grid.innerHTML = '<div class="empty-state"><i class="fas fa-search"></i><p>No prompts match your search</p></div>';
+        } else {
+            grid.innerHTML = '<div class="empty-state"><i class="fas fa-lightbulb"></i><p>No prompts yet. Add some!</p></div>';
+        }
         return;
     }
     
-    grid.innerHTML = promptsData.map(prompt => `
+    grid.innerHTML = displayPrompts.map(prompt => `
         <div class="prompt-card ${selectedPrompts.has(prompt.id) ? 'selected' : ''}" data-id="${prompt.id}">
             <div class="prompt-card-header">
                 <input type="checkbox" class="prompt-checkbox" 
                     data-id="${prompt.id}" 
                     ${selectedPrompts.has(prompt.id) ? 'checked' : ''}>
+                <span class="prompt-card-number">${prompt.prompt_number || ''}</span>
                 <span class="prompt-card-title">${escapeHtml(prompt.theme)}</span>
                 <div class="prompt-card-actions">
+                    <button class="icon-btn edit" data-id="${prompt.id}" title="Edit">
+                        <i class="fas fa-pencil-alt"></i>
+                    </button>
                     <button class="icon-btn heart ${prompt.favorite ? 'active' : ''}" 
                         data-id="${prompt.id}" title="Favorite">
                         ${prompt.favorite ? '❤️' : '🤍'}
@@ -553,19 +909,72 @@ function renderPrompts() {
 }
 
 function renderFavorites() {
-    const grid = document.getElementById('favorites-grid');
+    // Separate favorites by gender
+    favoritesDataByGender = {
+        male: favoritesData.filter(fav => fav.gender && fav.gender.toLowerCase() === 'male'),
+        female: favoritesData.filter(fav => fav.gender && fav.gender.toLowerCase() === 'female')
+    };
     
-    if (favoritesData.length === 0) {
-        grid.innerHTML = '<div class="empty-state"><i class="fas fa-heart"></i><p>No favorites yet</p></div>';
-        return;
+    // Filter by category
+    const filteredMale = filterFavoritesByCategory(favoritesDataByGender.male);
+    const filteredFemale = filterFavoritesByCategory(favoritesDataByGender.female);
+    
+    // Update counts
+    const maleCount = document.getElementById('male-favorites-count');
+    const femaleCount = document.getElementById('female-favorites-count');
+    if (maleCount) maleCount.textContent = `(${filteredMale.length})`;
+    if (femaleCount) femaleCount.textContent = `(${filteredFemale.length})`;
+    
+    // Show/hide sections based on filter and data
+    const maleSection = document.getElementById('male-favorites-section');
+    const femaleSection = document.getElementById('female-favorites-section');
+    const emptyState = document.getElementById('favorites-empty');
+    
+    // Render male favorites
+    const maleGrid = document.getElementById('male-favorites-grid');
+    if (maleGrid) {
+        if (filteredMale.length === 0) {
+            maleGrid.innerHTML = '<div class="empty-state-small">No male favorites</div>';
+        } else {
+            maleGrid.innerHTML = filteredMale.map(prompt => createFavoriteCard(prompt)).join('');
+        }
     }
     
-    grid.innerHTML = favoritesData.map(prompt => `
+    // Render female favorites
+    const femaleGrid = document.getElementById('female-favorites-grid');
+    if (femaleGrid) {
+        if (filteredFemale.length === 0) {
+            femaleGrid.innerHTML = '<div class="empty-state-small">No female favorites</div>';
+        } else {
+            femaleGrid.innerHTML = filteredFemale.map(prompt => createFavoriteCard(prompt)).join('');
+        }
+    }
+    
+    // Show/hide gender sections based on whether there's data
+    const hasAnyFavorites = favoritesData.length > 0;
+    const hasMale = filteredMale.length > 0 || (favoritesCategoryFilter === 'all' && favoritesDataByGender.male.length > 0);
+    const hasFemale = filteredFemale.length > 0 || (favoritesCategoryFilter === 'all' && favoritesDataByGender.female.length > 0);
+    
+    if (maleSection) maleSection.style.display = hasMale ? 'block' : 'none';
+    if (femaleSection) femaleSection.style.display = hasFemale ? 'block' : 'none';
+    
+    // Show empty state only if no favorites at all
+    if (emptyState) {
+        emptyState.style.display = hasAnyFavorites ? 'none' : 'block';
+    }
+    
+    // Attach event listeners
+    attachFavoritesListeners();
+}
+
+function createFavoriteCard(prompt) {
+    return `
         <div class="prompt-card ${selectedPrompts.has(prompt.id) ? 'selected' : ''}" data-id="${prompt.id}">
             <div class="prompt-card-header">
                 <input type="checkbox" class="prompt-checkbox" 
                     data-id="${prompt.id}" 
                     ${selectedPrompts.has(prompt.id) ? 'checked' : ''}>
+                <span class="prompt-card-number">${prompt.prompt_number || ''}</span>
                 <span class="prompt-card-title">${escapeHtml(prompt.theme)}</span>
                 <div class="prompt-card-actions">
                     <button class="icon-btn heart active" data-id="${prompt.id}" title="Remove from favorites">❤️</button>
@@ -578,9 +987,23 @@ function renderFavorites() {
                 <span class="badge">${prompt.category}</span>
             </div>
         </div>
-    `).join('');
+    `;
+}
+
+// Toggle gender section (collapsible)
+function toggleGenderSection(gender) {
+    const section = document.getElementById(`${gender}-favorites-section`);
+    if (!section) return;
     
-    attachFavoritesListeners();
+    const content = section.querySelector('.gender-section-content');
+    const icon = section.querySelector('.gender-section-header i.fa-chevron-right');
+    
+    if (content) {
+        content.classList.toggle('collapsed');
+    }
+    if (icon) {
+        icon.classList.toggle('rotated');
+    }
 }
 
 function attachPromptListeners() {
@@ -594,6 +1017,14 @@ function attachPromptListeners() {
             }
             renderPrompts();
             updateQueueList();
+        });
+    });
+    
+    // Edit button handler
+    document.querySelectorAll('.icon-btn.edit').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const id = parseInt(btn.dataset.id);
+            openEditModal(id);
         });
     });
     
@@ -726,7 +1157,11 @@ async function addBulkPrompts() {
             document.querySelector('.bulk-textarea').value = '';
             loadPrompts();
             loadStats();
-            showToast(`${data.added} prompts added successfully`, 'success');
+            let message = `${data.added} prompts added successfully`;
+            if (data.untitled && data.untitled > 0) {
+                message += ` (${data.untitled} without theme)`;
+            }
+            showToast(message, 'success');
         }
     } catch (error) {
         console.error('Error adding bulk prompts:', error);
@@ -1034,27 +1469,42 @@ async function loadResults() {
         // Group by Reference Character Name
         const grouped = {};
         images.forEach(img => {
-            const charName = img.character_name || 'Default';
+            const charName = img.character_name || 'Ungrouped';
             if (!grouped[charName]) grouped[charName] = [];
             grouped[charName].push(img);
         });
         
-        resultsContainer.innerHTML = Object.entries(grouped).map(([charName, imgs]) => {
+        // Sort characters alphabetically, with Ungrouped last
+        const sortedChars = Object.keys(grouped).sort((a, b) => {
+            if (a === 'Ungrouped') return 1;
+            if (b === 'Ungrouped') return -1;
+            return a.localeCompare(b);
+        });
+        
+        resultsContainer.innerHTML = sortedChars.map(charName => {
+            const imgs = grouped[charName];
+            const safeCharName = charName.toLowerCase().replace(/[^a-z0-9]/g, '_');
             return `
             <div class="model-group">
                 <div class="model-group-header" onclick="this.nextElementSibling.classList.toggle('open')">
-                    <h3>Character: ${charName}</h3>
+                    <h3>Character: ${escapeHtml(charName)}</h3>
                     <div class="header-right">
                         <span class="badge">${imgs.length} images</span>
+                        <button class="btn btn-primary btn-sm download-all-btn" 
+                            onclick="event.stopPropagation(); downloadAllForCharacter('${escapeHtml(charName)}')"
+                            title="Download all as ZIP">
+                            <i class="fas fa-download"></i> Download All
+                        </button>
                         <i class="fas fa-chevron-down"></i>
                     </div>
                 </div>
-                <div class="model-group-content">
+                <div class="model-group-content open">
                     <div class="results-grid">
-                        ${imgs.map(img => `
+                        ${imgs.map((img, idx) => `
                             <div class="result-item">
                                 <img src="${img.file_path}" alt="Generated">
                                 <div class="result-meta">
+                                    ${img.prompt_number ? `<span class="badge prompt-number-badge">${img.prompt_number}</span>` : ''}
                                     <span class="badge model-tag">${img.model_used.toUpperCase()}</span>
                                     <span class="badge">${img.resolution || '1k'}</span>
                                     <span class="badge">${img.aspect_ratio || '1:1'}</span>
@@ -1076,6 +1526,69 @@ async function loadResults() {
         
     } catch (error) {
         console.error('Error loading results:', error);
+    }
+}
+
+// Download all images for a character as ZIP
+async function downloadAllForCharacter(characterName) {
+    try {
+        // Fetch all images again to ensure we have the latest
+        const response = await fetch('/api/generated-images');
+        const allImages = await response.json();
+        
+        // Filter images for this character
+        const images = allImages.filter(img => 
+            (img.character_name || 'Ungrouped') === characterName
+        );
+        
+        if (images.length === 0) {
+            showToast('No images found for this character', 'error');
+            return;
+        }
+        
+        showToast(`Preparing ${images.length} images for download...`, 'info');
+        
+        const zip = new JSZip();
+        const safeCharName = characterName.toLowerCase().replace(/[^a-z0-9]/g, '_');
+        
+        // Download each image and add to ZIP
+        const imagePromises = images.map(async (img, idx) => {
+            try {
+                // Get the full file path from the relative URL
+                const imgUrl = img.file_path;
+                const response = await fetch(imgUrl);
+                const blob = await response.blob();
+                
+                // Generate filename: P001_muskan_1.png
+                const promptNum = img.prompt_number || `img${idx + 1}`;
+                const ext = img.file_path.split('.').pop() || 'png';
+                const filename = `${promptNum}_${safeCharName}_${idx + 1}.${ext}`;
+                
+                zip.file(filename, blob);
+            } catch (err) {
+                console.error(`Error downloading image ${img.id}:`, err);
+            }
+        });
+        
+        await Promise.all(imagePromises);
+        
+        // Generate and download ZIP
+        const zipBlob = await zip.generateAsync({ type: 'blob' });
+        const zipUrl = URL.createObjectURL(zipBlob);
+        
+        const link = document.createElement('a');
+        link.href = zipUrl;
+        link.download = `${safeCharName}_images.zip`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(zipUrl);
+        
+        showToast(`Downloaded ${images.length} images as ZIP`, 'success');
+        
+    } catch (error) {
+        console.error('Error downloading ZIP:', error);
+        showToast('Failed to download images', 'error');
     }
 }
 
@@ -1149,3 +1662,8 @@ window.deleteReferenceImage = deleteReferenceImage;
 window.deleteGeneratedImage = deleteGeneratedImage;
 window.deleteCategory = deleteCategory;
 window.deleteCharacter = deleteCharacter;
+window.downloadAllForCharacter = downloadAllForCharacter;
+window.saveCharacterName = saveCharacterName;
+window.uploadMoreImages = uploadMoreImages;
+window.deleteCharReferenceImage = deleteCharReferenceImage;
+window.toggleGenderSection = toggleGenderSection;

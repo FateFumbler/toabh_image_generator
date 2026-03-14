@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 <body>
     <div class="app-container">
@@ -24,19 +25,19 @@
                 </a>
                 <a href="#favorites-section" class="nav-item" data-section="favorites">
                     <i class="fas fa-heart"></i>
-                    <span>Favorites</span>
+                    <span>Favorites <span class="fav-count-badge" id="favorites-count-badge">(0)</span></span>
                 </a>
-                <a href="#generate-section" class="nav-item" data-section="generate">
-                    <i class="fas fa-wand-magic"></i>
-                    <span>Generate</span>
+                <a href="#characters-modal" class="nav-item" id="sidebar-manage-chars">
+                    <i class="fas fa-user-friends"></i>
+                    <span>Characters</span>
                 </a>
                 <a href="#categories-modal" class="nav-item" id="sidebar-manage-cats">
                     <i class="fas fa-tags"></i>
                     <span>Categories</span>
                 </a>
-                <a href="#characters-modal" class="nav-item" id="sidebar-manage-chars">
-                    <i class="fas fa-user-friends"></i>
-                    <span>Characters</span>
+                <a href="#generate-section" class="nav-item" data-section="generate">
+                    <i class="fas fa-wand-magic"></i>
+                    <span>Generate</span>
                 </a>
                 <a href="#results-section" class="nav-item" data-section="results">
                     <i class="fas fa-images"></i>
@@ -72,39 +73,7 @@
 
             <!-- Prompts Section -->
             <section id="prompts-section" class="section active">
-                <div class="section-header">
-                    <h2>Prompt Management</h2>
-                </div>
 
-                <!-- Filters -->
-                <div class="filters-bar">
-                    <div class="filter-group">
-                        <label>Gender:</label>
-                        <select id="gender-filter" class="select-input">
-                            <option value="all">All</option>
-                            <option value="female">Female</option>
-                            <option value="male">Male</option>
-                        </select>
-                    </div>
-                    <div class="filter-group">
-                        <label>Category:</label>
-                        <select id="category-filter" class="select-input">
-                            <option value="all">All</option>
-                            <option value="Polaroids">Polaroids</option>
-                            <option value="Portfolio">Portfolio</option>
-                            <option value="Indian">Indian</option>
-                            <option value="Swimwear/Lingerie">Swimwear/Lingerie</option>
-                        </select>
-                    </div>
-                    <div class="filter-actions">
-                        <button class="btn btn-primary" id="add-prompt-btn">
-                            <i class="fas fa-plus"></i> Add Prompt
-                        </button>
-                        <button class="btn btn-secondary" id="bulk-add-btn">
-                            <i class="fas fa-list"></i> Bulk Add
-                        </button>
-                    </div>
-                </div>
 
                 <!-- Reference Images Upload -->
                 <div class="reference-section card">
@@ -139,6 +108,60 @@
                     </div>
                 </div>
 
+                <!-- Filters -->
+                <div class="filters-bar">
+                    <!-- Search Bar -->
+                    <div class="search-group">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="search-input" class="search-input" placeholder="Search prompts (P001, P217, theme...)">
+                    </div>
+                    
+                    <!-- Gender Toggle -->
+                    <div class="filter-group">
+                        <label>Gender:</label>
+                        <div class="toggle-buttons" id="gender-toggle">
+                            <button class="toggle-btn active" data-value="all">All</button>
+                            <button class="toggle-btn" data-value="female">Female</button>
+                            <button class="toggle-btn" data-value="male">Male</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Category Toggle -->
+                    <div class="filter-group">
+                        <label>Category:</label>
+                        <div class="toggle-buttons" id="category-toggle">
+                            <button class="toggle-btn active" data-value="all">All</button>
+                            <button class="toggle-btn" data-value="Polaroids">Polaroids</button>
+                            <button class="toggle-btn" data-value="Portfolio">Portfolio</button>
+                            <button class="toggle-btn" data-value="Indian">Indian</button>
+                            <button class="toggle-btn" data-value="Swimwear/Lingerie">Swimwear/Lingerie</button>
+                        </div>
+                    </div>
+                    
+                    <div class="filter-actions">
+                        <button class="btn btn-primary" id="add-prompt-btn">
+                            <i class="fas fa-plus"></i> Add Prompt
+                        </button>
+                        <button class="btn btn-secondary" id="bulk-add-btn">
+                            <i class="fas fa-list"></i> Bulk Add
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Hidden filters for API compatibility -->
+                <select id="gender-filter" style="display: none;">
+                    <option value="all">All</option>
+                    <option value="female">Female</option>
+                    <option value="male">Male</option>
+                </select>
+                <select id="category-filter" style="display: none;">
+                    <option value="all">All</option>
+                    <option value="Polaroids">Polaroids</option>
+                    <option value="Portfolio">Portfolio</option>
+                    <option value="Indian">Indian</option>
+                    <option value="Swimwear/Lingerie">Swimwear/Lingerie</option>
+                </select>
+
                 <!-- Bulk Actions -->
                 <div class="bulk-actions-bar" id="bulk-actions-bar">
                     <span id="selected-count">0 selected</span>
@@ -167,8 +190,58 @@
                 <div class="section-header">
                     <h2>Favorite Prompts</h2>
                 </div>
-                <div class="prompts-grid" id="favorites-grid">
-                    <!-- Favorite prompts will be inserted here -->
+                
+                <!-- Category Filter Buttons -->
+                <div class="favorites-filters">
+                    <div class="filter-buttons" id="favorites-category-filters">
+                        <button class="filter-btn active" data-category="all">All</button>
+                        <button class="filter-btn" data-category="Portfolio">Portfolio</button>
+                        <button class="filter-btn" data-category="Beauty">Beauty</button>
+                        <button class="filter-btn" data-category="Runway">Runway</button>
+                        <button class="filter-btn" data-category="Fashion">Fashion</button>
+                        <button class="filter-btn" data-category="Commercial">Commercial</button>
+                        <button class="filter-btn" data-category="Polaroids">Polaroids</button>
+                        <button class="filter-btn" data-category="Indian">Indian</button>
+                        <button class="filter-btn" data-category="Swimwear/Lingerie">Swimwear/Lingerie</button>
+                    </div>
+                </div>
+                
+                <!-- Gender Sections -->
+                <div class="favorites-gender-sections" id="favorites-gender-sections">
+                    <!-- Male Section -->
+                    <div class="gender-section" id="male-favorites-section">
+                        <div class="gender-section-header" onclick="toggleGenderSection('male')">
+                            <div class="gender-section-title">
+                                <i class="fas fa-chevron-right"></i>
+                                <i class="fas fa-male"></i>
+                                <span>Male</span>
+                                <span class="gender-count" id="male-favorites-count">(0)</span>
+                            </div>
+                        </div>
+                        <div class="gender-section-content" id="male-favorites-grid">
+                            <!-- Male favorites will be inserted here -->
+                        </div>
+                    </div>
+                    
+                    <!-- Female Section -->
+                    <div class="gender-section" id="female-favorites-section">
+                        <div class="gender-section-header" onclick="toggleGenderSection('female')">
+                            <div class="gender-section-title">
+                                <i class="fas fa-chevron-right"></i>
+                                <i class="fas fa-female"></i>
+                                <span>Female</span>
+                                <span class="gender-count" id="female-favorites-count">(0)</span>
+                            </div>
+                        </div>
+                        <div class="gender-section-content" id="female-favorites-grid">
+                            <!-- Female favorites will be inserted here -->
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Empty State -->
+                <div class="favorites-empty" id="favorites-empty" style="display: none;">
+                    <div class="empty-state"><i class="fas fa-heart"></i><p>No favorites yet</p></div>
                 </div>
             </section>
 
@@ -371,10 +444,11 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label>Paste Prompts (one per line)</label>
-                        <textarea name="prompts_text" class="textarea-input bulk-textarea" rows="15" placeholder="Beach: Young woman at sunset beach...
-Studio: Professional headshot with white background...
-Outdoor: Walking through autumn forest..." required></textarea>
+                        <label>Paste Prompts (one per line, max 50)</label>
+                        <textarea name="prompts_text" class="textarea-input bulk-textarea" rows="15" placeholder="Beach: Young woman walking on a sunset beach with long flowing hair
+Studio: Professional fashion portrait with white background, studio lighting
+Outdoor: Model walking through autumn forest, golden hour lighting
+Headshot: Close-up portrait with natural lighting, soft focus" required></textarea>
                     </div>
                 </form>
             </div>
@@ -408,19 +482,77 @@ Outdoor: Walking through autumn forest..." required></textarea>
     <!-- Manage Characters Modal -->
     <div class="modal" id="characters-modal">
         <div class="modal-overlay"></div>
-        <div class="modal-content">
+        <div class="modal-content modal-lg">
             <div class="modal-header">
                 <h3>Manage Characters</h3>
                 <button class="modal-close"><i class="fas fa-times"></i></button>
             </div>
             <div class="modal-body">
-                <div class="add-cat-group">
-                    <input type="text" id="new-char-name" class="text-input" placeholder="New character name...">
-                    <button class="btn btn-primary" id="save-char-btn">Add</button>
+                <!-- Add New Character Section -->
+                <div class="add-character-section">
+                    <h4>Add New Character</h4>
+                    <div class="add-char-form">
+                        <div class="form-row">
+                            <input type="text" id="new-char-name" class="text-input" placeholder="Character name...">
+                            <button class="btn btn-primary" id="save-char-btn">Add</button>
+                        </div>
+                        <div class="char-upload-section">
+                            <label>Reference Images (optional)</label>
+                            <input type="file" id="char-ref-upload" multiple accept="image/*" class="file-input">
+                            <p class="upload-hint">Upload up to 8 reference images for this character</p>
+                        </div>
+                    </div>
                 </div>
-                <div class="categories-list" id="characters-list">
+                
+                <!-- Characters List -->
+                <div class="characters-grid" id="characters-list">
                     <!-- Characters will be listed here -->
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Prompt Modal -->
+    <div class="modal" id="edit-prompt-modal">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Prompt</h3>
+                <button class="modal-close"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="edit-prompt-form">
+                    <input type="hidden" id="edit-prompt-id">
+                    <div class="form-group">
+                        <label>Prompt Number</label>
+                        <input type="text" id="edit-prompt-number" class="text-input" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label>Theme Name</label>
+                        <input type="text" name="theme" id="edit-theme" class="text-input" placeholder="e.g., Beach Sunset" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Prompt Text</label>
+                        <textarea name="prompt_text" id="edit-prompt-text" class="textarea-input" rows="4" placeholder="Detailed prompt description..." required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select name="category" id="edit-category" class="select-input">
+                            <option value="Portfolio">Portfolio</option>
+                            <option value="Beauty">Beauty</option>
+                            <option value="Runway">Runway</option>
+                            <option value="Fashion">Fashion</option>
+                            <option value="Commercial">Commercial</option>
+                            <option value="Polaroids">Polaroids</option>
+                            <option value="Indian">Indian</option>
+                            <option value="Swimwear/Lingerie">Swimwear/Lingerie</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary modal-cancel">Cancel</button>
+                <button class="btn btn-primary" id="save-edit-btn">Save Changes</button>
             </div>
         </div>
     </div>

@@ -84,6 +84,24 @@ def get_prompts():
     prompts = query.order_by(Prompt.created_at.desc()).all()
     return jsonify([p.to_dict() for p in prompts])
 
+def get_next_prompt_number():
+    """Generate the next prompt number (e.g., P001, P002) based on existing prompts."""
+    # Get the maximum existing prompt number
+    max_prompt = Prompt.query.filter(
+        Prompt.prompt_number.isnot(None)
+    ).order_by(Prompt.prompt_number.desc()).first()
+    
+    if max_prompt and max_prompt.prompt_number:
+        # Extract number from existing (e.g., "P001" -> 1)
+        try:
+            num = int(max_prompt.prompt_number[1:])
+            return f"P{num + 1:03d}"
+        except (ValueError, IndexError):
+            pass
+    
+    # Start from P001 if no existing prompts or error
+    return "P001"
+
 @app.route('/api/prompts', methods=['POST'])
 def add_prompt():
     data = request.json
@@ -94,7 +112,8 @@ def add_prompt():
         gender=data.get('gender', 'female'),
         category=data.get('category', 'Polaroids'),
         model_name=data.get('model_name'),
-        model_reference_directory=data.get('model_reference_directory')
+        model_reference_directory=data.get('model_reference_directory'),
+        prompt_number=get_next_prompt_number()
     )
     
     db.session.add(prompt)
@@ -114,7 +133,17 @@ def add_bulk_prompts():
     # Parse prompts - each line should be a prompt
     # Format: "Theme: Prompt text" or just "Prompt text"
     lines = [line.strip() for line in text.split('\n') if line.strip()]
+    
+    # Limit to 50 prompts max
+    MAX_PROMPTS = 50
+    if len(lines) > MAX_PROMPTS:
+        lines = lines[:MAX_PROMPTS]
+    
     added_count = 0
+    untitled_count = 0
+    
+    # Get starting number for bulk add
+    current_prompt_number = get_next_prompt_number()
     
     for line in lines:
         if ':' in line:
@@ -122,8 +151,10 @@ def add_bulk_prompts():
             theme = parts[0].strip()
             prompt_text = parts[1].strip()
         else:
-            theme = f"Prompt {added_count + 1}"
+            # Lines without colon: treat whole line as prompt text with "Untitled" theme
+            theme = "Untitled"
             prompt_text = line
+            untitled_count += 1
         
         if prompt_text:
             prompt = Prompt(
@@ -132,14 +163,22 @@ def add_bulk_prompts():
                 gender=default_gender,
                 category=default_category,
                 model_name=model_name,
-                model_reference_directory=model_reference_directory
+                model_reference_directory=model_reference_directory,
+                prompt_number=current_prompt_number
             )
             db.session.add(prompt)
             added_count += 1
+            
+            # Increment prompt number for next prompt
+            try:
+                num = int(current_prompt_number[1:])
+                current_prompt_number = f"P{num + 1:03d}"
+            except (ValueError, IndexError):
+                pass
     
     db.session.commit()
     
-    return jsonify({'added': added_count, 'total_lines': len(lines)})
+    return jsonify({'added': added_count, 'total_lines': len(lines), 'untitled': untitled_count})
 
 @app.route('/api/prompts/<int:prompt_id>', methods=['PUT'])
 def update_prompt(prompt_id):
@@ -536,7 +575,8 @@ def generate_single_image(prompt, model, resolution, aspect_ratio, selected_mode
         file_path=output_path,
         model_used=model,
         resolution=resolution,
-        aspect_ratio=aspect_ratio
+        aspect_ratio=aspect_ratio,
+        prompt_number=prompt.prompt_number
     )
     db.session.add(gen_img)
     db.session.commit()
@@ -591,8 +631,9 @@ def get_generated_images():
         img_dict = img.to_dict()
         img_dict['prompt_theme'] = img.prompt.theme if img.prompt else None
         img_dict['prompt_gender'] = img.prompt.gender if img.prompt else None
+        img_dict['prompt_number'] = img.prompt.prompt_number if img.prompt else None
         # Add character/reference name for grouping
-        img_dict['character_name'] = img.prompt.model_name if img.prompt and img.prompt.model_name else "Default"
+        img_dict['character_name'] = img.prompt.model_name if img.prompt and img.prompt.model_name else "Ungrouped"
         result.append(img_dict)
     
     return jsonify(result)
@@ -677,22 +718,175 @@ def delete_category(category_id):
 @app.route('/api/characters', methods=['GET'])
 def get_characters():
     characters = Character.query.all()
-    return jsonify([c.to_dict() for c in characters])
+    result = []
+    for char in characters:
+        char_dict = char.to_dict()
+        # Get reference images for this character
+        ref_images = ReferenceImage.query.filter_by(model_name=char.name).all()
+        char_dict['reference_images'] = [img.to_dict() for img in ref_images]
+        char_dict['image_count'] = len(ref_images)
+        result.append(char_dict)
+    return jsonify(result)
 
 @app.route('/api/characters', methods=['POST'])
 def add_character():
-    data = request.json
-    name = data.get('name', '').strip()
-    if not name:
-        return jsonify({'error': 'Name is required'}), 400
+    # Check if this is a multipart form request (with file uploads) or JSON
+    if request.content_type and 'multipart/form-data' in request.content_type:
+        name = request.form.get('name', '').strip()
+        if not name:
+            return jsonify({'error': 'Name is required'}), 400
+        
+        if Character.query.filter_by(name=name).first():
+            return jsonify({'error': 'Character already exists'}), 400
+        
+        character = Character(name=name)
+        db.session.add(character)
+        db.session.commit()
+        
+        # Handle reference image uploads
+        uploaded_images = []
+        if 'files' in request.files:
+            files = request.files.getlist('files')
+            model_dir, safe_name = get_model_directory(name)
+            
+            existing_count = ReferenceImage.query.filter_by(model_name=name).count()
+            remaining_slots = Config.MAX_REFERENCE_IMAGES - existing_count
+            
+            for file in files[:remaining_slots]:
+                if file and allowed_file(file.filename):
+                    filename = secure_filename(file.filename)
+                    unique_name = f"{uuid.uuid4().hex[:8]}_{filename}"
+                    filepath = os.path.join(model_dir, unique_name)
+                    file.save(filepath)
+                    
+                    # Create thumbnail
+                    try:
+                        with Image.open(filepath) as img:
+                            img.thumbnail((400, 400))
+                            thumb_path = filepath.rsplit('.', 1)[0] + '_thumb.' + filepath.rsplit('.', 1)[1]
+                            img.save(thumb_path)
+                    except:
+                        pass
+                    
+                    ref_img = ReferenceImage(
+                        model_name=name,
+                        file_path=filepath,
+                        file_name=filename
+                    )
+                    db.session.add(ref_img)
+                    uploaded_images.append(ref_img)
+            
+            db.session.commit()
+        
+        # Return character with reference images
+        char_dict = character.to_dict()
+        char_dict['reference_images'] = [img.to_dict() for img in uploaded_images]
+        char_dict['image_count'] = len(uploaded_images)
+        return jsonify(char_dict), 201
+    else:
+        # JSON request (original behavior)
+        data = request.json
+        name = data.get('name', '').strip()
+        if not name:
+            return jsonify({'error': 'Name is required'}), 400
+        
+        if Character.query.filter_by(name=name).first():
+            return jsonify({'error': 'Character already exists'}), 400
+        
+        character = Character(name=name)
+        db.session.add(character)
+        db.session.commit()
+        return jsonify(character.to_dict()), 201
+
+@app.route('/api/characters/<int:character_id>', methods=['PUT'])
+def update_character(character_id):
+    character = Character.query.get_or_404(character_id)
     
-    if Character.query.filter_by(name=name).first():
-        return jsonify({'error': 'Character already exists'}), 400
-    
-    character = Character(name=name)
-    db.session.add(character)
-    db.session.commit()
-    return jsonify(character.to_dict()), 201
+    # Check if this is a multipart form request (with file uploads) or JSON
+    if request.content_type and 'multipart/form-data' in request.content_type:
+        new_name = request.form.get('name', '').strip()
+        
+        # Update name if provided and different
+        if new_name and new_name != character.name:
+            # Check if new name already exists
+            if Character.query.filter(Character.name == new_name, Character.id != character_id).first():
+                return jsonify({'error': 'Character name already exists'}), 400
+            
+            # Update reference images model_name
+            old_name = character.name
+            ref_images = ReferenceImage.query.filter_by(model_name=old_name).all()
+            for img in ref_images:
+                img.model_name = new_name
+            
+            character.name = new_name
+        
+        # Handle new reference image uploads
+        uploaded_images = []
+        if 'files' in request.files:
+            files = request.files.getlist('files')
+            model_dir, safe_name = get_model_directory(character.name)
+            
+            existing_count = ReferenceImage.query.filter_by(model_name=character.name).count()
+            remaining_slots = Config.MAX_REFERENCE_IMAGES - existing_count
+            
+            for file in files[:remaining_slots]:
+                if file and allowed_file(file.filename):
+                    filename = secure_filename(file.filename)
+                    unique_name = f"{uuid.uuid4().hex[:8]}_{filename}"
+                    filepath = os.path.join(model_dir, unique_name)
+                    file.save(filepath)
+                    
+                    # Create thumbnail
+                    try:
+                        with Image.open(filepath) as img:
+                            img.thumbnail((400, 400))
+                            thumb_path = filepath.rsplit('.', 1)[0] + '_thumb.' + filepath.rsplit('.', 1)[1]
+                            img.save(thumb_path)
+                    except:
+                        pass
+                    
+                    ref_img = ReferenceImage(
+                        model_name=character.name,
+                        file_path=filepath,
+                        file_name=filename
+                    )
+                    db.session.add(ref_img)
+                    uploaded_images.append(ref_img)
+            
+            db.session.commit()
+        
+        db.session.commit()
+        
+        # Return updated character
+        char_dict = character.to_dict()
+        ref_images = ReferenceImage.query.filter_by(model_name=character.name).all()
+        char_dict['reference_images'] = [img.to_dict() for img in ref_images]
+        char_dict['image_count'] = len(ref_images)
+        return jsonify(char_dict)
+    else:
+        # JSON request - update name only
+        data = request.json
+        new_name = data.get('name', '').strip()
+        
+        if new_name and new_name != character.name:
+            # Check if new name already exists
+            if Character.query.filter(Character.name == new_name, Character.id != character_id).first():
+                return jsonify({'error': 'Character name already exists'}), 400
+            
+            # Update reference images model_name
+            old_name = character.name
+            ref_images = ReferenceImage.query.filter_by(model_name=old_name).all()
+            for img in ref_images:
+                img.model_name = new_name
+            
+            character.name = new_name
+            db.session.commit()
+        
+        char_dict = character.to_dict()
+        ref_images = ReferenceImage.query.filter_by(model_name=character.name).all()
+        char_dict['reference_images'] = [img.to_dict() for img in ref_images]
+        char_dict['image_count'] = len(ref_images)
+        return jsonify(char_dict)
 
 @app.route('/api/characters/<int:character_id>', methods=['DELETE'])
 def delete_character(character_id):

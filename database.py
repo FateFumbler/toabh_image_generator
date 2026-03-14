@@ -4,6 +4,27 @@ import os
 
 db = SQLAlchemy()
 
+def generate_next_prompt_number():
+    """Generate the next prompt number (e.g., P001, P002) based on existing prompts."""
+    from .models import Prompt
+    # Import here to avoid circular imports when used in models
+    
+    # Get the maximum existing prompt number
+    max_prompt = Prompt.query.filter(
+        Prompt.prompt_number.isnot(None)
+    ).order_by(Prompt.prompt_number.desc()).first()
+    
+    if max_prompt and max_prompt.prompt_number:
+        # Extract number from existing (e.g., "P001" -> 1)
+        try:
+            num = int(max_prompt.prompt_number[1:])
+            return f"P{num + 1:03d}"
+        except (ValueError, IndexError):
+            pass
+    
+    # Start from P001 if no existing prompts or error
+    return "P001"
+
 class Prompt(db.Model):
     __tablename__ = 'prompts'
     
@@ -16,6 +37,7 @@ class Prompt(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     model_name = db.Column(db.String(100), nullable=True)
     model_reference_directory = db.Column(db.String(500), nullable=True)
+    prompt_number = db.Column(db.String(10), unique=True, nullable=True)
     
     def to_dict(self):
         return {
@@ -27,7 +49,8 @@ class Prompt(db.Model):
             'favorite': self.favorite,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'model_name': self.model_name,
-            'model_reference_directory': self.model_reference_directory
+            'model_reference_directory': self.model_reference_directory,
+            'prompt_number': self.prompt_number
         }
 
 class GeneratedImage(db.Model):
@@ -40,6 +63,7 @@ class GeneratedImage(db.Model):
     resolution = db.Column(db.String(20), nullable=False)
     aspect_ratio = db.Column(db.String(20), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    prompt_number = db.Column(db.String(10), nullable=True)
     
     prompt = db.relationship('Prompt', backref='generated_images')
     
@@ -51,6 +75,7 @@ class GeneratedImage(db.Model):
         return {
             'id': self.id,
             'prompt_id': self.prompt_id,
+            'prompt_number': self.prompt_number,
             'file_path': url_path,
             'model_used': self.model_used,
             'resolution': self.resolution,
