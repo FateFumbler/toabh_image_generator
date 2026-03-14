@@ -101,8 +101,10 @@ function setupFilters() {
             categoryToggle.querySelectorAll('.toggle-btn').forEach(btn => btn.classList.remove('active'));
             e.target.classList.add('active');
             currentCategoryFilter = e.target.textContent;
+            // Convert "All" to lowercase for API, keep others as-is
+            const apiCategory = currentCategoryFilter.toLowerCase() === 'all' ? 'all' : currentCategoryFilter;
             // Update hidden select for API compatibility
-            document.getElementById('category-filter').value = currentCategoryFilter;
+            document.getElementById('category-filter').value = apiCategory;
             loadPrompts();
         }
     });
@@ -218,6 +220,9 @@ function setupFavoritesFilters() {
             favoritesFilters.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
             e.target.classList.add('active');
             favoritesCategoryFilter = e.target.textContent;
+            // Convert "All" to lowercase for internal filtering
+            const favFilter = favoritesCategoryFilter.toLowerCase() === 'all' ? 'all' : favoritesCategoryFilter;
+            favoritesCategoryFilter = favFilter;
             renderFavorites();
         }
     });
@@ -1075,12 +1080,21 @@ function renderPrompts() {
     
     grid.innerHTML = displayPrompts.map(prompt => `
         <div class="prompt-card ${selectedPrompts.has(prompt.id) ? 'selected' : ''}" data-id="${prompt.id}">
-            <div class="prompt-card-header">
+            <div class="prompt-card-top">
                 <input type="checkbox" class="prompt-checkbox" 
                     data-id="${prompt.id}" 
                     ${selectedPrompts.has(prompt.id) ? 'checked' : ''}>
-                <span class="prompt-card-number">${prompt.prompt_number || ''}</span>
-                <span class="prompt-card-title" title="${escapeHtml(prompt.theme)}">${escapeHtml(prompt.theme)}</span>
+                <div class="prompt-card-header-info">
+                    <span class="prompt-card-number">${prompt.prompt_number || ''}</span>
+                    <span class="prompt-card-title" title="${escapeHtml(prompt.theme)}">${escapeHtml(prompt.theme)}</span>
+                </div>
+            </div>
+            <p class="prompt-card-preview">${escapeHtml(prompt.prompt_text)}</p>
+            <div class="prompt-card-bottom">
+                <div class="prompt-card-meta">
+                    <span class="badge ${prompt.gender.toLowerCase()}">${prompt.gender}</span>
+                    <span class="badge">${prompt.category}</span>
+                </div>
                 <div class="prompt-card-actions">
                     <button class="icon-btn edit" data-id="${prompt.id}" title="Edit">
                         <i class="fas fa-pencil-alt"></i>
@@ -1091,11 +1105,6 @@ function renderPrompts() {
                     </button>
                     <button class="icon-btn delete" data-id="${prompt.id}" title="Delete">🗑️</button>
                 </div>
-            </div>
-            <p class="prompt-card-preview">${escapeHtml(prompt.prompt_text)}</p>
-            <div class="prompt-card-meta">
-                <span class="badge ${prompt.gender.toLowerCase()}">${prompt.gender}</span>
-                <span class="badge">${prompt.category}</span>
             </div>
         </div>
     `).join('');
@@ -1166,21 +1175,25 @@ function renderFavorites() {
 function createFavoriteCard(prompt) {
     return `
         <div class="prompt-card ${selectedPrompts.has(prompt.id) ? 'selected' : ''}" data-id="${prompt.id}">
-            <div class="prompt-card-header">
+            <div class="prompt-card-top">
                 <input type="checkbox" class="prompt-checkbox" 
                     data-id="${prompt.id}" 
                     ${selectedPrompts.has(prompt.id) ? 'checked' : ''}>
-                <span class="prompt-card-number">${prompt.prompt_number || ''}</span>
-                <span class="prompt-card-title" title="${escapeHtml(prompt.theme)}">${escapeHtml(prompt.theme)}</span>
+                <div class="prompt-card-header-info">
+                    <span class="prompt-card-number">${prompt.prompt_number || ''}</span>
+                    <span class="prompt-card-title" title="${escapeHtml(prompt.theme)}">${escapeHtml(prompt.theme)}</span>
+                </div>
+            </div>
+            <p class="prompt-card-preview">${escapeHtml(prompt.prompt_text)}</p>
+            <div class="prompt-card-bottom">
+                <div class="prompt-card-meta">
+                    <span class="badge ${prompt.gender.toLowerCase()}">${prompt.gender}</span>
+                    <span class="badge">${prompt.category}</span>
+                </div>
                 <div class="prompt-card-actions">
                     <button class="icon-btn heart active" data-id="${prompt.id}" title="Remove from favorites">❤️</button>
                     <button class="icon-btn queue-btn" data-id="${prompt.id}" title="Add to queue">➕</button>
                 </div>
-            </div>
-            <p class="prompt-card-preview">${escapeHtml(prompt.prompt_text)}</p>
-            <div class="prompt-card-meta">
-                <span class="badge ${prompt.gender.toLowerCase()}">${prompt.gender}</span>
-                <span class="badge">${prompt.category}</span>
             </div>
         </div>
     `;
@@ -1834,11 +1847,15 @@ async function loadResults() {
             grouped[charName].push(img);
         });
         
-        // Sort characters alphabetically, with Ungrouped last
+        // Sort characters by most recent generation (newest first), Ungrouped last
         const sortedChars = Object.keys(grouped).sort((a, b) => {
             if (a === 'Ungrouped') return 1;
             if (b === 'Ungrouped') return -1;
-            return a.localeCompare(b);
+            // Get most recent image timestamp for each character
+            const aTime = grouped[a][0]?.created_at || '';
+            const bTime = grouped[b][0]?.created_at || '';
+            // Sort descending (newest first)
+            return bTime.localeCompare(aTime);
         });
         
         resultsContainer.innerHTML = sortedChars.map(charName => {

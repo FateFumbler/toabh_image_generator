@@ -574,18 +574,29 @@ body {
     background: rgba(99, 102, 241, 0.05);
 }
 
-.prompt-card-header {
+/* Top Section: Checkbox + ID Badge + Title */
+.prompt-card-top {
     display: flex;
     align-items: flex-start;
-    gap: 12px;
-    margin-bottom: 12px;
+    gap: 10px;
+    margin-bottom: 10px;
 }
 
 .prompt-checkbox {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
     cursor: pointer;
     accent-color: var(--primary);
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.prompt-card-header-info {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+    min-width: 0;
 }
 
 .prompt-card-number {
@@ -597,12 +608,12 @@ body {
     font-weight: 700;
     font-family: monospace;
     white-space: nowrap;
+    width: fit-content;
 }
 
 .prompt-card-title {
-    flex: 1;
     font-weight: 600;
-    font-size: 0.875rem;
+    font-size: 0.9rem;
     line-height: 1.3;
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -610,12 +621,42 @@ body {
     overflow: hidden;
     text-overflow: ellipsis;
     min-height: 2.6em;
-    max-height: 2.6em;
+}
+
+/* Middle Section: Description */
+.prompt-card-preview {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-bottom: 10px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-height: 2.4em;
+    max-height: 2.4em;
+    line-height: 1.2;
+}
+
+/* Bottom Section: Tags + Actions */
+.prompt-card-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-top: auto;
+    gap: 8px;
+}
+
+.prompt-card-meta {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
 }
 
 .prompt-card-actions {
     display: flex;
-    gap: 8px;
+    gap: 6px;
+    flex-shrink: 0;
 }
 
 .icon-btn {
