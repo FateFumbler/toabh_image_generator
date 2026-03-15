@@ -30,6 +30,7 @@ function initializeApp() {
     setupPromptModals();
     setupGeneration();
     setupLightbox();
+    setupEditModal(); // Initialize edit modal
     loadInitialData();
     
     // Refresh results button
@@ -1887,6 +1888,9 @@ async function loadResults() {
                                     <span class="badge">${img.aspect_ratio || '1:1'}</span>
                                 </div>
                                 <div class="result-item-actions">
+                                    <button class="edit-btn" onclick="openEditModal(${img.id}, '${img.file_path.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}')" title="Edit Image">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
                                     <a href="${img.file_path}" download class="download-btn">
                                         <i class="fas fa-download"></i>
                                     </a>
@@ -1985,6 +1989,125 @@ async function deleteGeneratedImage(id) {
     }
 }
 
+// ============ Image Editing Functions ============
+
+// Open edit modal with image details
+function openEditModal(imageId, imagePath) {
+    const modal = document.getElementById('edit-image-modal');
+    const previewImg = document.getElementById('edit-image-preview-img');
+    const instructionInput = document.getElementById('edit-instruction');
+    const hiddenId = document.getElementById('edit-image-id');
+    
+    // Set the image ID and path
+    hiddenId.value = imageId;
+    previewImg.src = imagePath;
+    instructionInput.value = ''; // Clear previous instruction
+    
+    modal.classList.add('open');
+}
+
+// Set quick suggestion instruction
+function setEditInstruction(instruction) {
+    document.getElementById('edit-instruction').value = instruction;
+}
+
+// Handle edit submission
+async function submitEdit() {
+    const imageId = document.getElementById('edit-image-id').value;
+    const instruction = document.getElementById('edit-instruction').value.trim();
+    
+    if (!imageId) {
+        showToast('No image selected', 'error');
+        return;
+    }
+    
+    if (!instruction) {
+        showToast('Please enter an editing instruction', 'error');
+        return;
+    }
+    
+    // Show loading overlay
+    const loadingOverlay = document.getElementById('edit-loading-overlay');
+    const loadingInstruction = document.getElementById('edit-loading-instruction');
+    loadingInstruction.textContent = instruction;
+    loadingOverlay.style.display = 'flex';
+    
+    // Disable the apply button
+    const applyBtn = document.getElementById('apply-edit-btn');
+    applyBtn.disabled = true;
+    applyBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Editing...';
+    
+    try {
+        const response = await fetch('/api/edit-image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                image_id: parseInt(imageId),
+                instruction: instruction
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+            // Close the modal
+            document.getElementById('edit-image-modal').classList.remove('open');
+            showToast('Image edited successfully!', 'success');
+            
+            // Reload results to show the edited image
+            loadResults();
+        } else {
+            showToast(data.error || 'Failed to edit image', 'error');
+        }
+    } catch (error) {
+        console.error('Error editing image:', error);
+        showToast('Failed to edit image: ' + error.message, 'error');
+    } finally {
+        // Hide loading overlay
+        loadingOverlay.style.display = 'none';
+        
+        // Re-enable the button
+        applyBtn.disabled = false;
+        applyBtn.innerHTML = '<i class="fas fa-wand-magic"></i> Apply Edit';
+    }
+}
+
+// Initialize edit modal event listeners
+function setupEditModal() {
+    const modal = document.getElementById('edit-image-modal');
+    const applyBtn = document.getElementById('apply-edit-btn');
+    const cancelBtn = modal.querySelector('.modal-cancel');
+    const closeBtn = modal.querySelector('.modal-close');
+    
+    // Apply edit button
+    applyBtn?.addEventListener('click', submitEdit);
+    
+    // Cancel button
+    cancelBtn?.addEventListener('click', () => {
+        modal.classList.remove('open');
+    });
+    
+    // Close button
+    closeBtn?.addEventListener('click', () => {
+        modal.classList.remove('open');
+    });
+    
+    // Close on overlay click
+    const overlay = modal.querySelector('.modal-overlay');
+    overlay?.addEventListener('click', () => {
+        modal.classList.remove('open');
+    });
+    
+    // Handle Enter key in textarea to submit
+    const instructionInput = document.getElementById('edit-instruction');
+    instructionInput?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && e.ctrlKey) {
+            e.preventDefault();
+            submitEdit();
+        }
+    });
+}
+
 async function bulkDeletePrompts() {
     if (selectedPrompts.size === 0) return;
     
@@ -2047,3 +2170,5 @@ window.toggleGenderSection = toggleGenderSection;
 window.editCategoryName = editCategoryName;
 window.saveCategoryName = saveCategoryName;
 window.cancelEditCategory = cancelEditCategory;
+window.openEditModal = openEditModal;
+window.setEditInstruction = setEditInstruction;

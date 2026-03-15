@@ -682,6 +682,160 @@ def download_image(image_id):
     else:
         return jsonify({'error': 'File not found'}), 404
 
+# ============ Image Editing Endpoint ============
+
+@app.route('/api/edit-image', methods=['POST'])
+def edit_image():
+    """Edit an image using Google Gemini API with the original image as reference."""
+    data = request.json
+    image_id = data.get('image_id')
+    instruction = data.get('instruction', '').strip()
+    
+    if not image_id:
+        return jsonify({'error': 'Image ID is required'}), 400
+    
+    if not instruction:
+        return jsonify({'error': 'Edit instruction is required'}), 400
+    
+    # Get the original image
+    original_img = GeneratedImage.query.get(image_id)
+    if not original_img:
+        return jsonify({'error': 'Image not found'}), 404
+    
+    if not os.path.exists(original_img.file_path):
+        return jsonify({'error': 'Original image file not found'}), 404
+    
+    try:
+        # Use Gemini to edit the image
+        edited_image_data = edit_image_with_gemini(
+            original_image_path=original_img.file_path,
+            instruction=instruction
+        )
+        
+        if not edited_image_data:
+            raise Exception("Gemini returned no image data")
+        
+        # Save the edited image (overwrite the original)
+        # Create a backup first
+        backup_path = original_img.file_path + '.backup'
+        if os.path.exists(original_img.file_path):
+            import shutil
+            shutil.copy2(original_img.file_path, backup_path)
+        
+        # Save the edited image
+        with open(original_img.file_path, 'wb') as f:
+            f.write(edited_image_data)
+        
+        # Clean up backup if save was successful
+        if os.path.exists(backup_path):
+            os.remove(backup_path)
+        
+        return jsonify({
+            'success': True,
+            'message': 'Image edited successfully',
+            'image_path': original_img.file_path,
+            'instruction': instruction
+        })
+        
+    except Exception as e:
+        print(f"Image editing error: {str(e)}")
+        return jsonify({'error': f'Failed to edit image: {str(e)}'}), 500
+
+
+def edit_image_with_gemini(original_image_path, instruction):
+    """Edit an image using Google Gemini API.
+    
+    Uses the original image as a reference and applies the user's editing instruction.
+    Since Gemini doesn't have a direct edit endpoint, we generate a new image
+    using the original as reference along with the editing instruction.
+    
+    Args:
+        original_image_path: Path to the original image file
+        instruction: Text instruction for editing (e.g., "remove text", "fix background")
+        
+    Returns:
+        Bytes of the edited image
+    """
+    if not GEMINI_AVAILABLE:
+        raise Exception("Google GenAI library not installed. Run: pip install google-genai")
+    
+    api_key = Config.GEMINI_API_KEY
+    if not api_key:
+        raise Exception("GEMINI_API_KEY not found in environment or .env file")
+    
+    # Initialize Client
+    client = genai.Client(api_key=api_key)
+    
+    # Get original image dimensions for consistent output
+    with Image.open(original_image_path) as img:
+        width, height = img.size
+        # Determine aspect ratio
+        if width == height:
+            aspect_ratio = '1:1'
+        elif width > height:
+            aspect_ratio = '16:9' if width / height > 1.5 else '4:3'
+        else:
+            aspect_ratio = '9:16' if height / width > 1.5 else '3:4'
+    
+    # Prepare the prompt with instruction
+    # The instruction is added to modify the original image
+    full_prompt = f"Using the provided image as a reference, {instruction}. Maintain the same subject, pose, and composition. High quality, professional photography."
+    
+    # Prepare contents - original image + instruction
+    contents = []
+    
+    # Add the original image as reference
+    try:
+        contents.append(Image.open(original_image_path))
+    except Exception as e:
+        raise Exception(f"Could not load original image: {str(e)}")
+    
+    # Add the editing instruction
+    contents.append(full_prompt)
+    
+    # Build image config - try to match original dimensions
+    image_cfg_kwargs = {}
+    
+    # Use the original image's aspect ratio
+    image_cfg_kwargs["aspect_ratio"] = aspect_ratio
+    
+    # Try to use the original resolution (within API limits)
+    max_dim = max(width, height)
+    if max_dim >= 2048:
+        resolution = '4K'
+    elif max_dim >= 1024:
+        resolution = '2K'
+    else:
+        resolution = '1K'
+    image_cfg_kwargs["image_size"] = resolution
+    
+    # Generate the edited image
+    try:
+        response = client.models.generate_content(
+            model=Config.GEMINI_MODEL,
+            contents=contents,
+            config=types.GenerateContentConfig(
+                response_modalities=["TEXT", "IMAGE"],
+                image_config=types.ImageConfig(**image_cfg_kwargs)
+            )
+        )
+        
+        # Process response and extract image data
+        for part in response.parts:
+            if part.inline_data is not None:
+                # If it's already bytes, return it
+                if isinstance(part.inline_data.data, bytes):
+                    return part.inline_data.data
+                # If it's a string, it might be base64
+                if isinstance(part.inline_data.data, str):
+                    import base64
+                    return base64.b64decode(part.inline_data.data)
+        
+        raise Exception("No image data in Gemini response")
+        
+    except Exception as e:
+        raise Exception(f"Gemini editing failed: {str(e)}")
+
 # ============ Model Routes ============
 
 @app.route('/api/models', methods=['GET'])
