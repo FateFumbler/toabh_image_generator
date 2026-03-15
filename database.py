@@ -67,7 +67,7 @@ class GeneratedImage(db.Model):
     prompt_number = db.Column(db.String(10), nullable=True)
     character_name = db.Column(db.String(100), nullable=True)  # Store character name for grouping
     
-    prompt = db.relationship('Prompt', backref='generated_images')
+    prompt = db.relationship('Prompt', backref=db.backref('generated_images', cascade='save-update'))
     
     def to_dict(self):
         # Get relative path from static folder
