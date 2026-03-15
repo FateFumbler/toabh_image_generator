@@ -41,6 +41,17 @@ generation_status = {
     'errors': []
 }
 
+# Track image edit status (for background editing)
+edit_status = {
+    'is_editing': False,
+    'current_image_id': None,
+    'instruction': '',
+    'completed': False,
+    'error': None,
+    'success': False,
+    'edited_image_path': None
+}
+
 @app.route('/api/generate/stop', methods=['POST'])
 def stop_generation():
     global generation_status
@@ -686,7 +697,10 @@ def download_image(image_id):
 
 @app.route('/api/edit-image', methods=['POST'])
 def edit_image():
-    """Edit an image using Google Gemini API with the original image as reference."""
+    """Edit an image using Google Gemini API with the original image as reference.
+    Runs in background to avoid blocking the UI."""
+    global edit_status
+    
     data = request.json
     image_id = data.get('image_id')
     instruction = data.get('instruction', '').strip()
@@ -705,7 +719,45 @@ def edit_image():
     if not os.path.exists(original_img.file_path):
         return jsonify({'error': 'Original image file not found'}), 404
     
+    # Initialize edit status
+    edit_status = {
+        'is_editing': True,
+        'current_image_id': image_id,
+        'instruction': instruction,
+        'completed': False,
+        'error': None,
+        'success': False,
+        'edited_image_path': None
+    }
+    
+    # Start editing in background thread
+    edit_thread = threading.Thread(
+        target=edit_image_background,
+        args=(image_id, instruction)
+    )
+    edit_thread.daemon = True
+    edit_thread.start()
+    
+    return jsonify({
+        'success': True,
+        'message': 'Image edit started in background',
+        'edit_id': image_id
+    })
+
+
+def edit_image_background(image_id, instruction):
+    """Background function to edit image without blocking UI."""
+    global edit_status
+    
     try:
+        # Get the original image
+        original_img = GeneratedImage.query.get(image_id)
+        if not original_img:
+            raise Exception("Image not found")
+        
+        if not os.path.exists(original_img.file_path):
+            raise Exception("Original image file not found")
+        
         # Use Gemini to edit the image
         edited_image_data = edit_image_with_gemini(
             original_image_path=original_img.file_path,
@@ -715,7 +767,6 @@ def edit_image():
         if not edited_image_data:
             raise Exception("Gemini returned no image data")
         
-        # Save the edited image (overwrite the original)
         # Create a backup first
         backup_path = original_img.file_path + '.backup'
         if os.path.exists(original_img.file_path):
@@ -730,16 +781,28 @@ def edit_image():
         if os.path.exists(backup_path):
             os.remove(backup_path)
         
-        return jsonify({
-            'success': True,
-            'message': 'Image edited successfully',
-            'image_path': original_img.file_path,
-            'instruction': instruction
-        })
+        # Update edited_at timestamp
+        original_img.edited_at = datetime.utcnow()
+        db.session.commit()
+        
+        # Update status
+        edit_status['success'] = True
+        edit_status['completed'] = True
+        edit_status['edited_image_path'] = original_img.file_path
+        edit_status['is_editing'] = False
         
     except Exception as e:
-        print(f"Image editing error: {str(e)}")
-        return jsonify({'error': f'Failed to edit image: {str(e)}'}), 500
+        print(f"Background image editing error: {str(e)}")
+        edit_status['error'] = str(e)
+        edit_status['completed'] = True
+        edit_status['success'] = False
+        edit_status['is_editing'] = False
+
+
+@app.route('/api/edit-status', methods=['GET'])
+def get_edit_status():
+    """Get the current status of image editing (for polling)."""
+    return jsonify(edit_status)
 
 
 def edit_image_with_gemini(original_image_path, instruction):
@@ -763,8 +826,8 @@ def edit_image_with_gemini(original_image_path, instruction):
     if not api_key:
         raise Exception("GEMINI_API_KEY not found in environment or .env file")
     
-    # Initialize Client
-    client = genai.Client(api_key=api_key)
+    # Initialize Client with timeout
+    client = genai.Client(api_key=api_key, http_options={'timeout': 120})
     
     # Get original image dimensions for consistent output
     with Image.open(original_image_path) as img:

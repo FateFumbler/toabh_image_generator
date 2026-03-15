@@ -1840,21 +1840,28 @@ async function loadResults() {
             return;
         }
         
-        // Group by Reference Character Name
+        // Sort images by edited_at first, then created_at (edited images show at top)
+        const sortedImages = [...images].sort((a, b) => {
+            const aTime = a.edited_at || a.created_at || '';
+            const bTime = b.edited_at || b.created_at || '';
+            return bTime.localeCompare(aTime);
+        });
+        
+        // Group by Reference Character Name (using sorted images)
         const grouped = {};
-        images.forEach(img => {
+        sortedImages.forEach(img => {
             const charName = img.character_name || 'Ungrouped';
             if (!grouped[charName]) grouped[charName] = [];
             grouped[charName].push(img);
         });
         
-        // Sort characters by most recent generation (newest first), Ungrouped last
+        // Sort characters - recently edited images first, then by most recent
         const sortedChars = Object.keys(grouped).sort((a, b) => {
             if (a === 'Ungrouped') return 1;
             if (b === 'Ungrouped') return -1;
-            // Get most recent image timestamp for each character
-            const aTime = grouped[a][0]?.created_at || '';
-            const bTime = grouped[b][0]?.created_at || '';
+            // Get most recent timestamp (edited_at or created_at) for each character
+            const aTime = grouped[a][0]?.edited_at || grouped[a][0]?.created_at || '';
+            const bTime = grouped[b][0]?.edited_at || grouped[b][0]?.created_at || '';
             // Sort descending (newest first)
             return bTime.localeCompare(aTime);
         });
@@ -2011,7 +2018,7 @@ function setEditInstruction(instruction) {
     document.getElementById('edit-instruction').value = instruction;
 }
 
-// Handle edit submission
+// Handle edit submission - runs in background
 async function submitEdit() {
     const imageId = document.getElementById('edit-image-id').value;
     const instruction = document.getElementById('edit-instruction').value.trim();
@@ -2026,50 +2033,69 @@ async function submitEdit() {
         return;
     }
     
-    // Show loading overlay
-    const loadingOverlay = document.getElementById('edit-loading-overlay');
-    const loadingInstruction = document.getElementById('edit-loading-instruction');
-    loadingInstruction.textContent = instruction;
-    loadingOverlay.style.display = 'flex';
+    // Close the modal immediately - editing runs in background
+    document.getElementById('edit-image-modal').classList.remove('open');
     
-    // Disable the apply button
-    const applyBtn = document.getElementById('apply-edit-btn');
-    applyBtn.disabled = true;
-    applyBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Editing...';
+    // Show toast that editing has started
+    showToast('Image edit started in background. You can continue using the dashboard.', 'info');
     
-    try {
-        const response = await fetch('/api/edit-image', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                image_id: parseInt(imageId),
-                instruction: instruction
-            })
-        });
-        
-        const data = await response.json();
-        
-        if (response.ok && data.success) {
-            // Close the modal
-            document.getElementById('edit-image-modal').classList.remove('open');
-            showToast('Image edited successfully!', 'success');
+    // Store the edit info for polling
+    window.currentEditId = imageId;
+    window.currentEditInstruction = instruction;
+    
+    // Start polling for edit status
+    pollEditStatus();
+    
+    // Also refresh results after a delay to catch the edited image
+    setTimeout(() => {
+        loadResults();
+    }, 5000);
+}
+
+// Poll for edit status in background
+async function pollEditStatus() {
+    const banner = document.getElementById('edit-status-banner');
+    const statusText = document.getElementById('edit-status-text');
+    const progressFill = document.getElementById('edit-progress-fill');
+    
+    const checkStatus = async () => {
+        try {
+            const response = await fetch('/api/edit-status');
+            const status = await response.json();
             
-            // Reload results to show the edited image
-            loadResults();
-        } else {
-            showToast(data.error || 'Failed to edit image', 'error');
+            if (status.completed) {
+                // Hide banner after short delay
+                setTimeout(() => {
+                    banner.style.display = 'none';
+                    banner.classList.remove('completed', 'error');
+                }, 3000);
+                
+                if (status.success) {
+                    banner.classList.add('completed');
+                    statusText.innerHTML = '<i class="fas fa-check-circle"></i> Image edited successfully!';
+                    // Reload results to show the edited image
+                    loadResults();
+                } else {
+                    banner.classList.add('error');
+                    statusText.innerHTML = '<i class="fas fa-exclamation-circle"></i> Edit failed: ' + (status.error || 'Unknown error');
+                    showToast('Failed to edit image: ' + (status.error || 'Unknown error'), 'error');
+                }
+                window.currentEditId = null;
+                window.currentEditInstruction = null;
+            } else if (status.is_editing) {
+                // Show banner while editing
+                banner.style.display = 'block';
+                banner.classList.remove('completed', 'error');
+                statusText.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Editing image... (' + status.instruction.substring(0, 30) + '...)';
+                // Poll again in 2 seconds
+                setTimeout(checkStatus, 2000);
+            }
+        } catch (error) {
+            console.error('Error polling edit status:', error);
         }
-    } catch (error) {
-        console.error('Error editing image:', error);
-        showToast('Failed to edit image: ' + error.message, 'error');
-    } finally {
-        // Hide loading overlay
-        loadingOverlay.style.display = 'none';
-        
-        // Re-enable the button
-        applyBtn.disabled = false;
-        applyBtn.innerHTML = '<i class="fas fa-wand-magic"></i> Apply Edit';
-    }
+    };
+    
+    checkStatus();
 }
 
 // Initialize edit modal event listeners

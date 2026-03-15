@@ -63,6 +63,7 @@ class GeneratedImage(db.Model):
     resolution = db.Column(db.String(20), nullable=False)
     aspect_ratio = db.Column(db.String(20), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    edited_at = db.Column(db.DateTime, nullable=True)  # Track when image was last edited
     prompt_number = db.Column(db.String(10), nullable=True)
     character_name = db.Column(db.String(100), nullable=True)  # Store character name for grouping
     
@@ -82,6 +83,7 @@ class GeneratedImage(db.Model):
             'resolution': self.resolution,
             'aspect_ratio': self.aspect_ratio,
             'created_at': self.created_at.isoformat() if self.created_at else None,
+            'edited_at': self.edited_at.isoformat() if self.edited_at else None,
             'character_name': self.character_name if self.character_name else 'Ungrouped'
         }
 
