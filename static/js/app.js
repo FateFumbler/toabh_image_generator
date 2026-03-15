@@ -31,10 +31,36 @@ function initializeApp() {
     setupGeneration();
     setupLightbox();
     setupEditModal(); // Initialize edit modal
+    setupResultsBulkActions();
     loadInitialData();
+    loadResults();
     
     // Refresh results button
     document.getElementById('refresh-results-btn')?.addEventListener('click', loadResults);
+    
+    // Start polling for edit status on page load to catch any background edits
+    pollEditStatus();
+}
+
+function setupResultsBulkActions() {
+    // Select all checkbox
+    document.getElementById('results-select-all')?.addEventListener('change', (e) => {
+        if (e.target.checked) {
+            selectAllResults();
+        } else {
+            deselectAllResults();
+        }
+    });
+    
+    // Download selected button
+    document.getElementById('bulk-download-selected-btn')?.addEventListener('click', () => {
+        downloadSelectedImages();
+    });
+    
+    // Delete selected button
+    document.getElementById('bulk-delete-selected-btn')?.addEventListener('click', () => {
+        deleteSelectedImages();
+    });
 }
 
 function setupNavigation() {
@@ -1831,11 +1857,27 @@ async function pollGenerationStatus() {
 async function loadResults() {
     const resultsContainer = document.getElementById('results-container');
     
+    if (!resultsContainer) {
+        console.error('Results container not found');
+        return;
+    }
+    
+    // Clear previous selections when reloading
+    selectedResultsImages.clear();
+    updateResultsBulkActions();
+    
     try {
+        console.log('Fetching generated images...');
         const response = await fetch('/api/generated-images');
-        const images = await response.json();
         
-        if (images.length === 0) {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const images = await response.json();
+        console.log(`Loaded ${images.length} images:`, images);
+        
+        if (!Array.isArray(images) || images.length === 0) {
             resultsContainer.innerHTML = '<div class="empty-state"><i class="fas fa-images"></i><p>No generated images yet</p></div>';
             return;
         }
@@ -1880,13 +1922,19 @@ async function loadResults() {
                             title="Download all as ZIP">
                             <i class="fas fa-download"></i> Download All
                         </button>
+                        <button class="btn btn-danger btn-sm delete-all-btn" 
+                            onclick="event.stopPropagation(); deleteAllForCharacter('${escapeHtml(charName)}')"
+                            title="Delete all images for this character">
+                            <i class="fas fa-trash"></i> Delete All
+                        </button>
                         <i class="fas fa-chevron-down"></i>
                     </div>
                 </div>
                 <div class="model-group-content open">
                     <div class="results-grid">
                         ${imgs.map((img, idx) => `
-                            <div class="result-item">
+                            <div class="result-item" data-image-id="${img.id}">
+                                <input type="checkbox" class="select-checkbox" data-id="${img.id}" onchange="toggleImageSelection(${img.id})">
                                 <img src="${img.file_path}" alt="Generated" onclick="openLightbox('${img.file_path}', '${img.prompt_number || ''}', '${img.file_path}', ${JSON.stringify(imgs).replace(/"/g, '&quot;')})" style="cursor: pointer;">
                                 <div class="result-meta">
                                     ${img.prompt_number ? `<span class="badge prompt-number-badge">${img.prompt_number}</span>` : ''}
@@ -1914,6 +1962,173 @@ async function loadResults() {
         
     } catch (error) {
         console.error('Error loading results:', error);
+        resultsContainer.innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-circle"></i><p>Error loading results: ${escapeHtml(error.message)}</p></div>`;
+    }
+}
+
+// Track selected images in results
+let selectedResultsImages = new Set();
+
+function toggleImageSelection(imageId) {
+    const checkbox = document.querySelector(`.select-checkbox[data-id="${imageId}"]`);
+    const resultItem = document.querySelector(`.result-item[data-image-id="${imageId}"]`);
+    
+    if (checkbox.checked) {
+        selectedResultsImages.add(imageId);
+        resultItem.classList.add('selected');
+    } else {
+        selectedResultsImages.delete(imageId);
+        resultItem.classList.remove('selected');
+    }
+    
+    updateResultsBulkActions();
+}
+
+function updateResultsBulkActions() {
+    const bulkActions = document.getElementById('results-bulk-actions');
+    const selectedCount = document.getElementById('results-selected-count');
+    const selectAllCheckbox = document.getElementById('results-select-all');
+    
+    selectedCount.textContent = selectedResultsImages.size;
+    
+    if (selectedResultsImages.size > 0) {
+        bulkActions.style.display = 'flex';
+    } else {
+        bulkActions.style.display = 'none';
+    }
+    
+    // Update select all checkbox state
+    const totalCheckboxes = document.querySelectorAll('.select-checkbox').length;
+    if (selectedResultsImages.size === totalCheckboxes && totalCheckboxes > 0) {
+        selectAllCheckbox.checked = true;
+    } else {
+        selectAllCheckbox.checked = false;
+    }
+}
+
+function selectAllResults() {
+    const checkboxes = document.querySelectorAll('.select-checkbox');
+    checkboxes.forEach(cb => {
+        cb.checked = true;
+        const imageId = parseInt(cb.dataset.id);
+        selectedResultsImages.add(imageId);
+        cb.closest('.result-item').classList.add('selected');
+    });
+    updateResultsBulkActions();
+}
+
+function deselectAllResults() {
+    const checkboxes = document.querySelectorAll('.select-checkbox');
+    checkboxes.forEach(cb => {
+        cb.checked = false;
+        const imageId = parseInt(cb.dataset.id);
+        selectedResultsImages.delete(imageId);
+        cb.closest('.result-item').classList.remove('selected');
+    });
+    updateResultsBulkActions();
+}
+
+async function downloadSelectedImages() {
+    const ids = Array.from(selectedResultsImages);
+    
+    if (ids.length === 0) {
+        showToast('No images selected', 'error');
+        return;
+    }
+    
+    showToast(`Downloading ${ids.length} images...`, 'info');
+    
+    try {
+        const response = await fetch('/api/generated-images/bulk-download', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ ids: ids })
+        });
+        
+        if (!response.ok) {
+            throw new Error('Download failed');
+        }
+        
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'selected_images.zip';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        showToast(`Downloaded ${ids.length} images`, 'success');
+        deselectAllResults();
+        
+    } catch (error) {
+        console.error('Error downloading images:', error);
+        showToast('Failed to download images', 'error');
+    }
+}
+
+async function deleteSelectedImages() {
+    const ids = Array.from(selectedResultsImages);
+    
+    if (ids.length === 0) {
+        showToast('No images selected', 'error');
+        return;
+    }
+    
+    if (!confirm(`Are you sure you want to delete ${ids.length} image(s)?`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/generated-images/bulk-delete', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ ids: ids })
+        });
+        
+        const result = await response.json();
+        
+        if (result.deleted) {
+            showToast(`Deleted ${result.deleted} images`, 'success');
+            deselectAllResults();
+            loadResults();
+        } else {
+            throw new Error('Delete failed');
+        }
+        
+    } catch (error) {
+        console.error('Error deleting images:', error);
+        showToast('Failed to delete images', 'error');
+    }
+}
+
+async function deleteAllForCharacter(characterName) {
+    if (!confirm(`Are you sure you want to delete ALL images for "${characterName}"?`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/generated-images/delete-all/${encodeURIComponent(characterName)}`, {
+            method: 'POST'
+        });
+        
+        const result = await response.json();
+        
+        if (result.deleted !== undefined) {
+            showToast(`Deleted ${result.deleted} images`, 'success');
+            loadResults();
+        } else {
+            throw new Error('Delete failed');
+        }
+        
+    } catch (error) {
+        console.error('Error deleting all images:', error);
+        showToast('Failed to delete images', 'error');
     }
 }
 
@@ -2033,69 +2248,162 @@ async function submitEdit() {
         return;
     }
     
-    // Close the modal immediately - editing runs in background
-    document.getElementById('edit-image-modal').classList.remove('open');
+    // Show loading state on button
+    const applyBtn = document.getElementById('apply-edit-btn');
+    const originalBtnText = applyBtn.innerHTML;
+    applyBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Queuing...';
+    applyBtn.disabled = true;
     
-    // Show toast that editing has started
-    showToast('Image edit started in background. You can continue using the dashboard.', 'info');
-    
-    // Store the edit info for polling
-    window.currentEditId = imageId;
-    window.currentEditInstruction = instruction;
-    
-    // Start polling for edit status
-    pollEditStatus();
-    
-    // Also refresh results after a delay to catch the edited image
-    setTimeout(() => {
-        loadResults();
-    }, 5000);
+    try {
+        // Submit edit to API
+        const response = await fetch('/api/edit-image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                image_id: parseInt(imageId),
+                instruction: instruction
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+            // Close the modal on success - editing runs in background
+            document.getElementById('edit-image-modal').classList.remove('open');
+            
+            // Show toast that editing has started
+            showToast('Image added to edit queue. You can continue using the dashboard.', 'info');
+            
+            // Start polling for edit queue status
+            pollEditStatus();
+        } else {
+            showToast('Failed to queue edit: ' + (data.error || 'Unknown error'), 'error');
+        }
+    } catch (error) {
+        console.error('Error submitting edit:', error);
+        showToast('Error submitting edit: ' + error.message, 'error');
+    } finally {
+        // Restore button
+        applyBtn.innerHTML = originalBtnText;
+        applyBtn.disabled = false;
+    }
 }
 
-// Poll for edit status in background
+// Poll for edit queue status - handles multiple edits
+let editStatusPollInterval = null;
+let lastEditCompleted = false;
+
 async function pollEditStatus() {
     const banner = document.getElementById('edit-status-banner');
     const statusText = document.getElementById('edit-status-text');
     const progressFill = document.getElementById('edit-progress-fill');
     
+    // Clear any existing interval to prevent multiple polls
+    if (editStatusPollInterval) {
+        clearInterval(editStatusPollInterval);
+    }
+    
     const checkStatus = async () => {
         try {
             const response = await fetch('/api/edit-status');
-            const status = await response.json();
+            const data = await response.json();
             
-            if (status.completed) {
-                // Hide banner after short delay
+            const queue = data.queue || [];
+            const processing = data.processing || 0;
+            const queued = data.queued || 0;
+            const completed = data.completed || 0;
+            const errors = data.error || 0;
+            
+            if (queue.length === 0) {
+                // No edits in progress
+                banner.style.display = 'none';
+                // If we had edits before and now queue is empty, reload results
+                if (lastEditCompleted) {
+                    lastEditCompleted = false;
+                    loadResults();
+                }
+                return;
+            }
+            
+            // Show banner with queue status
+            banner.style.display = 'block';
+            
+            // Reset all status classes
+            banner.classList.remove('queued', 'processing', 'completed', 'error');
+            
+            // Build status message with color-coded status
+            let statusMsg = '';
+            if (processing > 0) {
+                // Find the currently processing task
+                const procTask = queue.find(t => t.status === 'processing');
+                if (procTask) {
+                    statusMsg = `<span class="status-badge processing"><i class="fas fa-spinner fa-spin"></i> Processing</span> "${escapeHtml(procTask.instruction.substring(0, 30))}${procTask.instruction.length > 30 ? '...' : ''}"`;
+                } else {
+                    statusMsg = `<span class="status-badge processing"><i class="fas fa-cog fa-spin"></i> Processing</span> ${processing} image(s)...`;
+                }
+                banner.classList.add('processing');
+                lastEditCompleted = false;
+            } else if (queued > 0) {
+                const queuedTasks = queue.filter(t => t.status === 'queued');
+                statusMsg = `<span class="status-badge queued"><i class="fas fa-hourglass-half"></i> Queued</span> ${queued} edit(s) waiting in queue...`;
+                banner.classList.add('queued');
+                lastEditCompleted = false;
+            } else if (errors > 0 && processing === 0 && queued === 0) {
+                const errorTask = queue.find(t => t.status === 'error');
+                statusMsg = `<span class="status-badge error"><i class="fas fa-exclamation-circle"></i> Error</span> ${escapeHtml(errorTask?.error || 'Edit failed')}`;
+                banner.classList.add('error');
+                lastEditCompleted = false;
+            } else if (completed > 0 && processing === 0 && queued === 0) {
+                statusMsg = `<span class="status-badge completed"><i class="fas fa-check-circle"></i> Completed</span> All edits finished successfully!`;
+                banner.classList.add('completed');
+                lastEditCompleted = true;
+                // Reload results to show edited images
+                loadResults();
+                // Hide banner after 3 seconds since all completed
                 setTimeout(() => {
                     banner.style.display = 'none';
-                    banner.classList.remove('completed', 'error');
                 }, 3000);
-                
-                if (status.success) {
-                    banner.classList.add('completed');
-                    statusText.innerHTML = '<i class="fas fa-check-circle"></i> Image edited successfully!';
-                    // Reload results to show the edited image
-                    loadResults();
-                } else {
-                    banner.classList.add('error');
-                    statusText.innerHTML = '<i class="fas fa-exclamation-circle"></i> Edit failed: ' + (status.error || 'Unknown error');
-                    showToast('Failed to edit image: ' + (status.error || 'Unknown error'), 'error');
-                }
-                window.currentEditId = null;
-                window.currentEditInstruction = null;
-            } else if (status.is_editing) {
-                // Show banner while editing
-                banner.style.display = 'block';
-                banner.classList.remove('completed', 'error');
-                statusText.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Editing image... (' + status.instruction.substring(0, 30) + '...)';
-                // Poll again in 2 seconds
-                setTimeout(checkStatus, 2000);
             }
+            
+            statusText.innerHTML = statusMsg;
+            
+            // Update progress bar based on completed vs total
+            const total = queue.length;
+            const done = completed + errors;
+            if (total > 0) {
+                const pct = (done / total) * 100;
+                progressFill.style.width = pct + '%';
+            }
+            
         } catch (error) {
             console.error('Error polling edit status:', error);
         }
     };
     
-    checkStatus();
+    // Start first check immediately
+    await checkStatus();
+    
+    // Continue polling every 2 seconds while there are active edits
+    editStatusPollInterval = setInterval(async () => {
+        const response = await fetch('/api/edit-status');
+        const data = await response.json();
+        const queue = data.queue || [];
+        const processing = data.processing || 0;
+        const queued = data.queued || 0;
+        
+        // Continue polling if there are active edits
+        if (queue.length > 0 || processing > 0 || queued > 0) {
+            checkStatus();
+        } else {
+            // No more active edits, slow down polling
+            if (editStatusPollInterval) {
+                clearInterval(editStatusPollInterval);
+                editStatusPollInterval = null;
+            }
+            // Final check and hide banner
+            checkStatus();
+        }
+    }, 2000);
 }
 
 // Initialize edit modal event listeners
@@ -2189,6 +2497,7 @@ window.deleteGeneratedImage = deleteGeneratedImage;
 window.deleteCategory = deleteCategory;
 window.deleteCharacter = deleteCharacter;
 window.downloadAllForCharacter = downloadAllForCharacter;
+window.deleteAllForCharacter = deleteAllForCharacter;
 window.saveCharacterName = saveCharacterName;
 window.uploadMoreImages = uploadMoreImages;
 window.deleteCharReferenceImage = deleteCharReferenceImage;
@@ -2198,3 +2507,4 @@ window.saveCategoryName = saveCategoryName;
 window.cancelEditCategory = cancelEditCategory;
 window.openEditModal = openEditModal;
 window.setEditInstruction = setEditInstruction;
+window.toggleImageSelection = toggleImageSelection;

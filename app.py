@@ -7,6 +7,8 @@ import requests
 import threading
 import subprocess
 import sys
+import io
+import zipfile
 from datetime import datetime
 from flask import Flask, render_template, request, jsonify, send_file
 from werkzeug.utils import secure_filename
@@ -41,16 +43,108 @@ generation_status = {
     'errors': []
 }
 
-# Track image edit status (for background editing)
-edit_status = {
-    'is_editing': False,
-    'current_image_id': None,
-    'instruction': '',
-    'completed': False,
-    'error': None,
-    'success': False,
-    'edited_image_path': None
-}
+# Track image edit status (for background editing) - queue-based for multiple edits
+# Each edit task has: id, image_id, instruction, status (queued/processing/completed/error), 
+# created_at, completed_at, error, edited_image_path
+edit_queue = []
+edit_queue_lock = threading.Lock()
+edit_task_counter = 0
+edit_processing_thread = None
+
+def get_next_edit_id():
+    global edit_task_counter
+    with edit_queue_lock:
+        edit_task_counter += 1
+        return edit_task_counter
+
+def start_edit_processor():
+    """Start the background edit processor thread if not already running."""
+    global edit_processing_thread
+    if edit_processing_thread is None or not edit_processing_thread.is_alive():
+        edit_processing_thread = threading.Thread(target=process_edit_queue, daemon=True)
+        edit_processing_thread.start()
+
+def process_edit_queue():
+    """Process edit tasks from the queue one at a time."""
+    while True:
+        task_to_process = None
+        
+        with edit_queue_lock:
+            # Find next queued task
+            for task in edit_queue:
+                if task['status'] == 'queued':
+                    task['status'] = 'processing'
+                    task['started_at'] = datetime.utcnow().isoformat()
+                    task_to_process = task
+                    break
+        
+        if task_to_process is None:
+            # No tasks to process, sleep and check again
+            import time
+            time.sleep(1)
+            continue
+        
+        # Process the task
+        try:
+            with app.app_context():
+                image_id = task_to_process['image_id']
+                instruction = task_to_process['instruction']
+                
+                # Get the original image
+                original_img = GeneratedImage.query.get(image_id)
+                if not original_img:
+                    raise Exception("Image not found")
+                
+                if not os.path.exists(original_img.file_path):
+                    raise Exception("Original image file not found")
+                
+                # Use Gemini to edit the image
+                edited_image_data = edit_image_with_gemini(
+                    original_image_path=original_img.file_path,
+                    instruction=instruction
+                )
+                
+                if not edited_image_data:
+                    raise Exception("Gemini returned no image data")
+                
+                # Create a backup first
+                backup_path = original_img.file_path + '.backup'
+                if os.path.exists(original_img.file_path):
+                    import shutil
+                    shutil.copy2(original_img.file_path, backup_path)
+                
+                # Save the edited image
+                with open(original_img.file_path, 'wb') as f:
+                    f.write(edited_image_data)
+                
+                # Clean up backup if save was successful
+                if os.path.exists(backup_path):
+                    os.remove(backup_path)
+                
+                # Update edited_at timestamp
+                original_img.edited_at = datetime.utcnow()
+                db.session.commit()
+                
+                # Update task status
+                with edit_queue_lock:
+                    for task in edit_queue:
+                        if task['id'] == task_to_process['id']:
+                            task['status'] = 'completed'
+                            task['completed_at'] = datetime.utcnow().isoformat()
+                            task['success'] = True
+                            task['edited_image_path'] = original_img.file_path
+                            break
+                            
+        except Exception as e:
+            print(f"Background image editing error: {str(e)}")
+            with edit_queue_lock:
+                for task in edit_queue:
+                    if task['id'] == task_to_process['id']:
+                        task['status'] = 'error'
+                        task['completed_at'] = datetime.utcnow().isoformat()
+                        task['error'] = str(e)
+                        task['success'] = False
+                        break
 
 @app.route('/api/generate/stop', methods=['POST'])
 def stop_generation():
@@ -693,14 +787,87 @@ def download_image(image_id):
     else:
         return jsonify({'error': 'File not found'}), 404
 
-# ============ Image Editing Endpoint ============
+@app.route('/api/generated-images/bulk-download', methods=['POST'])
+def bulk_download_images():
+    """Download multiple images as a ZIP file"""
+    data = request.json
+    ids = data.get('ids', [])
+    
+    if not ids:
+        return jsonify({'error': 'No image IDs provided'}), 400
+    
+    # Get images by IDs
+    images = GeneratedImage.query.filter(GeneratedImage.id.in_(ids)).all()
+    
+    if not images:
+        return jsonify({'error': 'No images found'}), 404
+    
+    # Create ZIP in memory
+    zip_buffer = io.BytesIO()
+    
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        for idx, img in enumerate(images):
+            if os.path.exists(img.file_path):
+                # Get file extension
+                ext = os.path.splitext(img.file_path)[1] or '.png'
+                # Create filename: P001_character_1.png
+                prompt_num = img.prompt.prompt_number if img.prompt else f'img{idx+1}'
+                char_name = re.sub(r'[^a-z0-9]', '_', (img.character_name or 'Ungrouped').lower())
+                filename = f"{prompt_num}_{char_name}_{idx+1}{ext}"
+                
+                # Read file and add to ZIP
+                with open(img.file_path, 'rb') as f:
+                    zipf.writestr(filename, f.read())
+    
+    zip_buffer.seek(0)
+    
+    return send_file(
+        zip_buffer,
+        mimetype='application/zip',
+        as_attachment=True,
+        download_name='selected_images.zip'
+    )
+
+@app.route('/api/generated-images/delete-all/<character_name>', methods=['POST'])
+def delete_all_for_character(character_name):
+    """Delete all images for a specific character"""
+    # URL decode the character name
+    char_name = character_name
+    
+    # Find all images for this character
+    images = GeneratedImage.query.filter(
+        GeneratedImage.character_name.ilike(char_name)
+    ).all()
+    
+    # If no character_name match, try to find by model_name in prompt
+    if not images:
+        prompts = Prompt.query.filter(
+            Prompt.model_name.ilike(char_name)
+        ).all()
+        prompt_ids = [p.id for p in prompts]
+        images = GeneratedImage.query.filter(
+            GeneratedImage.prompt_id.in_(prompt_ids)
+        ).all() if prompt_ids else []
+    
+    deleted_count = 0
+    for img in images:
+        try:
+            if os.path.exists(img.file_path):
+                os.remove(img.file_path)
+        except:
+            pass
+        db.session.delete(img)
+        deleted_count += 1
+    
+    db.session.commit()
+    return jsonify({'deleted': deleted_count})
+
+# ============ Image Editing Endpoint (Queue-based) ============
 
 @app.route('/api/edit-image', methods=['POST'])
 def edit_image():
     """Edit an image using Google Gemini API with the original image as reference.
-    Runs in background to avoid blocking the UI."""
-    global edit_status
-    
+    Runs in background queue to avoid blocking the UI."""
     data = request.json
     image_id = data.get('image_id')
     instruction = data.get('instruction', '').strip()
@@ -719,90 +886,100 @@ def edit_image():
     if not os.path.exists(original_img.file_path):
         return jsonify({'error': 'Original image file not found'}), 404
     
-    # Initialize edit status
-    edit_status = {
-        'is_editing': True,
-        'current_image_id': image_id,
+    # Check if this image is already being edited (queued or processing)
+    with edit_queue_lock:
+        for task in edit_queue:
+            if task['image_id'] == image_id and task['status'] in ['queued', 'processing']:
+                return jsonify({
+                    'error': 'This image is already being edited',
+                    'existing_task_id': task['id'],
+                    'status': task['status']
+                }), 409
+    
+    # Create edit task
+    task_id = get_next_edit_id()
+    task = {
+        'id': task_id,
+        'image_id': image_id,
         'instruction': instruction,
-        'completed': False,
+        'status': 'queued',  # queued, processing, completed, error
+        'created_at': datetime.utcnow().isoformat(),
+        'started_at': None,
+        'completed_at': None,
         'error': None,
         'success': False,
         'edited_image_path': None
     }
     
-    # Start editing in background thread
-    edit_thread = threading.Thread(
-        target=edit_image_background,
-        args=(image_id, instruction)
-    )
-    edit_thread.daemon = True
-    edit_thread.start()
+    # Add to queue
+    with edit_queue_lock:
+        edit_queue.append(task)
+    
+    # Start the processor if not running
+    start_edit_processor()
     
     return jsonify({
         'success': True,
-        'message': 'Image edit started in background',
-        'edit_id': image_id
+        'message': 'Image added to edit queue',
+        'task_id': task_id
     })
-
-
-def edit_image_background(image_id, instruction):
-    """Background function to edit image without blocking UI."""
-    global edit_status
-    
-    try:
-        # Get the original image
-        original_img = GeneratedImage.query.get(image_id)
-        if not original_img:
-            raise Exception("Image not found")
-        
-        if not os.path.exists(original_img.file_path):
-            raise Exception("Original image file not found")
-        
-        # Use Gemini to edit the image
-        edited_image_data = edit_image_with_gemini(
-            original_image_path=original_img.file_path,
-            instruction=instruction
-        )
-        
-        if not edited_image_data:
-            raise Exception("Gemini returned no image data")
-        
-        # Create a backup first
-        backup_path = original_img.file_path + '.backup'
-        if os.path.exists(original_img.file_path):
-            import shutil
-            shutil.copy2(original_img.file_path, backup_path)
-        
-        # Save the edited image
-        with open(original_img.file_path, 'wb') as f:
-            f.write(edited_image_data)
-        
-        # Clean up backup if save was successful
-        if os.path.exists(backup_path):
-            os.remove(backup_path)
-        
-        # Update edited_at timestamp
-        original_img.edited_at = datetime.utcnow()
-        db.session.commit()
-        
-        # Update status
-        edit_status['success'] = True
-        edit_status['completed'] = True
-        edit_status['edited_image_path'] = original_img.file_path
-        edit_status['is_editing'] = False
-        
-    except Exception as e:
-        print(f"Background image editing error: {str(e)}")
-        edit_status['error'] = str(e)
-        edit_status['completed'] = True
-        edit_status['success'] = False
-        edit_status['is_editing'] = False
 
 
 @app.route('/api/edit-status', methods=['GET'])
 def get_edit_status():
-    """Get the current status of image editing (for polling)."""
-    return jsonify(edit_status)
+    """Get the current status of all image editing tasks (for polling)."""
+    with edit_queue_lock:
+        # Return queue copy with status info
+        queue_status = []
+        for task in edit_queue:
+            queue_status.append({
+                'id': task['id'],
+                'image_id': task['image_id'],
+                'instruction': task['instruction'],
+                'status': task['status'],
+                'created_at': task['created_at'],
+                'started_at': task.get('started_at'),
+                'completed_at': task.get('completed_at'),
+                'error': task.get('error'),
+                'success': task.get('success', False)
+            })
+        
+        # Clean up completed tasks older than 5 minutes
+        current_time = datetime.utcnow()
+        cleanup_threshold = 300  # 5 minutes
+        edit_queue[:] = [t for t in edit_queue 
+            if t['status'] != 'completed' or 
+            (t.get('completed_at') and 
+             (current_time - datetime.fromisoformat(t['completed_at'])).total_seconds() < cleanup_threshold)]
+        
+        return jsonify({
+            'queue': queue_status,
+            'total': len(queue_status),
+            'processing': sum(1 for t in queue_status if t['status'] == 'processing'),
+            'queued': sum(1 for t in queue_status if t['status'] == 'queued'),
+            'completed': sum(1 for t in queue_status if t['status'] == 'completed'),
+            'error': sum(1 for t in queue_status if t['status'] == 'error')
+        })
+
+
+@app.route('/api/edit-status/<int:task_id>', methods=['GET'])
+def get_edit_task_status(task_id):
+    """Get status of a specific edit task."""
+    with edit_queue_lock:
+        for task in edit_queue:
+            if task['id'] == task_id:
+                return jsonify({
+                    'id': task['id'],
+                    'image_id': task['image_id'],
+                    'instruction': task['instruction'],
+                    'status': task['status'],
+                    'created_at': task['created_at'],
+                    'started_at': task.get('started_at'),
+                    'completed_at': task.get('completed_at'),
+                    'error': task.get('error'),
+                    'success': task.get('success', False)
+                })
+    return jsonify({'error': 'Task not found'}), 404
 
 
 def edit_image_with_gemini(original_image_path, instruction):
@@ -826,8 +1003,8 @@ def edit_image_with_gemini(original_image_path, instruction):
     if not api_key:
         raise Exception("GEMINI_API_KEY not found in environment or .env file")
     
-    # Initialize Client with timeout
-    client = genai.Client(api_key=api_key, http_options={'timeout': 120})
+    # Initialize Client with longer timeout for image operations
+    client = genai.Client(api_key=api_key, http_options={'timeout': 600})
     
     # Get original image dimensions for consistent output
     with Image.open(original_image_path) as img:
@@ -879,7 +1056,8 @@ def edit_image_with_gemini(original_image_path, instruction):
             contents=contents,
             config=types.GenerateContentConfig(
                 response_modalities=["TEXT", "IMAGE"],
-                image_config=types.ImageConfig(**image_cfg_kwargs)
+                image_config=types.ImageConfig(**image_cfg_kwargs),
+                http_options=types.HttpOptions(timeout=1200)
             )
         )
         
@@ -1182,6 +1360,25 @@ def get_stats():
         'total_prompts': total_prompts,
         'total_generated': total_generated,
         'total_reference_images': total_refs
+    })
+
+@app.route('/api/debug/images', methods=['GET'])
+def debug_images():
+    """Debug endpoint to check image paths"""
+    images = GeneratedImage.query.all()
+    result = []
+    for img in images[:10]:  # Limit to first 10
+        result.append({
+            'id': img.id,
+            'file_path': img.file_path,
+            'file_exists': os.path.exists(img.file_path),
+            'character_name': img.character_name,
+            'prompt_id': img.prompt_id
+        })
+    return jsonify({
+        'count': len(images),
+        'sample': result,
+        'generated_folder': app.config['GENERATED_FOLDER']
     })
 
 if __name__ == '__main__':
