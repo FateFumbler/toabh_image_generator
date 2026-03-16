@@ -200,11 +200,77 @@ export function PromptsPage() {
         </div>
       )}
 
-      {/* Toolbar */}
+      {/* Category Tabs */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
-        <div className="flex flex-col lg:flex-row gap-4">
-          {/* Search */}
-          <div className="relative flex-1">
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
+          <button
+            onClick={() => setCategoryFilter('all')}
+            className={cn(
+              "px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors",
+              categoryFilter === 'all'
+                ? "bg-indigo-600 text-white"
+                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+            )}
+          >
+            All
+          </button>
+          {categories.map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => setCategoryFilter(cat.name)}
+              className={cn(
+                "px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors",
+                categoryFilter === cat.name
+                  ? "bg-indigo-600 text-white"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              )}
+            >
+              {cat.name}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Gender Tabs */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-slate-700 mr-2">Gender:</span>
+          <button
+            onClick={() => setGenderFilter('all')}
+            className={cn(
+              "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
+              genderFilter === 'all'
+                ? "bg-indigo-600 text-white"
+                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+            )}
+          >
+            All
+          </button>
+          <button
+            onClick={() => setGenderFilter('female')}
+            className={cn(
+              "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
+              genderFilter === 'female'
+                ? "bg-indigo-600 text-white"
+                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+            )}
+          >
+            Female
+          </button>
+          <button
+            onClick={() => setGenderFilter('male')}
+            className={cn(
+              "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
+              genderFilter === 'male'
+                ? "bg-indigo-600 text-white"
+                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+            )}
+          >
+            Male
+          </button>
+          
+          {/* Search and other controls */}
+          <div className="relative flex-1 ml-4">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
               type="text"
