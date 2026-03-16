@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toabh AI Imagen</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <img src="{{ url_for('static', filename='logo.jpg') }}" alt="TOABH" class="logo-img">
+                <span>AI Imagen</span>
+            </div>
+            
+            <nav class="nav-menu">
+                <a href="#prompts-section" class="nav-item active" data-section="prompts">
+                    <i class="fas fa-lightbulb"></i>
+                    <span>Prompts</span>
+                </a>
+                <a href="#favorites-section" class="nav-item" data-section="favorites">
+                    <i class="fas fa-heart"></i>
+                    <span>Favorites <span class="fav-count-badge" id="favorites-count-badge">(0)</span></span>
+                </a>
+                <a href="#characters-modal" class="nav-item" id="sidebar-manage-chars">
+                    <i class="fas fa-user-friends"></i>
+                    <span>Characters</span>
+                </a>
+                <a href="#categories-modal" class="nav-item" id="sidebar-manage-cats">
+                    <i class="fas fa-tags"></i>
+                    <span>Categories</span>
+                </a>
+                <a href="#generate-section" class="nav-item" data-section="generate">
+                    <i class="fas fa-wand-magic"></i>
+                    <span>Generate</span>
+                </a>
+                <a href="#results-section" class="nav-item" data-section="results">
+                    <i class="fas fa-images"></i>
+                    <span>Results</span>
+                </a>
+                <a href="#prompt-generator-section" class="nav-item" data-section="prompt-generator">
+                    <i class="fas fa-wand-magic-sparkles"></i>
+                    <span>Prompt Generator</span>
+                </a>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="stats">
+                    <div class="stat-item">
+                        <span class="stat-value" id="total-prompts">0</span>
+                        <span class="stat-label">Prompts</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value" id="total-generated">0</span>
+                        <span class="stat-label">Generated</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <h1>Dashboard</h1>
+                <div class="header-actions">
+                    <button class="btn btn-secondary" id="refresh-btn">
+                        <i class="fas fa-refresh"></i> Refresh
+                    </button>
+                </div>
+            </header>
+
+            <!-- Prompts Section -->
+            <section id="prompts-section" class="section active">
+
+
+                <!-- Reference Images Upload -->
+                <div class="reference-section card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-images"></i> Reference Images</h3>
+                        <span class="badge" id="ref-count">0/8</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="model-input-group">
+                            <label>Character/Look Name (for reference images)</label>
+                            <div class="char-select-group">
+                                <select id="model-name-select" class="select-input">
+                                    <!-- Characters will be listed here -->
+                                </select>
+                                <input type="text" id="model-name" class="text-input" placeholder="Or type new name..." value="default_model">
+                            </div>
+                        </div>
+                        <div class="upload-zone" id="upload-zone">
+                            <input type="file" id="ref-upload" multiple accept="image/*" style="display: none;">
+                            <div class="upload-placeholder">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <p>Drag & drop images here or click to browse</p>
+                                <span class="upload-hint">Up to 8 images (PNG, JPG, WEBP)</span>
+                            </div>
+                        </div>
+                        <div class="reference-preview" id="reference-preview"></div>
+                        <div class="reference-actions">
+                            <button class="btn btn-danger btn-sm" id="clear-ref-btn">
+                                <i class="fas fa-trash"></i> Clear All
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="filters-bar">
+                    <!-- Search Bar -->
+                    <div class="search-group">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="search-input" class="search-input" placeholder="Search prompts (P001, P217, theme...)">
+                    </div>
+                    
+                    <!-- Gender Toggle -->
+                    <div class="filter-group">
+                        <label>Gender:</label>
+                        <div class="toggle-buttons" id="gender-toggle">
+                            <button class="toggle-btn active" data-value="all">All</button>
+                            <button class="toggle-btn" data-value="female">Female</button>
+                            <button class="toggle-btn" data-value="male">Male</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Category Toggle -->
+                    <div class="filter-group">
+                        <label>Category:</label>
+                        <div class="category-nav-wrapper">
+                            <button class="category-nav-btn category-scroll-left" aria-label="Scroll left">
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                            <div class="toggle-buttons" id="category-toggle">
+                                <button class="toggle-btn active" data-value="all">All</button>
+                                <button class="toggle-btn" data-value="Polaroids">Polaroids</button>
+                                <button class="toggle-btn" data-value="Portfolio">Portfolio</button>
+                                <button class="toggle-btn" data-value="Indian">Indian</button>
+                                <button class="toggle-btn" data-value="Swimwear/Lingerie">Swimwear/Lingerie</button>
+                            </div>
+                            <button class="category-nav-btn category-scroll-right" aria-label="Scroll right">
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="filter-actions">
+                        <button class="btn btn-primary" id="add-prompt-btn">
+                            <i class="fas fa-plus"></i> Add Prompt
+                        </button>
+                        <button class="btn btn-secondary" id="bulk-add-btn">
+                            <i class="fas fa-list"></i> Bulk Add
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Hidden filters for API compatibility -->
+                <select id="gender-filter" style="display: none;">
+                    <option value="all">All</option>
+                    <option value="female">Female</option>
+                    <option value="male">Male</option>
+                </select>
+                <select id="category-filter" style="display: none;">
+                    <option value="all">All</option>
+                    <option value="Polaroids">Polaroids</option>
+                    <option value="Portfolio">Portfolio</option>
+                    <option value="Indian">Indian</option>
+                    <option value="Swimwear/Lingerie">Swimwear/Lingerie</option>
+                </select>
+
+                <!-- Bulk Actions -->
+                <div class="bulk-actions-bar" id="bulk-actions-bar">
+                    <span id="selected-count">0 selected</span>
+                    <div class="bulk-actions">
+                        <div class="btn-group mr-2">
+                            <button class="btn btn-secondary btn-sm" id="select-all-btn">All</button>
+                            <button class="btn btn-secondary btn-sm" id="deselect-all-btn">None</button>
+                        </div>
+                        <button class="btn btn-danger btn-sm" id="bulk-delete-btn">
+                            <i class="fas fa-trash"></i> Delete Selected
+                        </button>
+                        <button class="btn btn-primary btn-sm" id="select-generate-btn">
+                            <i class="fas fa-wand-magic"></i> Generate Selected
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Prompts Grid -->
+                <div class="prompts-grid" id="prompts-grid">
+                    <!-- Prompt cards will be inserted here -->
+                </div>
+            </section>
+
+            <!-- Favorites Section -->
+            <section id="favorites-section" class="section">
+                <div class="section-header">
+                    <h2>Favorite Prompts</h2>
+                </div>
+                
+                <!-- Category Filter Buttons -->
+                <div class="favorites-filters">
+                    <div class="filter-buttons" id="favorites-category-filters">
+                        <div class="filter-buttons-inner">
+                            <button class="category-nav-btn favorites-scroll-left" aria-label="Scroll left">
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                            <div class="filter-btn-scroll" id="favorites-category-toggle">
+                                <!-- Category buttons loaded dynamically from API -->
+                            </div>
+                            <button class="category-nav-btn favorites-scroll-right" aria-label="Scroll right">
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Gender Sections -->
+                <div class="favorites-gender-sections" id="favorites-gender-sections">
+                    <!-- Male Section -->
+                    <div class="gender-section" id="male-favorites-section">
+                        <div class="gender-section-header" onclick="toggleGenderSection('male')">
+                            <div class="gender-section-title">
+                                <i class="fas fa-chevron-right"></i>
+                                <i class="fas fa-male"></i>
+                                <span>Male</span>
+                                <span class="gender-count" id="male-favorites-count">(0)</span>
+                            </div>
+                        </div>
+                        <div class="gender-section-content" id="male-favorites-grid">
+                            <!-- Male favorites will be inserted here -->
+                        </div>
+                    </div>
+                    
+                    <!-- Female Section -->
+                    <div class="gender-section" id="female-favorites-section">
+                        <div class="gender-section-header" onclick="toggleGenderSection('female')">
+                            <div class="gender-section-title">
+                                <i class="fas fa-chevron-right"></i>
+                                <i class="fas fa-female"></i>
+                                <span>Female</span>
+                                <span class="gender-count" id="female-favorites-count">(0)</span>
+                            </div>
+                        </div>
+                        <div class="gender-section-content" id="female-favorites-grid">
+                            <!-- Female favorites will be inserted here -->
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Empty State -->
+                <div class="favorites-empty" id="favorites-empty" style="display: none;">
+                    <div class="empty-state"><i class="fas fa-heart"></i><p>No favorites yet</p></div>
+                </div>
+            </section>
+
+            <!-- Generate Section -->
+            <section id="generate-section" class="section">
+                <div class="section-header">
+                    <h2>Image Generation</h2>
+                </div>
+
+                <div class="generation-setup card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-sliders"></i> Generation Settings</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="settings-grid">
+                            <div class="setting-item">
+                                <label>AI Model</label>
+                                <div class="model-toggle">
+                                    <button class="model-option active" data-model="flux">
+                                        <i class="fas fa-bolt"></i>
+                                        FLUX 2 Pro
+                                    </button>
+                                    <button class="model-option" data-model="gemini">
+                                        <i class="fas fa-gem"></i>
+                                        Gemini
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <label>Resolution</label>
+                                <select id="resolution-select" class="select-input">
+                                    <option value="1k">1K (1024x1024)</option>
+                                    <option value="2k">2K (2048x2048)</option>
+                                </select>
+                            </div>
+                            <div class="setting-item">
+                                <label>Aspect Ratio</label>
+                                <select id="aspect-ratio-select" class="select-input">
+                                    <option value="1:1">1:1 Square</option>
+                                    <option value="16:9">16:9 Landscape</option>
+                                    <option value="9:16">9:16 Portrait</option>
+                                    <option value="4:3">4:3 Standard</option>
+                                    <option value="3:4">3:4 Portrait</option>
+                                </select>
+                            </div>
+                            <div class="setting-item">
+                                <label>Reference Set (for reference images)</label>
+                                <select id="gen-model-select" class="select-input">
+                                    <option value="default_model">default_model</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="generation-queue card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-list-check"></i> Generation Queue</h3>
+                        <span class="badge" id="queue-count">0</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="queue-list" id="queue-list">
+                            <p class="empty-state">Select prompts from the Prompts section to add them here</p>
+                        </div>
+                        <div class="queue-actions">
+                            <button class="btn btn-primary btn-lg" id="start-generation-btn" disabled>
+                                <i class="fas fa-play"></i> Start Generation
+                            </button>
+                            <button class="btn btn-danger btn-lg" id="stop-generation-btn" style="display: none;">
+                                <i class="fas fa-stop"></i> Stop
+                            </button>
+                            <button class="btn btn-secondary" id="clear-queue-btn">
+                                <i class="fas fa-times"></i> Clear Queue
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Generation Status -->
+                <div class="generation-status card" id="generation-status-card" style="display: none;">
+                    <div class="card-header">
+                        <h3><i class="fas fa-spinner fa-spin"></i> Generating Images</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="progress-container">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+                            </div>
+                            <div class="progress-stats">
+                                <span id="progress-text">0 / 0 completed</span>
+                                <span id="current-prompt">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Results Section -->
+            <section id="results-section" class="section">
+                <div class="section-header">
+                    <h2>Generated Images</h2>
+                </div>
+
+                <div class="results-filters">
+                    <select id="results-model-filter" class="select-input">
+                        <option value="all">All Models</option>
+                    </select>
+                    <button class="btn btn-secondary" id="refresh-results-btn">
+                        <i class="fas fa-refresh"></i> Refresh
+                    </button>
+                </div>
+
+                <!-- Bulk Actions Toolbar -->
+                <div class="results-bulk-actions" id="results-bulk-actions" style="display: none;">
+                    <div class="bulk-selection-info">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="results-select-all">
+                            <span id="results-selected-count">0</span> selected
+                        </label>
+                    </div>
+                    <div class="bulk-buttons">
+                        <button class="btn btn-primary btn-sm" id="bulk-download-selected-btn">
+                            <i class="fas fa-download"></i> Download Selected
+                        </button>
+                        <button class="btn btn-danger btn-sm" id="bulk-delete-selected-btn">
+                            <i class="fas fa-trash"></i> Delete Selected
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Edit Status Banner -->
+                <div class="edit-status-banner" id="edit-status-banner" style="display: none;">
+                    <div class="edit-status-content">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <span id="edit-status-text">Editing image...</span>
+                    </div>
+                    <button class="edit-banner-dismiss" onclick="dismissEditBanner()" title="Dismiss">✕</button>
+                    <div class="edit-progress-bar">
+                        <div class="edit-progress-fill" id="edit-progress-fill"></div>
+                    </div>
+                </div>
+
+                <div class="results-container" id="results-container">
+                    <!-- Results will be grouped by model -->
+                </div>
+            </section>
+
+            <!-- Prompt Generator Section -->
+            <section id="prompt-generator-section" class="section">
+                <div class="section-header">
+                    <h2><i class="fas fa-wand-magic-sparkles"></i> Prompt Generator</h2>
+                    <p>Generate structured prompts from images using AI.</p>
+                </div>
+
+                <div class="generator-layout">
+                    <!-- Knowledge Base Panel -->
+                    <div class="kb-panel card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-book"></i> Knowledge Base Rules</h3>
+                            <button class="btn btn-sm btn-primary" onclick="savePromptKB()">Save Rules</button>
+                        </div>
+                        <div class="card-body">
+                            <textarea id="generator-kb" placeholder="Define prompt style, structure, and consistency rules here..."></textarea>
+                            <p class="help-text">These rules guide the AI when generating prompts from your images.</p>
+                        </div>
+                    </div>
+
+                    <!-- Generator Chat/Upload Panel -->
+                    <div class="generator-panel card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-upload"></i> Upload Images</h3>
+                            <span class="badge" id="upload-count">0/20</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="upload-area" id="generator-upload-area">
+                                <i class="fas fa-cloud-upload-alt fa-3x"></i>
+                                <p>Click or drag images here to analyze</p>
+                                <input type="file" id="generator-file-input" multiple accept="image/*" style="display: none;">
+                            </div>
+                            <div id="generator-preview-grid" class="preview-grid"></div>
+                            
+                            <div class="action-bar">
+                                <button class="btn btn-primary btn-block" id="start-generator-btn" disabled>
+                                    <i class="fas fa-play"></i> Generate Prompts
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Generated Results -->
+                <div id="generator-results" class="card" style="display: none; margin-top: 20px;">
+                    <div class="card-header">
+                        <h3><i class="fas fa-list-check"></i> Generated Prompts</h3>
+                        <div class="header-actions">
+                            <select id="save-gender" class="form-select sm">
+                                <option value="FEMALE">Female</option>
+                                <option value="MALE">Male</option>
+                            </select>
+                            <select id="save-category" class="form-select sm">
+                                <!-- Populated dynamically -->
+                            </select>
+                            <button class="btn btn-success" onclick="saveGeneratedToLibrary()">
+                                <i class="fas fa-save"></i> Add to Library
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <textarea id="generated-prompts-output" rows="10" class="form-control"></textarea>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Add Prompt Modal -->
+    <div class="modal" id="add-prompt-modal">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New Prompt</h3>
+                <button class="modal-close"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="add-prompt-form">
+                    <div class="form-group">
+                        <label>Theme Name</label>
+                        <input type="text" name="theme" class="text-input" placeholder="e.g., Beach Sunset" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Prompt Text</label>
+                        <textarea name="prompt_text" class="textarea-input" rows="4" placeholder="Detailed prompt description..." required></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Gender</label>
+                            <select name="gender" class="select-input">
+                                <option value="female">Female</option>
+                                <option value="male">Male</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Category</label>
+                            <select name="category" class="select-input">
+                                <option value="Polaroids">Polaroids</option>
+                                <option value="Portfolio">Portfolio</option>
+                                <option value="Indian">Indian</option>
+                                <option value="Swimwear/Lingerie">Swimwear/Lingerie</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Model Reference</label>
+                        <select name="model_name" class="select-input" id="modal-model-select">
+                            <option value="">None</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary modal-cancel">Cancel</button>
+                <button class="btn btn-primary" id="save-prompt-btn">Save Prompt</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulk Add Modal -->
+    <div class="modal" id="bulk-add-modal">
+        <div class="modal-overlay"></div>
+        <div class="modal-content modal-lg">
+            <div class="modal-header">
+                <h3>Bulk Add Prompts</h3>
+                <button class="modal-close"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="bulk-instructions">
+                    <p>Paste 20-50 prompts below. Format: <code>Theme: Prompt text</code> or just <code>Prompt text</code></p>
+                </div>
+                <form id="bulk-add-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Default Gender</label>
+                            <select name="gender" class="select-input">
+                                <option value="female">Female</option>
+                                <option value="male">Male</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Default Category</label>
+                            <select name="category" class="select-input">
+                                <option value="Polaroids">Polaroids</option>
+                                <option value="Portfolio">Portfolio</option>
+                                <option value="Indian">Indian</option>
+                                <option value="Swimwear/Lingerie">Swimwear/Lingerie</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Paste Prompts (one per line, max 50)</label>
+                        <textarea name="prompts_text" class="textarea-input bulk-textarea" rows="15" placeholder="Beach: Young woman walking on a sunset beach with long flowing hair
+Studio: Professional fashion portrait with white background, studio lighting
+Outdoor: Model walking through autumn forest, golden hour lighting
+Headshot: Close-up portrait with natural lighting, soft focus" required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary modal-cancel">Cancel</button>
+                <button class="btn btn-primary" id="save-bulk-btn">Add Prompts</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manage Categories Modal -->
+    <div class="modal" id="categories-modal">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Manage Categories</h3>
+                <button class="modal-close"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="add-cat-group">
+                    <input type="text" id="new-cat-name" class="text-input" placeholder="New category name...">
+                    <button class="btn btn-primary" id="save-cat-btn">Add</button>
+                </div>
+                <div class="categories-list" id="categories-list">
+                    <!-- Categories will be listed here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manage Characters Modal -->
+    <div class="modal" id="characters-modal">
+        <div class="modal-overlay"></div>
+        <div class="modal-content modal-lg">
+            <div class="modal-header">
+                <h3>Manage Characters</h3>
+                <button class="modal-close"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <!-- Add New Character Section -->
+                <div class="add-character-section">
+                    <h4>Add New Character</h4>
+                    <div class="add-char-form">
+                        <div class="form-row">
+                            <input type="text" id="new-char-name" class="text-input" placeholder="Character name...">
+                            <button class="btn btn-primary" id="save-char-btn">Add</button>
+                        </div>
+                        <div class="char-upload-section">
+                            <label>Reference Images (optional)</label>
+                            <input type="file" id="char-ref-upload" multiple accept="image/*" class="file-input">
+                            <p class="upload-hint">Upload up to 8 reference images for this character</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Characters List -->
+                <div class="characters-grid" id="characters-list">
+                    <!-- Characters will be listed here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Prompt Modal -->
+    <div class="modal" id="edit-prompt-modal">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Prompt</h3>
+                <button class="modal-close"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="edit-prompt-form">
+                    <input type="hidden" id="edit-prompt-id">
+                    <div class="form-group">
+                        <label>Prompt Number</label>
+                        <input type="text" id="edit-prompt-number" class="text-input" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label>Theme Name</label>
+                        <input type="text" name="theme" id="edit-theme" class="text-input" placeholder="e.g., Beach Sunset" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Prompt Text</label>
+                        <textarea name="prompt_text" id="edit-prompt-text" class="textarea-input" rows="4" placeholder="Detailed prompt description..." required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select name="category" id="edit-category" class="select-input">
+                            <option value="Portfolio">Portfolio</option>
+                            <option value="Beauty">Beauty</option>
+                            <option value="Runway">Runway</option>
+                            <option value="Fashion">Fashion</option>
+                            <option value="Commercial">Commercial</option>
+                            <option value="Polaroids">Polaroids</option>
+                            <option value="Indian">Indian</option>
+                            <option value="Swimwear/Lingerie">Swimwear/Lingerie</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary modal-cancel">Cancel</button>
+                <button class="btn btn-primary" id="save-edit-btn">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal" id="delete-modal">
+        <div class="modal-overlay"></div>
+        <div class="modal-content modal-sm">
+            <div class="modal-header">
+                <h3>Confirm Delete</h3>
+                <button class="modal-close"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <p id="delete-message">Are you sure you want to delete this item?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary modal-cancel">Cancel</button>
+                <button class="btn btn-danger" id="confirm-delete-btn">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Lightbox Modal -->
+    <div class="lightbox" id="lightbox">
+        <div class="lightbox-overlay"></div>
+        <div class="lightbox-content">
+            <button class="lightbox-close" id="lightbox-close"><i class="fas fa-times"></i></button>
+            <button class="lightbox-nav lightbox-prev" id="lightbox-prev"><i class="fas fa-chevron-left"></i></button>
+            <button class="lightbox-nav lightbox-next" id="lightbox-next"><i class="fas fa-chevron-right"></i></button>
+            <img src="" alt="Preview" id="lightbox-image">
+            <div class="lightbox-info">
+                <span class="lightbox-prompt-number" id="lightbox-prompt-number"></span>
+                <a href="" download class="lightbox-download" id="lightbox-download">
+                    <i class="fas fa-download"></i> Download
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Image Modal -->
+    <div class="modal" id="edit-image-modal">
+        <div class="modal-overlay"></div>
+        <div class="modal-content modal-sm">
+            <div class="modal-header">
+                <h3><i class="fas fa-edit"></i> Edit Image</h3>
+                <button class="modal-close"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="edit-image-preview">
+                    <img id="edit-image-preview-img" src="" alt="Original image">
+                    <p class="edit-image-label">Original Image</p>
+                </div>
+                <div class="form-group">
+                    <label>Editing Instruction</label>
+                    <textarea id="edit-instruction" class="textarea-input" rows="3" placeholder="e.g., Remove the text in the background, Fix the lighting, Adjust the clothing, Change the background to beach sunset..."></textarea>
+                    <p class="form-hint">Describe what you want to change. Be specific for better results.</p>
+                </div>
+                <div class="edit-suggestions">
+                    <span class="suggestion-label">Quick suggestions:</span>
+                    <button class="suggestion-btn" onclick="setEditInstruction('remove text')">Remove text</button>
+                    <button class="suggestion-btn" onclick="setEditInstruction('fix background')">Fix background</button>
+                    <button class="suggestion-btn" onclick="setEditInstruction('adjust lighting')">Adjust lighting</button>
+                    <button class="suggestion-btn" onclick="setEditInstruction('enhance colors')">Enhance colors</button>
+                </div>
+                <input type="hidden" id="edit-image-id">
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary modal-cancel">Cancel</button>
+                <button class="btn btn-primary" id="apply-edit-btn">
+                    <i class="fas fa-wand-magic"></i> Apply Edit
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Loading Overlay -->
+    <div class="edit-loading-overlay" id="edit-loading-overlay" style="display: none;">
+        <div class="edit-loading-content">
+            <div class="spinner"></div>
+            <p>Editing image...</p>
+            <span class="edit-loading-instruction" id="edit-loading-instruction"></span>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

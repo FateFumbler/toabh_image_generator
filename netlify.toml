@@ -1,0 +1,14 @@
+[build]
+  command = "pip install -r requirements.txt"
+  publish = "."
+
+[functions]
+  directory = "."
+
+[[redirects]]
+  from = "/*"
+  to = "/app.py"
+  status = 200
+
+[context.production]
+  environment = { GEMINI_API_KEY = "" }
