@@ -52,6 +52,10 @@ export function GalleryPage() {
   // Edit queue state
   const [editQueue, setEditQueue] = useState<api.EditTask[]>([]);
   const [pollingEditStatus, setPollingEditStatus] = useState(false);
+  const [dismissedEdits, setDismissedEdits] = useState<Set<number>>(new Set());
+  
+  // Group state
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
 
   // Load data
   const loadData = useCallback(async () => {
@@ -108,6 +112,61 @@ export function GalleryPage() {
       setSelectedImages(new Set());
     } else {
       setSelectedImages(new Set(filteredImages.map(img => img.id)));
+    }
+  };
+
+  // Dismiss edit task
+  const dismissEditTask = (taskId: number) => {
+    setDismissedEdits(prev => new Set(prev).add(taskId));
+  };
+  
+  const clearAllDismissed = () => {
+    setDismissedEdits(new Set());
+  };
+
+  // Group images by character
+  const groupedImages = filteredImages.reduce((acc, image) => {
+    const key = image.character_name || 'Ungrouped';
+    if (!acc[key]) {
+      acc[key] = [];
+    }
+    acc[key].push(image);
+    return acc;
+  }, {} as Record<string, api.GeneratedImage[]>);
+  
+  const toggleGroup = (groupKey: string) => {
+    setExpandedGroups(prev => {
+      const next = new Set(prev);
+      if (next.has(groupKey)) {
+        next.delete(groupKey);
+      } else {
+        next.add(groupKey);
+      }
+      return next;
+    });
+  };
+  
+  const expandAllGroups = () => {
+    setExpandedGroups(new Set(Object.keys(groupedImages)));
+  };
+  
+  const collapseAllGroups = () => {
+    setExpandedGroups(new Set());
+  };
+
+  // Download all images in a group
+  const handleDownloadAllGroup = async (groupKey: string) => {
+    const groupImages = groupedImages[groupKey];
+    for (const image of groupImages) {
+      try {
+        const blob = await api.downloadImage(image.id);
+        const filename = `${image.prompt_number}_${image.character_name || 'ungrouped'}.png`;
+        downloadBlob(blob, filename);
+        // Small delay between downloads
+        await new Promise(resolve => setTimeout(resolve, 500));
+      } catch (err) {
+        console.error(`Failed to download ${filename}:`, err);
+      }
     }
   };
 
@@ -267,7 +326,7 @@ export function GalleryPage() {
       </div>
 
       {/* Edit Queue Status */}
-      {editQueue.length > 0 && (
+      {editQueue.filter(t => !dismissedEdits.has(t.id)).length > 0 && (
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-medium text-slate-900 flex items-center gap-2">
@@ -277,13 +336,23 @@ export function GalleryPage() {
                 <Loader2 className="w-4 h-4 animate-spin text-indigo-600" />
               )}
             </h3>
-            <span className="text-sm text-slate-500">
-              {editQueue.filter(t => t.status === 'queued').length} queued,{' '}
-              {editQueue.filter(t => t.status === 'processing').length} processing
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-slate-500">
+                {editQueue.filter(t => t.status === 'queued' && !dismissedEdits.has(t.id)).length} queued,{' '}
+                {editQueue.filter(t => t.status === 'processing' && !dismissedEdits.has(t.id)).length} processing
+              </span>
+              {editQueue.some(t => dismissedEdits.has(t.id)) && (
+                <button
+                  onClick={clearAllDismissed}
+                  className="text-xs text-indigo-600 hover:text-indigo-700"
+                >
+                  Show dismissed
+                </button>
+              )}
+            </div>
           </div>
           <div className="space-y-2 max-h-32 overflow-y-auto">
-            {editQueue.slice(-5).map(task => (
+            {editQueue.filter(t => !dismissedEdits.has(t.id)).slice(-5).map(task => (
               <div 
                 key={task.id}
                 className={cn(
@@ -300,6 +369,13 @@ export function GalleryPage() {
                 {task.status === 'error' && <AlertCircle className="w-4 h-4" />}
                 <span className="truncate flex-1">{task.instruction}</span>
                 <span className="text-xs opacity-75 capitalize">{task.status}</span>
+                <button
+                  onClick={() => dismissEditTask(task.id)}
+                  className="p-1 hover:bg-black/10 rounded"
+                  title="Dismiss"
+                >
+                  <X className="w-3 h-3" />
+                </button>
               </div>
             ))}
           </div>
@@ -440,8 +516,72 @@ export function GalleryPage() {
           )}
         </div>
       ) : viewMode === 'grid' ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-          {filteredImages.map((image) => (
+        // Grouped by character
+        <div className="space-y-6">
+          {/* Expand/Collapse All */}
+          {Object.keys(groupedImages).length > 1 && (
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-slate-500">
+                {Object.keys(groupedImages).length} groups
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={expandAllGroups}
+                  className="text-xs text-indigo-600 hover:text-indigo-700"
+                >
+                  Expand all
+                </button>
+                <span className="text-slate-300">|</span>
+                <button
+                  onClick={collapseAllGroups}
+                  className="text-xs text-indigo-600 hover:text-indigo-700"
+                >
+                  Collapse all
+                </button>
+              </div>
+            </div>
+          )}
+          
+          {Object.entries(groupedImages).map(([groupKey, groupImages]) => {
+            const isExpanded = expandedGroups.has(groupKey) || expandedGroups.size === 0;
+            return (
+              <div key={groupKey} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                {/* Group Header */}
+                <button
+                  onClick={() => toggleGroup(groupKey)}
+                  className="w-full flex items-center justify-between p-4 hover:bg-slate-50 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <Package className="w-5 h-5 text-indigo-600" />
+                    <div className="text-left">
+                      <h3 className="font-medium text-slate-900">{groupKey}</h3>
+                      <p className="text-sm text-slate-500">{groupImages.length} images</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDownloadAllGroup(groupKey);
+                      }}
+                      className="flex items-center gap-1 px-3 py-1.5 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition-colors"
+                    >
+                      <Download className="w-4 h-4" />
+                      Download All
+                    </button>
+                    <X 
+                      className={cn(
+                        "w-5 h-5 text-slate-400 transition-transform",
+                        isExpanded ? "rotate-180" : ""
+                      )} 
+                    />
+                  </div>
+                </button>
+                
+                {/* Group Content */}
+                {isExpanded && (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 p-4 pt-0">
+                    {groupImages.map((image) => (
             <div
               key={image.id}
               className={cn(
@@ -509,6 +649,11 @@ export function GalleryPage() {
               </div>
             </div>
           ))}
+                </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       ) : (
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
