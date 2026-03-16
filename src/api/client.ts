@@ -106,6 +106,11 @@ export async function deletePrompt(id: number): Promise<{ deleted: boolean }> {
   return handleResponse<{ deleted: boolean }>(response);
 }
 
+export async function toggleFavorite(id: number): Promise<Prompt> {
+  const response = await fetch(`${API_BASE}/prompts/${id}/favorite`, jsonRequest('POST'));
+  return handleResponse<Prompt>(response);
+}
+
 export async function bulkDeletePrompts(ids: number[]): Promise<BulkDeleteResult> {
   const response = await fetch(`${API_BASE}/prompts/bulk-delete`, jsonRequest('POST', { ids }));
   return handleResponse<BulkDeleteResult>(response);

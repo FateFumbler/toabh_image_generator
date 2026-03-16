@@ -172,9 +172,9 @@ export function GalleryPage() {
   const handleDownloadAllGroup = async (groupKey: string) => {
     const groupImages = groupedImages[groupKey];
     for (const image of groupImages) {
+      const filename = `${image.prompt_number}_${image.character_name || 'ungrouped'}.png`;
       try {
         const blob = await api.downloadImage(image.id);
-        const filename = `${image.prompt_number}_${image.character_name || 'ungrouped'}.png`;
         downloadBlob(blob, filename);
         // Small delay between downloads
         await new Promise(resolve => setTimeout(resolve, 500));

@@ -29,7 +29,7 @@ function cn(...inputs: ClassValue[]) {
 
 export function SettingsPage() {
   const [activeTab, setActiveTab] = useState<'general' | 'categories' | 'api' | 'storage'>('general');
-  const { settings, setSettings, loaded } = useSettings();
+  const { settings, setSettings } = useSettings();
   const [saved, setSaved] = useState(false);
 
   // Categories state

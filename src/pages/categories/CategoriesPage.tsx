@@ -7,13 +7,8 @@ import {
   Folder,
   Check
 } from 'lucide-react';
-import { clsx, type ClassValue } from '../../utils/clsx';
 import * as api from '../../api/client';
 import type { Category } from '../../types';
-
-function cn(...inputs: ClassValue[]) {
-  return clsx(inputs);
-}
 
 export function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);

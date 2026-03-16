@@ -1,16 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { 
   Search, 
-  Edit2, 
   Trash2, 
   Copy,
   CheckSquare,
-  Heart,
-  X,
-  ChevronDown,
-  ChevronUp,
-  FileText,
-  Star
+  Heart
 } from 'lucide-react';
 import { clsx, type ClassValue } from '../../utils/clsx';
 import * as api from '../../api/client';
@@ -27,7 +21,6 @@ export function FavoritesPage() {
 
   // Filter state
   const [searchQuery, setSearchQuery] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
 
   // Selection state
   const [selectedPrompts, setSelectedPrompts] = useState<number[]>([]);
@@ -108,17 +101,6 @@ export function FavoritesPage() {
       loadData();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete prompt');
-    }
-  };
-
-  // Bulk delete
-  const handleBulkDelete = async () => {
-    try {
-      await Promise.all(selectedPrompts.map(id => api.deletePrompt(id)));
-      setSelectedPrompts([]);
-      loadData();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete prompts');
     }
   };
 
@@ -269,7 +251,7 @@ export function FavoritesPage() {
                       >
                         <Heart className={cn(
                           "w-5 h-5",
-                          prompt.is_favorite ? "text-amber-400 fill-amber-400" : "text-slate-300"
+                          prompt.favorite ? "text-amber-400 fill-amber-400" : "text-slate-300"
                         )} />
                       </button>
                     </td>
