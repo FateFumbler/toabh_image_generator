@@ -12,6 +12,7 @@ import {
   ChevronUp
 } from 'lucide-react';
 import { clsx, type ClassValue } from '../../utils/clsx';
+import { useSettings } from '../../hooks/useSettings';
 import * as api from '../../api/client';
 
 function cn(...inputs: ClassValue[]) {
@@ -36,13 +37,28 @@ export function GeneratePage() {
   const [generationStatus, setGenerationStatus] = useState<api.GenerationStatus | null>(null);
   const statusPollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Settings
+  // Get default settings
+  const { settings: defaultSettings, loaded: settingsLoaded } = useSettings();
+
+  // Settings - use defaults from settings, but allow override
   const [settings, setSettings] = useState<GenerationSettings>({
     model: 'flux',
     resolution: '1k',
     aspect_ratio: '1:1',
     model_name: 'default_model',
   });
+
+  // Apply default settings when loaded
+  useEffect(() => {
+    if (settingsLoaded) {
+      setSettings(prev => ({
+        ...prev,
+        model: defaultSettings.defaultModel,
+        resolution: defaultSettings.defaultResolution,
+        aspect_ratio: defaultSettings.defaultAspectRatio,
+      }));
+    }
+  }, [settingsLoaded, defaultSettings.defaultModel, defaultSettings.defaultResolution, defaultSettings.defaultAspectRatio]);
 
   // Selection state
   const [selectedPrompts, setSelectedPrompts] = useState<Set<number>>(new Set());

@@ -20,6 +20,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { clsx, type ClassValue } from '../../utils/clsx';
+import { useSettings, RESOLUTION_OPTIONS, ASPECT_RATIO_OPTIONS, FORMAT_OPTIONS, MODEL_OPTIONS } from '../../hooks/useSettings';
 import * as api from '../../api/client';
 
 function cn(...inputs: ClassValue[]) {
@@ -28,7 +29,7 @@ function cn(...inputs: ClassValue[]) {
 
 export function SettingsPage() {
   const [activeTab, setActiveTab] = useState<'general' | 'categories' | 'api' | 'storage'>('general');
-  const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system');
+  const { settings, setSettings, loaded } = useSettings();
   const [saved, setSaved] = useState(false);
 
   // Categories state
@@ -158,10 +159,10 @@ export function SettingsPage() {
                     {(['light', 'dark', 'system'] as const).map((t) => (
                       <button
                         key={t}
-                        onClick={() => setTheme(t)}
+                        onClick={() => setSettings({ theme: t })}
                         className={cn(
                           "flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-all",
-                          theme === t
+                          settings.theme === t
                             ? "border-indigo-600 bg-indigo-50 text-indigo-700"
                             : "border-slate-200 hover:border-slate-300 text-slate-700"
                         )}
@@ -190,35 +191,50 @@ export function SettingsPage() {
             >
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <InputField label="Default Model">
-                  <select className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
-                    <option value="flux">FLUX 2 Pro</option>
-                    <option value="gemini">Gemini</option>
+                  <select
+                    value={settings.defaultModel}
+                    onChange={(e) => setSettings({ defaultModel: e.target.value as 'flux' | 'gemini' })}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  >
+                    {MODEL_OPTIONS.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
                   </select>
                 </InputField>
 
                 <InputField label="Default Resolution">
-                  <select className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
-                    <option value="1k">1K (1024px)</option>
-                    <option value="2k">2K (2048px)</option>
-                    <option value="4k">4K (4096px)</option>
+                  <select
+                    value={settings.defaultResolution}
+                    onChange={(e) => setSettings({ defaultResolution: e.target.value as '1k' | '2k' | '4k' })}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  >
+                    {RESOLUTION_OPTIONS.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
                   </select>
                 </InputField>
 
                 <InputField label="Default Aspect Ratio">
-                  <select className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
-                    <option value="1:1">1:1 Square</option>
-                    <option value="16:9">16:9 Widescreen</option>
-                    <option value="9:16">9:16 Portrait</option>
-                    <option value="4:3">4:3 Standard</option>
-                    <option value="3:4">3:4 Portrait</option>
+                  <select
+                    value={settings.defaultAspectRatio}
+                    onChange={(e) => setSettings({ defaultAspectRatio: e.target.value as '1:1' | '16:9' | '9:16' | '4:3' | '3:4' })}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  >
+                    {ASPECT_RATIO_OPTIONS.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
                   </select>
                 </InputField>
 
                 <InputField label="Output Format">
-                  <select className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
-                    <option value="png">PNG</option>
-                    <option value="jpg">JPG</option>
-                    <option value="webp">WebP</option>
+                  <select
+                    value={settings.defaultFormat}
+                    onChange={(e) => setSettings({ defaultFormat: e.target.value as 'png' | 'jpg' | 'webp' })}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  >
+                    {FORMAT_OPTIONS.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
                   </select>
                 </InputField>
               </div>
