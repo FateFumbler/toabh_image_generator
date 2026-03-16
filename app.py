@@ -110,7 +110,15 @@ def generate_prompts_from_images():
             img_file.seek(0)
             
             # Use Gemini to analyze image
-            prompt_instruction = f"Analyze this image and generate a structured prompt for an AI image generator following these rules:\n\n{kb_text}\n\nReturn ONLY the generated prompt string."
+            prompt_instruction = f"""Analyze this image and generate a structured prompt for an AI image generator.
+
+STRICT RULES - FOLLOW EXACTLY:
+{kb_text}
+
+CRITICAL: Your response MUST be in the exact format:
+Theme: [Theme Name] - [Detailed prompt description]
+
+DO NOT include any other text, explanation, or formatting. Return ONLY the Theme line."""
             
             response = client.models.generate_content(
                 model="gemini-2.0-flash", # Using flash for faster analysis
@@ -145,6 +153,13 @@ def bulk_save_to_library():
     
     if not prompts_text:
         return jsonify({'error': 'No prompts provided'}), 400
+    
+    # Fetch category name from Category table
+    category_name = 'Polaroids'  # default fallback
+    if category_id:
+        category = Category.query.get(category_id)
+        if category:
+            category_name = category.name
         
     # Standard parsing logic for prompts
     new_prompts = []
@@ -165,12 +180,16 @@ def bulk_save_to_library():
             else:
                 theme = line[:30] + "..." if len(line) > 30 else line
                 prompt_text = line.strip()
+        
+        # Generate next prompt number
+        prompt_number = get_next_prompt_number()
                 
         prompt = Prompt(
             theme=theme,
-            text=prompt_text,
-            category_id=category_id,
-            gender=gender
+            prompt_text=prompt_text,
+            category=category_name,
+            gender=gender.lower(),
+            prompt_number=prompt_number
         )
         db.session.add(prompt)
         new_prompts.append(prompt)

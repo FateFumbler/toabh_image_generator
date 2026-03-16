@@ -2521,6 +2521,8 @@ window.cancelEditCategory = cancelEditCategory;
 window.openEditModal = openEditModal;
 window.setEditInstruction = setEditInstruction;
 window.toggleImageSelection = toggleImageSelection;
+window.removeGeneratorFile = removeGeneratorFile;
+window.saveGeneratedToLibrary = saveGeneratedToLibrary;
 
 // Prompt Generator Module
 let generatorFiles = [];
@@ -2699,8 +2701,18 @@ async function saveGeneratedToLibrary() {
 
         if (response.ok) {
             showToast(`Saved ${data.count} prompts to library`, 'success');
-            // Switch to prompts section to show results
+            
+            // Clear results and images
+            generatorFiles = [];
+            updateGeneratorPreview();
+            document.getElementById('generated-prompts-output').value = '';
+            document.getElementById('generator-results').style.display = 'none';
+            
+            // Switch to "Prompts" section
             document.querySelector('.nav-item[data-section="prompts"]').click();
+            
+            // Reload prompts
+            loadPrompts();
         } else {
             showToast(data.error || 'Failed to save prompts', 'error');
         }
