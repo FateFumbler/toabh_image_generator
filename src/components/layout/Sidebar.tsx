@@ -60,45 +60,54 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }: Side
       {/* Sidebar */}
       <aside className={sidebarClasses}>
         {/* Header */}
-        <div className="flex items-center h-16 px-4 border-b border-slate-800">
-          <div className={cn(
-            "flex items-center justify-center transition-all duration-200",
-            isCollapsed && !isMobile && "w-10"
-          )}>
-            {/* Logo - Leonardo.Ai style with white background circle */}
-            <div className={cn(
-              "flex items-center justify-center bg-white rounded-full shadow-md",
-              isCollapsed && !isMobile ? "w-10 h-10" : "w-10 h-10"
-            )}>
+        <div className="flex items-center justify-between h-16 px-3 border-b border-slate-800">
+          {/* Logo - Hidden when collapsed, full logo when expanded */}
+          {!isCollapsed && !isMobile && (
+            <div className="flex-shrink-0">
               <img 
-                src="/logo.jpg" 
+                src="/toabh-logo.png" 
                 alt="TOABH Logo" 
-                className={cn(
-                  "object-cover",
-                  isCollapsed && !isMobile ? "w-6 h-6" : "w-8 h-8"
-                )}
-                style={{ borderRadius: '50%' }}
+                className="h-10 w-auto object-contain"
               />
             </div>
-          </div>
+          )}
           
-          {isMobile ? (
-            <button 
-              onClick={onClose}
-              className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          ) : (
+          {/* Mobile: show logo + close button */}
+          {isMobile && (
+            <>
+              <div className="flex-shrink-0">
+                <img 
+                  src="/toabh-logo.png" 
+                  alt="TOABH Logo" 
+                  className="h-10 w-auto object-contain"
+                />
+              </div>
+              <button 
+                onClick={onClose}
+                className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </>
+          )}
+          
+          {/* Desktop collapsed: just the toggle button centered */}
+          {!isMobile && isCollapsed && (
             <button
               onClick={onToggleCollapse}
-              className="p-1.5 hover:bg-slate-800 rounded-lg transition-colors"
+              className="p-1.5 hover:bg-slate-800 rounded-lg transition-colors mx-auto"
             >
-              {isCollapsed ? (
-                <ChevronRight className="w-4 h-4" />
-              ) : (
-                <ChevronLeft className="w-4 h-4" />
-              )}
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          )}
+          
+          {/* Desktop expanded: toggle button on right */}
+          {!isMobile && !isCollapsed && (
+            <button
+              onClick={onToggleCollapse}
+              className="p-1.5 hover:bg-slate-800 rounded-lg transition-colors flex-shrink-0"
+            >
+              <ChevronLeft className="w-4 h-4" />
             </button>
           )}
         </div>
