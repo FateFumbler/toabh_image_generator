@@ -9,7 +9,7 @@ export default defineConfig({
   server: {
     host: true,
     port: 3005,
-    allowedHosts: ['bufing-lounge-reynolds-based.trycloudflare.com', 'gerald-flu-mixed-author.trycloudflare.com', 'organizational-brain-prize-rfc.trycloudflare.com', 'innocent-thinks-processed-www.trycloudflare.com', 'dealing-about-aircraft-thumbs.trycloudflare.com', 'lobby-costa-subjects-girls.trycloudflare.com', 'recruiting-basename-tel-colon.trycloudflare.com'],
+    allowedHosts: ['bufing-lounge-reynolds-based.trycloudflare.com', 'gerald-flu-mixed-author.trycloudflare.com', 'organizational-brain-prize-rfc.trycloudflare.com', 'innocent-thinks-processed-www.trycloudflare.com', 'dealing-about-aircraft-thumbs.trycloudflare.com', 'lobby-costa-subjects-girls.trycloudflare.com', 'recruiting-basename-tel-colon.trycloudflare.com', 'let-fairfield-your-objective.trycloudflare.com'],
     proxy: {
       '/api': {
         target: 'http://localhost:5000',
