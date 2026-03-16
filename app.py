@@ -33,6 +33,13 @@ app = Flask(__name__)
 app.config.from_object(Config)
 init_db(app)
 
+# Serve static files (uploads)
+@app.route('/static/<path:filename>')
+def serve_static(filename):
+    from flask import send_from_directory
+    import os
+    return send_from_directory(os.path.join(os.path.dirname(__file__), 'static'), filename)
+
 # Track generation status
 generation_status = {
     'is_generating': False,
