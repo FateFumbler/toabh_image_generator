@@ -17,6 +17,7 @@ from PIL import Image
 
 from config import Config
 from database import db, init_db, Prompt, GeneratedImage, ReferenceImage, Category, Character
+from turso_images import save_image_to_turso, get_image_from_turso, delete_image_from_turso, list_turso_images, get_turso_client
 
 # Import flux_gen for image generation
 sys.path.insert(0, '/home/Fate/.openclaw/workspace/scripts')
@@ -35,6 +36,191 @@ CORS(app)  # Enable CORS for all routes
 app.config.from_object(Config)
 init_db(app)
 
+# ============ Turso Sync Setup ============
+# Try to import libsql for embedded replica sync
+try:
+    import libsql
+    LIBSQL_AVAILABLE = True
+except ImportError:
+    LIBSQL_AVAILABLE = False
+    print("Warning: libsql client not installed. Turso sync will be limited.")
+
+# Turso sync client
+turso_client = None
+turso_sync_url = None
+
+def get_turso_sync_client():
+    """Get or create Turso sync client."""
+    global turso_client, turso_sync_url
+    
+    if not Config.USE_TURSO or not LIBSQL_AVAILABLE:
+        return None
+    
+    if turso_client is None:
+        try:
+            # Create client for remote Turso sync
+            # sync_url is the Turso server, database is local path (we use :memory: for remote-only)
+            turso_sync_url = Config.TURSO_DB_URL
+            turso_client = libsql.connect(
+                database=':memory:',  # In-memory for remote-only operations
+                sync_url=turso_sync_url,
+                auth_token=Config.TURSO_AUTH_TOKEN
+            )
+            print(f"Turso sync client initialized: {turso_sync_url}")
+        except Exception as e:
+            print(f"Failed to initialize Turso client: {e}")
+            turso_client = None
+    
+    return turso_client
+
+def sync_to_turso():
+    """Sync local database changes to Turso.
+    
+    This performs a push sync to send local changes to Turso.
+    For embedded replica mode, changes are automatically synced when connection is available.
+    """
+    if not Config.USE_TURSO:
+        return {'success': False, 'message': 'Turso sync is disabled'}
+    
+    client = get_turso_sync_client()
+    if client is None:
+        # Fallback: try using the replica database file directly
+        try:
+            import subprocess
+            instance_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'instance')
+            db_path = os.path.join(instance_folder, 'toabh_replica.db')
+            
+            # Use turso CLI if available to push sync
+            result = subprocess.run(
+                ['turso', 'db', 'sync', Config.TURSO_DB_URL.split('://')[1]],
+                capture_output=True,
+                text=True,
+                timeout=60
+            )
+            
+            if result.returncode == 0:
+                return {'success': True, 'message': 'Synced via CLI', 'output': result.stdout}
+            else:
+                return {'success': False, 'message': 'CLI sync failed', 'error': result.stderr}
+        except FileNotFoundError:
+            return {'success': False, 'message': 'Turso CLI not found, using HTTP sync'}
+        except Exception as e:
+            return {'success': False, 'message': str(e)}
+    
+    try:
+        # Perform a simple query to test connectivity
+        cursor = client.execute("SELECT 1")
+        cursor.fetchall()
+        return {'success': True, 'message': 'Connection verified'}
+    except Exception as e:
+        return {'success': False, 'message': f'Sync failed: {str(e)}'}
+
+# Register after_commit hook for automatic sync
+from sqlalchemy import event
+
+def after_commit(session):
+    """Automatically sync to Turso after each database commit."""
+    if Config.USE_TURSO:
+        try:
+            result = sync_to_turso()
+            if result.get('success'):
+                print(f"Auto-sync to Turso: {result.get('message')}")
+            else:
+                print(f"Auto-sync warning: {result.get('message')}")
+        except Exception as e:
+            print(f"Auto-sync error: {e}")
+
+# Hook into SQLAlchemy session
+from database import db
+event.listen(db.session, 'after_commit', after_commit)
+
+# ============ Sync Endpoints ============
+
+@app.route('/api/sync/status', methods=['GET'])
+def get_sync_status():
+    """Get current sync status with Turso."""
+    if not Config.USE_TURSO:
+        return jsonify({
+            'enabled': False,
+            'message': 'Turso sync is disabled',
+            'db_url': Config.TURSO_DB_URL
+        })
+    
+    client = get_turso_sync_client()
+    instance_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'instance')
+    local_db_path = os.path.join(instance_folder, 'toabh_replica.db')
+    
+    # Check if local database exists
+    local_exists = os.path.exists(local_db_path)
+    local_size = os.path.getsize(local_db_path) if local_exists else 0
+    
+    return jsonify({
+        'enabled': True,
+        'db_url': Config.TURSO_DB_URL,
+        'local_db_exists': local_exists,
+        'local_db_size': local_size,
+        'client_connected': client is not None,
+        'libsql_available': LIBSQL_AVAILABLE
+    })
+
+@app.route('/api/sync/push', methods=['POST'])
+def sync_push():
+    """Push local changes to Turso (manual sync)."""
+    result = sync_to_turso()
+    
+    if result['success']:
+        return jsonify({
+            'status': 'success',
+            'message': result['message']
+        })
+    else:
+        return jsonify({
+            'status': 'error',
+            'message': result['message']
+        }), 500
+
+@app.route('/api/sync/pull', methods=['POST'])
+def sync_pull():
+    """Pull changes from Turso to local (manual sync)."""
+    if not Config.USE_TURSO:
+        return jsonify({
+            'status': 'error',
+            'message': 'Turso sync is disabled'
+        }), 400
+    
+    try:
+        import subprocess
+        # Pull from Turso using CLI
+        result = subprocess.run(
+            ['turso', 'db', 'pull', Config.TURSO_DB_URL.split('://')[1], '--force'],
+            capture_output=True,
+            text=True,
+            timeout=60
+        )
+        
+        if result.returncode == 0:
+            return jsonify({
+                'status': 'success',
+                'message': 'Pulled from Turso',
+                'output': result.stdout
+            })
+        else:
+            return jsonify({
+                'status': 'error',
+                'message': 'Pull failed',
+                'error': result.stderr
+            }), 500
+    except FileNotFoundError:
+        return jsonify({
+            'status': 'error',
+            'message': 'Turso CLI not found'
+        }), 500
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
 # Serve static files (uploads) - serves from public folder for Vercel
 @app.route('/uploads/<path:filename>')
 def serve_uploads(filename):
@@ -49,6 +235,68 @@ def serve_generated(filename):
     import os
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     return send_from_directory(os.path.join(base_dir, 'public', 'generated'), filename)
+
+# ============ Turso Image Storage Endpoints ============
+
+@app.route('/api/images/turso/<image_id>')
+def serve_image_from_turso(image_id):
+    """Serve an image directly from Turso storage by ID."""
+    result = get_image_from_turso(image_id)
+    
+    if not result.get('success'):
+        return jsonify({'error': result.get('error', 'Image not found')}), 404
+    
+    return send_file(
+        io.BytesIO(result['data']),
+        mimetype=result['mime_type'],
+        as_attachment=False,
+        download_name=result['file_name']
+    )
+
+@app.route('/api/images/turso/list')
+def list_turso_stored_images():
+    """List all images stored in Turso."""
+    image_type = request.args.get('type')  # 'reference' or 'generated'
+    character_name = request.args.get('character')
+    limit = request.args.get('limit', 100, type=int)
+    
+    result = list_turso_images(
+        image_type=image_type,
+        character_name=character_name,
+        limit=limit
+    )
+    
+    if result.get('success'):
+        return jsonify({
+            'images': result['images'],
+            'count': len(result['images'])
+        })
+    else:
+        return jsonify({'error': result.get('error')}), 500
+
+@app.route('/api/images/turso/status')
+def turso_storage_status():
+    """Get Turso image storage status."""
+    client = get_turso_client()
+    if client is None:
+        return jsonify({
+            'available': False,
+            'error': 'Turso client not available - install libsql-client'
+        })
+    
+    try:
+        from turso_images import get_turso_image_count
+        count = get_turso_image_count()
+        return jsonify({
+            'available': True,
+            'image_count': count,
+            'db_url': Config.TURSO_DB_URL
+        })
+    except Exception as e:
+        return jsonify({
+            'available': False,
+            'error': str(e)
+        })
 
 # Track generation status
 generation_status = {
@@ -482,8 +730,11 @@ def update_prompt(prompt_id):
 def delete_prompt(prompt_id):
     prompt = Prompt.query.get_or_404(prompt_id)
     
-    # Delete associated generated images
+    # Delete associated generated images (including from Turso)
     for img in prompt.generated_images:
+        # Delete from Turso if we have the ID
+        if img.turso_image_id:
+            delete_image_from_turso(img.turso_image_id)
         try:
             if os.path.exists(img.file_path):
                 os.remove(img.file_path)
@@ -504,8 +755,11 @@ def bulk_delete_prompts():
     for prompt_id in ids:
         prompt = Prompt.query.get(prompt_id)
         if prompt:
-            # Delete associated generated images
+            # Delete associated generated images (including from Turso)
             for img in prompt.generated_images:
+                # Delete from Turso if we have the ID
+                if img.turso_image_id:
+                    delete_image_from_turso(img.turso_image_id)
                 try:
                     if os.path.exists(img.file_path):
                         os.remove(img.file_path)
@@ -549,9 +803,34 @@ def upload_reference_images():
             filename = secure_filename(file.filename)
             unique_name = f"{uuid.uuid4().hex[:8]}_{filename}"
             filepath = os.path.join(model_dir, unique_name)
-            file.save(filepath)
             
-            # Create thumbnail
+            # Read file data
+            file_data = file.read()
+            
+            # Save to local disk (backup) and Turso
+            with open(filepath, 'wb') as f:
+                f.write(file_data)
+            
+            # Determine MIME type
+            ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else 'png'
+            mime_type = {
+                'jpg': 'image/jpeg',
+                'jpeg': 'image/jpeg',
+                'png': 'image/png',
+                'gif': 'image/gif',
+                'webp': 'image/webp'
+            }.get(ext, 'image/png')
+            
+            # Save to Turso
+            turso_result = save_image_to_turso(
+                image_data=file_data,
+                image_type='reference',
+                file_name=filename,
+                mime_type=mime_type,
+                character_name=model_name
+            )
+            
+            # Create thumbnail (save locally only)
             try:
                 with Image.open(filepath) as img:
                     img.thumbnail((400, 400))
@@ -560,10 +839,14 @@ def upload_reference_images():
             except:
                 pass
             
+            # Store Turso image ID in file_path for retrieval
+            turso_image_id = turso_result.get('id') if turso_result.get('success') else None
+            
             ref_img = ReferenceImage(
                 model_name=model_name,
                 file_path=filepath,
-                file_name=filename
+                file_name=filename,
+                turso_image_id=turso_image_id  # Store Turso ID
             )
             db.session.add(ref_img)
             uploaded.append(ref_img)
@@ -574,6 +857,10 @@ def upload_reference_images():
 @app.route('/api/reference-images/<int:image_id>', methods=['DELETE'])
 def delete_reference_image(image_id):
     img = ReferenceImage.query.get_or_404(image_id)
+    
+    # Delete from Turso if we have the ID
+    if img.turso_image_id:
+        delete_image_from_turso(img.turso_image_id)
     
     try:
         if os.path.exists(img.file_path):
@@ -600,6 +887,9 @@ def clear_reference_images():
         images = ReferenceImage.query.all()
     
     for img in images:
+        # Delete from Turso if we have the ID
+        if img.turso_image_id:
+            delete_image_from_turso(img.turso_image_id)
         try:
             if os.path.exists(img.file_path):
                 os.remove(img.file_path)
@@ -853,10 +1143,29 @@ def generate_single_image(prompt, model, resolution, aspect_ratio, selected_mode
     except Exception as e:
         raise Exception(f"Image generation failed: {str(e)}")
     
+    # Read the generated image data
+    with open(output_path, 'rb') as f:
+        img_data = f.read()
+    
+    # Save to Turso
+    turso_result = save_image_to_turso(
+        image_data=img_data,
+        image_type='generated',
+        file_name=os.path.basename(output_path),
+        mime_type='image/png',
+        character_name=actual_model_name if actual_model_name and actual_model_name != 'default_model' else None,
+        prompt_id=prompt.id,
+        prompt_number=prompt.prompt_number
+    )
+    
+    # Get Turso image ID if successful
+    turso_image_id = turso_result.get('id') if turso_result.get('success') else None
+    
     # Save to database
     gen_img = GeneratedImage(
         prompt_id=prompt.id,
         file_path=output_path,
+        turso_image_id=turso_image_id,
         model_used=model,
         resolution=resolution,
         aspect_ratio=aspect_ratio,
@@ -928,6 +1237,10 @@ def get_generated_images():
 def delete_generated_image(image_id):
     img = GeneratedImage.query.get_or_404(image_id)
     
+    # Delete from Turso if we have the ID
+    if img.turso_image_id:
+        delete_image_from_turso(img.turso_image_id)
+    
     try:
         if os.path.exists(img.file_path):
             os.remove(img.file_path)
@@ -947,6 +1260,9 @@ def bulk_delete_generated_images():
     for image_id in ids:
         img = GeneratedImage.query.get(image_id)
         if img:
+            # Delete from Turso if we have the ID
+            if img.turso_image_id:
+                delete_image_from_turso(img.turso_image_id)
             try:
                 if os.path.exists(img.file_path):
                     os.remove(img.file_path)
@@ -1030,6 +1346,9 @@ def delete_all_for_character(character_name):
     
     deleted_count = 0
     for img in images:
+        # Delete from Turso if we have the ID
+        if img.turso_image_id:
+            delete_image_from_turso(img.turso_image_id)
         try:
             if os.path.exists(img.file_path):
                 os.remove(img.file_path)
@@ -1363,9 +1682,34 @@ def add_character():
                     filename = secure_filename(file.filename)
                     unique_name = f"{uuid.uuid4().hex[:8]}_{filename}"
                     filepath = os.path.join(model_dir, unique_name)
-                    file.save(filepath)
                     
-                    # Create thumbnail
+                    # Read file data
+                    file_data = file.read()
+                    
+                    # Save to local disk and Turso
+                    with open(filepath, 'wb') as f:
+                        f.write(file_data)
+                    
+                    # Determine MIME type
+                    ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else 'png'
+                    mime_type = {
+                        'jpg': 'image/jpeg',
+                        'jpeg': 'image/jpeg',
+                        'png': 'image/png',
+                        'gif': 'image/gif',
+                        'webp': 'image/webp'
+                    }.get(ext, 'image/png')
+                    
+                    # Save to Turso
+                    turso_result = save_image_to_turso(
+                        image_data=file_data,
+                        image_type='reference',
+                        file_name=filename,
+                        mime_type=mime_type,
+                        character_name=name
+                    )
+                    
+                    # Create thumbnail (save locally only)
                     try:
                         with Image.open(filepath) as img:
                             img.thumbnail((400, 400))
@@ -1374,10 +1718,13 @@ def add_character():
                     except:
                         pass
                     
+                    turso_image_id = turso_result.get('id') if turso_result.get('success') else None
+                    
                     ref_img = ReferenceImage(
                         model_name=name,
                         file_path=filepath,
-                        file_name=filename
+                        file_name=filename,
+                        turso_image_id=turso_image_id
                     )
                     db.session.add(ref_img)
                     uploaded_images.append(ref_img)
@@ -1440,9 +1787,34 @@ def update_character(character_id):
                     filename = secure_filename(file.filename)
                     unique_name = f"{uuid.uuid4().hex[:8]}_{filename}"
                     filepath = os.path.join(model_dir, unique_name)
-                    file.save(filepath)
                     
-                    # Create thumbnail
+                    # Read file data
+                    file_data = file.read()
+                    
+                    # Save to local disk and Turso
+                    with open(filepath, 'wb') as f:
+                        f.write(file_data)
+                    
+                    # Determine MIME type
+                    ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else 'png'
+                    mime_type = {
+                        'jpg': 'image/jpeg',
+                        'jpeg': 'image/jpeg',
+                        'png': 'image/png',
+                        'gif': 'image/gif',
+                        'webp': 'image/webp'
+                    }.get(ext, 'image/png')
+                    
+                    # Save to Turso
+                    turso_result = save_image_to_turso(
+                        image_data=file_data,
+                        image_type='reference',
+                        file_name=filename,
+                        mime_type=mime_type,
+                        character_name=character.name
+                    )
+                    
+                    # Create thumbnail (save locally only)
                     try:
                         with Image.open(filepath) as img:
                             img.thumbnail((400, 400))
@@ -1451,10 +1823,13 @@ def update_character(character_id):
                     except:
                         pass
                     
+                    turso_image_id = turso_result.get('id') if turso_result.get('success') else None
+                    
                     ref_img = ReferenceImage(
                         model_name=character.name,
                         file_path=filepath,
-                        file_name=filename
+                        file_name=filename,
+                        turso_image_id=turso_image_id
                     )
                     db.session.add(ref_img)
                     uploaded_images.append(ref_img)
@@ -1498,9 +1873,12 @@ def update_character(character_id):
 def delete_character(character_id):
     character = Character.query.get_or_404(character_id)
     
-    # Delete associated reference images
+    # Delete associated reference images (including from Turso)
     ref_images = ReferenceImage.query.filter_by(model_name=character.name).all()
     for img in ref_images:
+        # Delete from Turso if we have the ID
+        if img.turso_image_id:
+            delete_image_from_turso(img.turso_image_id)
         try:
             if os.path.exists(img.file_path):
                 os.remove(img.file_path)

@@ -11,5 +11,3 @@ static/generated/
 node_modules/
 dist/
 build/
-uploads/
-generated/

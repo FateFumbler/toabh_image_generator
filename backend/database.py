@@ -4,6 +4,39 @@ import os
 
 db = SQLAlchemy()
 
+# Sync function that can be called after commits
+def sync_to_turso():
+    """Sync database to Turso after changes."""
+    try:
+        # Import app context to get config
+        from flask import current_app
+        if not current_app.config.get('USE_TURSO', False):
+            return {'success': True, 'message': 'Turso disabled'}
+        
+        import subprocess
+        turso_db_url = current_app.config.get('TURSO_DB_URL', '')
+        if not turso_db_url:
+            return {'success': False, 'message': 'No Turso URL'}
+        
+        # Use turso CLI to sync
+        db_name = turso_db_url.split('://')[1] if '://' in turso_db_url else turso_db_url
+        
+        result = subprocess.run(
+            ['turso', 'db', 'sync', db_name],
+            capture_output=True,
+            text=True,
+            timeout=60
+        )
+        
+        if result.returncode == 0:
+            return {'success': True, 'message': 'Synced to Turso'}
+        else:
+            return {'success': False, 'message': result.stderr}
+    except FileNotFoundError:
+        return {'success': False, 'message': 'Turso CLI not found'}
+    except Exception as e:
+        return {'success': False, 'message': str(e)}
+
 def generate_next_prompt_number():
     """Generate the next prompt number (e.g., P001, P002) based on existing prompts."""
     from .models import Prompt
