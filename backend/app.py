@@ -11,6 +11,7 @@ import io
 import zipfile
 from datetime import datetime
 from flask import Flask, render_template, request, jsonify, send_file
+from flask_cors import CORS
 from werkzeug.utils import secure_filename
 from PIL import Image
 
@@ -30,6 +31,7 @@ except ImportError:
     GEMINI_AVAILABLE = False
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
 app.config.from_object(Config)
 init_db(app)
 
