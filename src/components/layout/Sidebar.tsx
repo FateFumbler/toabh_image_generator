@@ -9,7 +9,8 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
-  Folder
+  Folder,
+  Heart
 } from 'lucide-react';
 import { useMobile } from '../../hooks/useMobile';
 import { clsx, type ClassValue } from '../../utils/clsx';
@@ -24,6 +25,7 @@ interface SidebarProps {
 const navItems = [
   { path: '/', icon: Grid3X3, label: 'Dashboard', exact: true },
   { path: '/prompts', icon: MessageSquare, label: 'Prompts' },
+  { path: '/favorites', icon: Heart, label: 'Favorites' },
   { path: '/categories', icon: Folder, label: 'Categories' },
   { path: '/reference', icon: Images, label: 'Reference Sets' },
   { path: '/generate', icon: Sparkles, label: 'Generate' },
