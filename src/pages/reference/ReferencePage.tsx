@@ -90,10 +90,18 @@ export function ReferencePage() {
     return null;
   };
 
-  // Helper to get image URL
+  // Helper to get image URL - works on both mobile and desktop
   const getImageUrl = (path: string) => {
-    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-    return `${baseUrl}${path}`;
+    // Use relative path for images - works on both mobile and desktop
+    // The proxy/Vite handles serving static files correctly
+    if (path.startsWith('http')) {
+      return path;
+    }
+    // Remove leading slash if present for proper relative path
+    const cleanPath = path.startsWith('/') ? path.slice(1) : path;
+    // Use current window location for proper relative URLs on mobile
+    const baseUrl = window.location.origin;
+    return `${baseUrl}/${cleanPath}`;
   };
 
   // Character handlers
