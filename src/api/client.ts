@@ -26,7 +26,10 @@ import type {
 } from '../types';
 
 // Use environment variable for production, proxy for development
-const API_BASE = import.meta.env.VITE_API_URL || '/api';
+// For production, set VITE_API_URL to the full API base (e.g., https://your-tunnel.trycloudflare.com)
+const API_BASE = import.meta.env.VITE_API_URL 
+  ? `${import.meta.env.VITE_API_URL}/api` 
+  : '/api';
 
 // Helper for handling fetch responses
 async function handleResponse<T>(response: Response): Promise<T> {
