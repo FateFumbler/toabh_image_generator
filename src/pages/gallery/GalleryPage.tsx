@@ -804,10 +804,19 @@ export function GalleryPage() {
           if (hasNext) setPreviewImage(groupImages[currentIndex + 1]);
         };
         
+        // Keyboard navigation
+        const handleKeyDown = (e: React.KeyboardEvent) => {
+          if (e.key === 'ArrowLeft') goToPrev();
+          if (e.key === 'ArrowRight') goToNext();
+          if (e.key === 'Escape') setPreviewImage(null);
+        };
+        
         return (
           <div 
             className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
             onClick={() => setPreviewImage(null)}
+            onKeyDown={handleKeyDown}
+            tabIndex={0}
           >
             {/* Left Arrow */}
             {hasPrev && (
@@ -830,20 +839,21 @@ export function GalleryPage() {
             )}
             
             <div 
-              className="relative max-w-4xl max-h-[90vh]"
+              className="relative max-w-4xl w-full"
               onClick={(e) => e.stopPropagation()}
             >
+              {/* Image */}
               <img
                 src={getImageUrl(previewImage.file_path)}
                 alt="Preview"
-                className="max-w-full max-h-[80vh] object-contain rounded-lg"
+                className="max-w-full max-h-[75vh] object-contain rounded-lg mx-auto"
               />
               
-              {/* Action Buttons */}
-              <div className="absolute bottom-16 left-0 right-0 flex justify-center gap-3">
+              {/* Minimal Action Buttons Below Image */}
+              <div className="flex items-center justify-center gap-2 mt-4">
                 <button
                   onClick={(e) => { e.stopPropagation(); handleDownload(previewImage); }}
-                  className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white/80 hover:text-white rounded-lg transition-colors text-sm"
                 >
                   <Download className="w-4 h-4" />
                   Download
@@ -854,7 +864,7 @@ export function GalleryPage() {
                     setEditingImage(previewImage); 
                     setShowEditModal(true); 
                   }}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white/80 hover:text-white rounded-lg transition-colors text-sm"
                 >
                   <Edit3 className="w-4 h-4" />
                   Edit
@@ -864,7 +874,7 @@ export function GalleryPage() {
                     e.stopPropagation(); 
                     setShowDeleteConfirm('single'); 
                   }}
-                  className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-red-600/80 text-white/80 hover:text-white rounded-lg transition-colors text-sm"
                 >
                   <Trash2 className="w-4 h-4" />
                   Delete
@@ -872,16 +882,16 @@ export function GalleryPage() {
               </div>
               
               {/* Image Info */}
-              <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent rounded-b-lg">
+              <div className="mt-3 text-center">
                 <p className="text-white font-medium">{previewImage.prompt_number} - {previewImage.prompt_theme}</p>
-                <p className="text-white/70 text-sm">{previewImage.character_name} • {previewImage.model_used}</p>
-                <p className="text-white/50 text-xs mt-1">{currentIndex + 1} of {groupImages.length} in {groupKey}</p>
+                <p className="text-white/60 text-sm">{previewImage.character_name} • {previewImage.model_used}</p>
+                <p className="text-white/40 text-xs mt-1">{currentIndex + 1} of {groupImages.length} in {groupKey}</p>
               </div>
               
               {/* Close Button */}
               <button
                 onClick={() => setPreviewImage(null)}
-                className="absolute top-2 right-2 p-2 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors"
+                className="absolute top-0 right-0 p-2 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
