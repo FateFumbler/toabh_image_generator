@@ -97,11 +97,11 @@ export function ReferencePage() {
     if (path.startsWith('http')) {
       return path;
     }
-    // Remove leading slash if present for proper relative path
-    const cleanPath = path.startsWith('/') ? path.slice(1) : path;
-    // Use current window location for proper relative URLs on mobile
+    // Prepend /static because images are served from Flask's static folder
+    // API returns paths like /generated/... or /uploads/..., but actual files are in /static/generated/ and /static/uploads/
+    const staticPath = '/static' + (path.startsWith('/') ? path : '/' + path);
     const baseUrl = window.location.origin;
-    return `${baseUrl}/${cleanPath}`;
+    return `${baseUrl}${staticPath}`;
   };
 
   // Character handlers
@@ -372,7 +372,7 @@ export function ReferencePage() {
                         {(character.reference_images || []).map(image => (
                           <div key={image.id} className="relative aspect-square rounded-lg overflow-hidden group">
                             <img
-                              src={`${window.location.origin}${image.file_path.startsWith('/') ? '' : '/'}${image.file_path}`}
+                              src={getImageUrl(image.file_path)}
                               alt={image.file_name}
                               className="w-full h-full object-cover"
                               onError={(e) => {
@@ -485,7 +485,7 @@ export function ReferencePage() {
                   className="group relative aspect-square rounded-xl overflow-hidden border border-slate-200"
                 >
                   <img
-                    src={`${window.location.origin}${image.file_path.startsWith('/') ? '' : '/'}${image.file_path}`}
+                    src={getImageUrl(image.file_path)}
                     alt={image.file_name}
                     className="w-full h-full object-cover"
                   />
@@ -537,7 +537,7 @@ export function ReferencePage() {
                       <td className="px-4 py-3">
                         <div className="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center overflow-hidden">
                           <img
-                            src={`${window.location.origin}${image.file_path.startsWith('/') ? '' : '/'}${image.file_path}`}
+                            src={getImageUrl(image.file_path)}
                             alt={image.file_name}
                             className="w-full h-full object-cover"
                           />

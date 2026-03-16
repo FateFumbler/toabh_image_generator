@@ -300,11 +300,11 @@ export function GalleryPage() {
     if (filePath.startsWith('http')) {
       return filePath;
     }
-    // Remove leading slash if present for proper relative path
-    const cleanPath = filePath.startsWith('/') ? filePath.slice(1) : filePath;
-    // Use current window location for proper relative URLs on mobile
+    // Prepend /static because images are served from Flask's static folder
+    // API returns paths like /generated/... or /uploads/..., but actual files are in /static/generated/ and /static/uploads/
+    const staticPath = '/static' + (filePath.startsWith('/') ? filePath : '/' + filePath);
     const baseUrl = window.location.origin;
-    return `${baseUrl}/${cleanPath}`;
+    return `${baseUrl}${staticPath}`;
   };
 
   return (
