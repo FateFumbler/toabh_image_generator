@@ -296,15 +296,20 @@ export function GalleryPage() {
   // Image URL helper - works on both mobile and desktop
   const getImageUrl = (filePath: string) => {
     // Use relative path for images - works on both mobile and desktop
-    // The proxy/Vite handles serving static files correctly
     if (filePath.startsWith('http')) {
       return filePath;
     }
-    // Prepend /static because images are served from Flask's static folder
-    // API returns paths like /generated/... or /uploads/..., but actual files are in /static/generated/ and /static/uploads/
-    const staticPath = '/static' + (filePath.startsWith('/') ? filePath : '/' + filePath);
-    const baseUrl = window.location.origin;
-    return `${baseUrl}${staticPath}`;
+    
+    // For static files (/static/), use the API URL (Flask backend) for production
+    const apiUrl = import.meta.env.VITE_API_URL || '';
+    const path = filePath.startsWith('/') ? filePath : '/' + filePath;
+    
+    if (filePath.startsWith('/static/') && apiUrl) {
+      return `${apiUrl}${path}`;
+    }
+    
+    // Fallback to current origin
+    return `${window.location.origin}${path}`;
   };
 
   return (

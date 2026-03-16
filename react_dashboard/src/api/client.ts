@@ -391,11 +391,12 @@ export async function debugImages(): Promise<{
 // ============ Utility Functions ============
 
 export function getImageUrl(filePath: string): string {
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
   if (filePath.startsWith('/static/')) {
-    return `http://localhost:5000${filePath}`;
+    return `${apiUrl}${filePath}`;
   }
   if (filePath.startsWith('static/')) {
-    return `http://localhost:5000/${filePath}`;
+    return `${apiUrl}/${filePath}`;
   }
   return filePath;
 }
