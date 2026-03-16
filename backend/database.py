@@ -104,11 +104,19 @@ class GeneratedImage(db.Model):
     
     def to_dict(self):
         # Return URL path for generated images (served from /static/generated/)
+        # Extract path relative to the static/generated folder
+        static_base = '/static/generated/'
+        if self.file_path and static_base in self.file_path:
+            relative_path = self.file_path.split(static_base)[-1]
+        else:
+            # Fallback to just basename if path structure is different
+            relative_path = os.path.basename(self.file_path)
+        
         return {
             'id': self.id,
             'prompt_id': self.prompt_id,
             'prompt_number': self.prompt_number,
-            'file_path': f'/static/generated/{os.path.basename(self.file_path)}',
+            'file_path': f'{static_base}{relative_path}',
             'model_used': self.model_used,
             'resolution': self.resolution,
             'aspect_ratio': self.aspect_ratio,
@@ -128,10 +136,18 @@ class ReferenceImage(db.Model):
     
     def to_dict(self):
         # Return URL path for reference images (served from /static/uploads/)
+        # Extract path relative to the static/uploads folder
+        static_base = '/static/uploads/'
+        if self.file_path and static_base in self.file_path:
+            relative_path = self.file_path.split(static_base)[-1]
+        else:
+            # Fallback to just basename if path structure is different
+            relative_path = os.path.basename(self.file_path)
+        
         return {
             'id': self.id,
             'model_name': self.model_name,
-            'file_path': f'/static/uploads/{os.path.basename(self.file_path)}',
+            'file_path': f'{static_base}{relative_path}',
             'file_name': self.file_name,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }

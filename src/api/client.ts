@@ -403,11 +403,18 @@ export function getImageUrl(filePath: string): string {
   if (filePath.startsWith('http')) {
     return filePath;
   }
-  // API now returns full paths like /static/generated/... or /static/uploads/...
-  // Just prepend the base URL
-  const baseUrl = window.location.origin;
+  
+  // For static files (/static/), use the API URL (Flask backend)
+  // For other paths, use the current origin (Vercel)
+  const apiUrl = import.meta.env.VITE_API_URL || '';
   const path = filePath.startsWith('/') ? filePath : '/' + filePath;
-  return `${baseUrl}${path}`;
+  
+  if (filePath.startsWith('/static/') && apiUrl) {
+    return `${apiUrl}${path}`;
+  }
+  
+  // Fallback to current origin
+  return `${window.location.origin}${path}`;
 }
 
 export function downloadBlob(blob: Blob, filename: string) {
