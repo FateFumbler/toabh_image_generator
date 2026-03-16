@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   Plus, 
   Search, 
@@ -11,6 +11,8 @@ import {
   X,
   ChevronDown,
   ChevronUp,
+  ChevronLeft,
+  ChevronRight,
   FileText,
   Star
 } from 'lucide-react';
@@ -38,6 +40,11 @@ export function PromptsPage() {
 
   // Selection state
   const [selectedPrompts, setSelectedPrompts] = useState<number[]>([]);
+  
+  // Category scroll state
+  const categoryRef = useRef<HTMLDivElement>(null);
+  const [showLeftArrow, setShowLeftArrow] = useState(false);
+  const [showRightArrow, setShowRightArrow] = useState(true);
 
   // Modal states
   const [showAddModal, setShowAddModal] = useState(false);
@@ -73,6 +80,30 @@ export function PromptsPage() {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  // Category scroll handlers
+  const checkArrows = useCallback(() => {
+    if (categoryRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = categoryRef.current;
+      setShowLeftArrow(scrollLeft > 0);
+      setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 10);
+    }
+  }, []);
+
+  useEffect(() => {
+    checkArrows();
+    window.addEventListener('resize', checkArrows);
+    return () => window.removeEventListener('resize', checkArrows);
+  }, [categories, checkArrows]);
+
+  const scrollCategories = (direction: 'left' | 'right') => {
+    if (categoryRef.current) {
+      categoryRef.current.scrollBy({
+        left: direction === 'right' ? 200 : -200,
+        behavior: 'smooth'
+      });
+    }
+  };
 
   // Filter prompts by search query
   const filteredPrompts = prompts.filter(prompt => {
@@ -202,75 +233,67 @@ export function PromptsPage() {
 
       {/* Category Tabs */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
-          <button
-            onClick={() => setCategoryFilter('all')}
-            className={cn(
-              "px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors",
-              categoryFilter === 'all'
-                ? "bg-indigo-600 text-white"
-                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-            )}
-          >
-            All
-          </button>
-          {categories.map((cat) => (
+        <div className="flex items-center gap-2">
+          {/* Left Arrow */}
+          {showLeftArrow && (
             <button
-              key={cat.id}
-              onClick={() => setCategoryFilter(cat.name)}
+              onClick={() => scrollCategories('left')}
+              className="flex-shrink-0 p-2 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4 text-slate-600" />
+            </button>
+          )}
+          
+          {/* Categories Container */}
+          <div 
+            ref={categoryRef}
+            onScroll={checkArrows}
+            className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide flex-1"
+          >
+            <button
+              onClick={() => setCategoryFilter('all')}
               className={cn(
                 "px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors",
-                categoryFilter === cat.name
+                categoryFilter === 'all'
                   ? "bg-indigo-600 text-white"
                   : "bg-slate-100 text-slate-600 hover:bg-slate-200"
               )}
             >
-              {cat.name}
+              All
             </button>
-          ))}
+            {categories.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => setCategoryFilter(cat.name)}
+                className={cn(
+                  "px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors",
+                  categoryFilter === cat.name
+                    ? "bg-indigo-600 text-white"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                )}
+              >
+                {cat.name}
+              </button>
+            ))}
+          </div>
+          
+          {/* Right Arrow */}
+          {showRightArrow && (
+            <button
+              onClick={() => scrollCategories('right')}
+              className="flex-shrink-0 p-2 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
+            >
+              <ChevronRight className="w-4 h-4 text-slate-600" />
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Gender Tabs */}
+      {/* Toolbar */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-slate-700 mr-2">Gender:</span>
-          <button
-            onClick={() => setGenderFilter('all')}
-            className={cn(
-              "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
-              genderFilter === 'all'
-                ? "bg-indigo-600 text-white"
-                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-            )}
-          >
-            All
-          </button>
-          <button
-            onClick={() => setGenderFilter('female')}
-            className={cn(
-              "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
-              genderFilter === 'female'
-                ? "bg-indigo-600 text-white"
-                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-            )}
-          >
-            Female
-          </button>
-          <button
-            onClick={() => setGenderFilter('male')}
-            className={cn(
-              "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
-              genderFilter === 'male'
-                ? "bg-indigo-600 text-white"
-                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-            )}
-          >
-            Male
-          </button>
-          
-          {/* Search and other controls */}
-          <div className="relative flex-1 ml-4">
+        <div className="flex flex-col lg:flex-row gap-4">
+          {/* Search */}
+          <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
               type="text"
@@ -359,6 +382,46 @@ export function PromptsPage() {
             </div>
           </div>
         )}
+      </div>
+
+      {/* Gender Tabs */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-slate-700 mr-2">Gender:</span>
+          <button
+            onClick={() => setGenderFilter('all')}
+            className={cn(
+              "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
+              genderFilter === 'all'
+                ? "bg-indigo-600 text-white"
+                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+            )}
+          >
+            All
+          </button>
+          <button
+            onClick={() => setGenderFilter('female')}
+            className={cn(
+              "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
+              genderFilter === 'female'
+                ? "bg-indigo-600 text-white"
+                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+            )}
+          >
+            Female
+          </button>
+          <button
+            onClick={() => setGenderFilter('male')}
+            className={cn(
+              "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
+              genderFilter === 'male'
+                ? "bg-indigo-600 text-white"
+                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+            )}
+          >
+            Male
+          </button>
+        </div>
       </div>
 
       {/* Prompts Table */}
