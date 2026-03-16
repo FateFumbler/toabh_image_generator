@@ -23,11 +23,11 @@ class Config:
         'connect_args': {'check_same_thread': False}
     }
     
-    # Upload settings - use public folder for Vercel static file serving
-    # Vercel serves files from 'public' at the root URL
+    # Upload settings - use static folder for Vercel static file serving
+    # Vercel serves files from 'static' at the /static URL path
     BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    UPLOAD_FOLDER = os.path.join(BASE_DIR, 'public', 'uploads')
-    GENERATED_FOLDER = os.path.join(BASE_DIR, 'public', 'generated')
+    UPLOAD_FOLDER = os.path.join(BASE_DIR, 'static', 'uploads')
+    GENERATED_FOLDER = os.path.join(BASE_DIR, 'static', 'generated')
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
     

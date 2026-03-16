@@ -221,20 +221,20 @@ def sync_pull():
             'message': str(e)
         }), 500
 
-# Serve static files (uploads) - serves from public folder for Vercel
-@app.route('/uploads/<path:filename>')
+# Serve static files (uploads) - serves from static folder for Vercel
+@app.route('/static/uploads/<path:filename>')
 def serve_uploads(filename):
     from flask import send_from_directory
     import os
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    return send_from_directory(os.path.join(base_dir, 'public', 'uploads'), filename)
+    return send_from_directory(os.path.join(base_dir, 'static', 'uploads'), filename)
 
-@app.route('/generated/<path:filename>')
+@app.route('/static/generated/<path:filename>')
 def serve_generated(filename):
     from flask import send_from_directory
     import os
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    return send_from_directory(os.path.join(base_dir, 'public', 'generated'), filename)
+    return send_from_directory(os.path.join(base_dir, 'static', 'generated'), filename)
 
 # ============ Turso Image Storage Endpoints ============
 
@@ -733,8 +733,9 @@ def delete_prompt(prompt_id):
     # Delete associated generated images (including from Turso)
     for img in prompt.generated_images:
         # Delete from Turso if we have the ID
-        if img.turso_image_id:
-            delete_image_from_turso(img.turso_image_id)
+        turso_id = getattr(img, 'turso_image_id', None)
+        if turso_id:
+            delete_image_from_turso(turso_id)
         try:
             if os.path.exists(img.file_path):
                 os.remove(img.file_path)
@@ -758,8 +759,9 @@ def bulk_delete_prompts():
             # Delete associated generated images (including from Turso)
             for img in prompt.generated_images:
                 # Delete from Turso if we have the ID
-                if img.turso_image_id:
-                    delete_image_from_turso(img.turso_image_id)
+                turso_id = getattr(img, 'turso_image_id', None)
+                if turso_id:
+                    delete_image_from_turso(turso_id)
                 try:
                     if os.path.exists(img.file_path):
                         os.remove(img.file_path)
@@ -839,14 +841,10 @@ def upload_reference_images():
             except:
                 pass
             
-            # Store Turso image ID in file_path for retrieval
-            turso_image_id = turso_result.get('id') if turso_result.get('success') else None
-            
             ref_img = ReferenceImage(
                 model_name=model_name,
                 file_path=filepath,
-                file_name=filename,
-                turso_image_id=turso_image_id  # Store Turso ID
+                file_name=filename
             )
             db.session.add(ref_img)
             uploaded.append(ref_img)
@@ -859,8 +857,9 @@ def delete_reference_image(image_id):
     img = ReferenceImage.query.get_or_404(image_id)
     
     # Delete from Turso if we have the ID
-    if img.turso_image_id:
-        delete_image_from_turso(img.turso_image_id)
+    turso_id = getattr(img, 'turso_image_id', None)
+    if turso_id:
+        delete_image_from_turso(turso_id)
     
     try:
         if os.path.exists(img.file_path):
@@ -888,8 +887,9 @@ def clear_reference_images():
     
     for img in images:
         # Delete from Turso if we have the ID
-        if img.turso_image_id:
-            delete_image_from_turso(img.turso_image_id)
+        turso_id = getattr(img, 'turso_image_id', None)
+        if turso_id:
+            delete_image_from_turso(turso_id)
         try:
             if os.path.exists(img.file_path):
                 os.remove(img.file_path)
@@ -1158,14 +1158,10 @@ def generate_single_image(prompt, model, resolution, aspect_ratio, selected_mode
         prompt_number=prompt.prompt_number
     )
     
-    # Get Turso image ID if successful
-    turso_image_id = turso_result.get('id') if turso_result.get('success') else None
-    
     # Save to database
     gen_img = GeneratedImage(
         prompt_id=prompt.id,
         file_path=output_path,
-        turso_image_id=turso_image_id,
         model_used=model,
         resolution=resolution,
         aspect_ratio=aspect_ratio,
@@ -1238,8 +1234,9 @@ def delete_generated_image(image_id):
     img = GeneratedImage.query.get_or_404(image_id)
     
     # Delete from Turso if we have the ID
-    if img.turso_image_id:
-        delete_image_from_turso(img.turso_image_id)
+    turso_id = getattr(img, 'turso_image_id', None)
+    if turso_id:
+        delete_image_from_turso(turso_id)
     
     try:
         if os.path.exists(img.file_path):
@@ -1261,8 +1258,9 @@ def bulk_delete_generated_images():
         img = GeneratedImage.query.get(image_id)
         if img:
             # Delete from Turso if we have the ID
-            if img.turso_image_id:
-                delete_image_from_turso(img.turso_image_id)
+            turso_id = getattr(img, 'turso_image_id', None)
+            if turso_id:
+                delete_image_from_turso(turso_id)
             try:
                 if os.path.exists(img.file_path):
                     os.remove(img.file_path)
@@ -1347,8 +1345,9 @@ def delete_all_for_character(character_name):
     deleted_count = 0
     for img in images:
         # Delete from Turso if we have the ID
-        if img.turso_image_id:
-            delete_image_from_turso(img.turso_image_id)
+        turso_id = getattr(img, 'turso_image_id', None)
+        if turso_id:
+            delete_image_from_turso(turso_id)
         try:
             if os.path.exists(img.file_path):
                 os.remove(img.file_path)
@@ -1718,13 +1717,10 @@ def add_character():
                     except:
                         pass
                     
-                    turso_image_id = turso_result.get('id') if turso_result.get('success') else None
-                    
                     ref_img = ReferenceImage(
                         model_name=name,
                         file_path=filepath,
-                        file_name=filename,
-                        turso_image_id=turso_image_id
+                        file_name=filename
                     )
                     db.session.add(ref_img)
                     uploaded_images.append(ref_img)
@@ -1823,13 +1819,10 @@ def update_character(character_id):
                     except:
                         pass
                     
-                    turso_image_id = turso_result.get('id') if turso_result.get('success') else None
-                    
                     ref_img = ReferenceImage(
                         model_name=character.name,
                         file_path=filepath,
-                        file_name=filename,
-                        turso_image_id=turso_image_id
+                        file_name=filename
                     )
                     db.session.add(ref_img)
                     uploaded_images.append(ref_img)
@@ -1877,8 +1870,9 @@ def delete_character(character_id):
     ref_images = ReferenceImage.query.filter_by(model_name=character.name).all()
     for img in ref_images:
         # Delete from Turso if we have the ID
-        if img.turso_image_id:
-            delete_image_from_turso(img.turso_image_id)
+        turso_id = getattr(img, 'turso_image_id', None)
+        if turso_id:
+            delete_image_from_turso(turso_id)
         try:
             if os.path.exists(img.file_path):
                 os.remove(img.file_path)

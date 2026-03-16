@@ -403,11 +403,11 @@ export function getImageUrl(filePath: string): string {
   if (filePath.startsWith('http')) {
     return filePath;
   }
-  // Prepend /static because images are served from Flask's static folder
-  // API returns paths like /generated/... or /uploads/..., but actual files are in /static/generated/ and /static/uploads/
-  const staticPath = '/static' + (filePath.startsWith('/') ? filePath : '/' + filePath);
+  // API now returns full paths like /static/generated/... or /static/uploads/...
+  // Just prepend the base URL
   const baseUrl = window.location.origin;
-  return `${baseUrl}${staticPath}`;
+  const path = filePath.startsWith('/') ? filePath : '/' + filePath;
+  return `${baseUrl}${path}`;
 }
 
 export function downloadBlob(blob: Blob, filename: string) {
