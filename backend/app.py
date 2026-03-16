@@ -332,9 +332,10 @@ def get_model_directory(model_name):
     os.makedirs(model_dir, exist_ok=True)
     return model_dir, safe_name
 
-@app.route('/')
-def index():
-    return render_template('index.html')
+# React frontend is served by Vercel - this route disabled
+# @app.route('/')
+# def index():
+#     return render_template('index.html')
 
 # ============ Prompt Routes ============
 
