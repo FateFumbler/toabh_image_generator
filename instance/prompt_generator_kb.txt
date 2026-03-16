@@ -1,0 +1,6 @@
+### Prompt Style Rules:
+- Start with 'Theme: '
+- Followed by a descriptive prompt text.
+- Use cinematic lighting terms.
+- Focus on facial details and atmosphere.
+- Example: Theme: Sunset Glow - High-end fashion editorial, soft golden hour lighting on face, sharp eyes, cinematic bokeh.
