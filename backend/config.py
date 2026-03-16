@@ -6,22 +6,36 @@ load_dotenv()
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
     
-    # Turso database - use env vars for production deployment
+    # Turso database credentials (for sync/backup)
     TURSO_DB_URL = os.environ.get('TURSO_DB_URL') or 'libsql://toabh-images-fatefumbler.aws-ap-south-1.turso.io'
     TURSO_AUTH_TOKEN = os.environ.get('TURSO_AUTH_TOKEN') or 'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJleHAiOjE4MDUyMzIyODEsImlhdCI6MTc3MzY5NjI4MSwiaWQiOiIwMTljZjg4OS0xNjAxLTczMDEtYmJlMy1mY2MxNDQ5NjAzNWQiLCJyaWQiOiJiMmQ5MjY4OC0xODNlLTQwZWEtODBmMC0yNmY1YjM2YzI0Y2YifQ.jpya6xr9NXWNohqectUq4j54uGlBRlp53grJwGwHKyVtxhuA_VHTMpnk2fotAJOqCTQOcN1mBhYYWUXgpy7yAQ'
     
-    # Use local SQLite (for now) - Turso sync already done
-    # Production can switch to Turso by setting USE_TURSO=true
-    if os.environ.get('USE_TURSO') == 'true':
-        SQLALCHEMY_DATABASE_URI = 'sqlite:///toabh_imagen.db'  # Will sync with Turso
+    # Database configuration
+    # For Vercel: use embedded replica with Turso sync
+    # Local development: use SQLite
+    USE_TURSO = os.environ.get('USE_TURSO', 'false').lower() == 'true'
+    
+    # Get instance folder path
+    instance_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'instance')
+    
+    if USE_TURSO and TURSO_DB_URL and TURSO_AUTH_TOKEN:
+        # Use Turso with embedded replica (syncs locally)
+        # This requires turso CLI and libsql client
+        SQLALCHEMY_DATABASE_URI = f"sqlite+libsql:///{os.path.join(instance_folder, 'toabh_replica.db')}"
     else:
-        SQLALCHEMY_DATABASE_URI = 'sqlite:///toabh_imagen.db'
+        # Use local SQLite database
+        SQLALCHEMY_DATABASE_URI = f'sqlite:///{os.path.join(instance_folder, "toabh_imagen.db")}'
     
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        'connect_args': {'check_same_thread': False} if not USE_TURSO else {}
+    }
     
-    # Upload settings
-    UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'uploads')
-    GENERATED_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'generated')
+    # Upload settings - use public folder for Vercel static file serving
+    # Vercel serves files from 'public' at the root URL
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    UPLOAD_FOLDER = os.path.join(BASE_DIR, 'public', 'uploads')
+    GENERATED_FOLDER = os.path.join(BASE_DIR, 'public', 'generated')
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
     

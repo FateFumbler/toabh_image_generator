@@ -70,15 +70,12 @@ class GeneratedImage(db.Model):
     prompt = db.relationship('Prompt', backref=db.backref('generated_images', cascade='save-update'))
     
     def to_dict(self):
-        # Get relative path from static folder
-        static_idx = self.file_path.find('/static/')
-        url_path = self.file_path[static_idx:] if static_idx != -1 else self.file_path
-        
+        # Return URL path for generated images (served from /generated/)
         return {
             'id': self.id,
             'prompt_id': self.prompt_id,
             'prompt_number': self.prompt_number,
-            'file_path': url_path,
+            'file_path': f'/generated/{os.path.basename(self.file_path)}',
             'model_used': self.model_used,
             'resolution': self.resolution,
             'aspect_ratio': self.aspect_ratio,
@@ -97,14 +94,11 @@ class ReferenceImage(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     def to_dict(self):
-        # Get relative path from static folder
-        static_idx = self.file_path.find('/static/')
-        url_path = self.file_path[static_idx:] if static_idx != -1 else self.file_path
-        
+        # Return URL path for reference images (served from /uploads/)
         return {
             'id': self.id,
             'model_name': self.model_name,
-            'file_path': url_path,
+            'file_path': f'/uploads/{os.path.basename(self.file_path)}',
             'file_name': self.file_name,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }

@@ -35,12 +35,20 @@ CORS(app)  # Enable CORS for all routes
 app.config.from_object(Config)
 init_db(app)
 
-# Serve static files (uploads)
-@app.route('/static/<path:filename>')
-def serve_static(filename):
+# Serve static files (uploads) - serves from public folder for Vercel
+@app.route('/uploads/<path:filename>')
+def serve_uploads(filename):
     from flask import send_from_directory
     import os
-    return send_from_directory(os.path.join(os.path.dirname(__file__), 'static'), filename)
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    return send_from_directory(os.path.join(base_dir, 'public', 'uploads'), filename)
+
+@app.route('/generated/<path:filename>')
+def serve_generated(filename):
+    from flask import send_from_directory
+    import os
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    return send_from_directory(os.path.join(base_dir, 'public', 'generated'), filename)
 
 # Track generation status
 generation_status = {
