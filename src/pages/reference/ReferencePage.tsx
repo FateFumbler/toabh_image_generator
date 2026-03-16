@@ -345,7 +345,7 @@ export function ReferencePage() {
                         {(character.reference_images || []).map(image => (
                           <div key={image.id} className="relative aspect-square rounded-lg overflow-hidden group">
                             <img
-                              src={`http://localhost:5000${image.file_path}`}
+                              src={`${window.location.origin}${image.file_path.startsWith('/') ? '' : '/'}${image.file_path}`}
                               alt={image.file_name}
                               className="w-full h-full object-cover"
                               onError={(e) => {
@@ -458,7 +458,7 @@ export function ReferencePage() {
                   className="group relative aspect-square rounded-xl overflow-hidden border border-slate-200"
                 >
                   <img
-                    src={`http://localhost:5000${image.file_path}`}
+                    src={`${window.location.origin}${image.file_path.startsWith('/') ? '' : '/'}${image.file_path}`}
                     alt={image.file_name}
                     className="w-full h-full object-cover"
                   />
@@ -510,7 +510,7 @@ export function ReferencePage() {
                       <td className="px-4 py-3">
                         <div className="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center overflow-hidden">
                           <img
-                            src={`http://localhost:5000${image.file_path}`}
+                            src={`${window.location.origin}${image.file_path.startsWith('/') ? '' : '/'}${image.file_path}`}
                             alt={image.file_name}
                             className="w-full h-full object-cover"
                           />

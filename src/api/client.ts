@@ -391,13 +391,14 @@ export async function debugImages(): Promise<{
 // ============ Utility Functions ============
 
 export function getImageUrl(filePath: string): string {
-  if (filePath.startsWith('/static/')) {
-    return `http://localhost:5000${filePath}`;
+  if (filePath.startsWith('http')) {
+    return filePath;
   }
-  if (filePath.startsWith('static/')) {
-    return `http://localhost:5000/${filePath}`;
-  }
-  return filePath;
+  // Use relative path that works on both mobile and desktop
+  const baseUrl = window.location.origin;
+  // Remove leading slash if present
+  const cleanPath = filePath.startsWith('/') ? filePath.slice(1) : filePath;
+  return `${baseUrl}/${cleanPath}`;
 }
 
 export function downloadBlob(blob: Blob, filename: string) {

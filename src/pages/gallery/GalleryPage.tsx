@@ -211,9 +211,18 @@ export function GalleryPage() {
     });
   }, []);
 
-  // Image URL helper
+  // Image URL helper - works on both mobile and desktop
   const getImageUrl = (filePath: string) => {
-    return `http://localhost:5000${filePath}`;
+    // Use relative path for images - works on both mobile and desktop
+    // The proxy/Vite handles serving static files correctly
+    if (filePath.startsWith('http')) {
+      return filePath;
+    }
+    // Remove leading slash if present for proper relative path
+    const cleanPath = filePath.startsWith('/') ? filePath.slice(1) : filePath;
+    // Use current window location for proper relative URLs on mobile
+    const baseUrl = window.location.origin;
+    return `${baseUrl}/${cleanPath}`;
   };
 
   return (

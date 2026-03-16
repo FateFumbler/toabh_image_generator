@@ -8,7 +8,8 @@ import {
   Wand2,
   X,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Folder
 } from 'lucide-react';
 import { useMobile } from '../../hooks/useMobile';
 import { clsx, type ClassValue } from '../../utils/clsx';
@@ -23,6 +24,7 @@ interface SidebarProps {
 const navItems = [
   { path: '/', icon: Grid3X3, label: 'Dashboard', exact: true },
   { path: '/prompts', icon: MessageSquare, label: 'Prompts' },
+  { path: '/categories', icon: Folder, label: 'Categories' },
   { path: '/reference', icon: Images, label: 'Reference Sets' },
   { path: '/generate', icon: Sparkles, label: 'Generate' },
   { path: '/gallery', icon: Grid3X3, label: 'Results Gallery' },
@@ -60,14 +62,24 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }: Side
         {/* Header */}
         <div className="flex items-center h-16 px-4 border-b border-slate-800">
           <div className={cn(
-            "flex-1 flex justify-center transition-opacity duration-200",
-            isCollapsed && !isMobile && "opacity-0 w-0 overflow-hidden"
+            "flex items-center justify-center transition-all duration-200",
+            isCollapsed && !isMobile && "w-10"
           )}>
-            <img 
-              src="/logo.jpg" 
-              alt="TOABH Logo" 
-              className="w-8 h-8 rounded-lg object-cover"
-            />
+            {/* Logo - Leonardo.Ai style with white background circle */}
+            <div className={cn(
+              "flex items-center justify-center bg-white rounded-full shadow-md",
+              isCollapsed && !isMobile ? "w-10 h-10" : "w-10 h-10"
+            )}>
+              <img 
+                src="/logo.jpg" 
+                alt="TOABH Logo" 
+                className={cn(
+                  "object-cover",
+                  isCollapsed && !isMobile ? "w-6 h-6" : "w-8 h-8"
+                )}
+                style={{ borderRadius: '50%' }}
+              />
+            </div>
           </div>
           
           {isMobile ? (
