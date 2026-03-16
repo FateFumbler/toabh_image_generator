@@ -54,7 +54,16 @@ export function GalleryPage() {
   // Edit queue state
   const [editQueue, setEditQueue] = useState<api.EditTask[]>([]);
   const [pollingEditStatus, setPollingEditStatus] = useState(false);
-  const [dismissedEdits, setDismissedEdits] = useState<Set<number>>(new Set());
+  
+  // Load dismissed edits from localStorage
+  const [dismissedEdits, setDismissedEdits] = useState<Set<number>>(() => {
+    try {
+      const stored = localStorage.getItem('toabh_dismissed_edits');
+      return stored ? new Set(JSON.parse(stored)) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
   
   // Group state
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
@@ -117,13 +126,16 @@ export function GalleryPage() {
     }
   };
 
-  // Dismiss edit task
+  // Dismiss edit task - saves to localStorage
   const dismissEditTask = (taskId: number) => {
-    setDismissedEdits(prev => new Set(prev).add(taskId));
+    const updated = new Set(dismissedEdits).add(taskId);
+    setDismissedEdits(updated);
+    localStorage.setItem('toabh_dismissed_edits', JSON.stringify([...updated]));
   };
   
   const clearAllDismissed = () => {
     setDismissedEdits(new Set());
+    localStorage.setItem('toabh_dismissed_edits', '[]');
   };
 
   // Group images by character
