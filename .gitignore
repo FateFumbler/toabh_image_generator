@@ -2,7 +2,7 @@ __pycache__/
 *.pyc
 *.pyo
 *.db
-instance/
+#instance/
 static/uploads/
 static/generated/
 .env

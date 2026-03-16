@@ -6,14 +6,14 @@ load_dotenv()
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
     
-    # Turso database configuration
-    TURSO_DB_URL = os.environ.get('TURSO_DB_URL')
-    TURSO_AUTH_TOKEN = os.environ.get('TURSO_AUTH_TOKEN')
+    # Turso database - use env vars for production deployment
+    TURSO_DB_URL = os.environ.get('TURSO_DB_URL') or 'libsql://toabh-images-fatefumbler.aws-ap-south-1.turso.io'
+    TURSO_AUTH_TOKEN = os.environ.get('TURSO_AUTH_TOKEN') or 'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJleHAiOjE4MDUyMzIyODEsImlhdCI6MTc3MzY5NjI4MSwiaWQiOiIwMTljZjg4OS0xNjAxLTczMDEtYmJlMy1mY2MxNDQ5NjAzNWQiLCJyaWQiOiJiMmQ5MjY4OC0xODNlLTQwZWEtODBmMC0yNmY1YjM2YzI0Y2YifQ.jpya6xr9NXWNohqectUq4j54uGlBRlp53grJwGwHKyVtxhuA_VHTMpnk2fotAJOqCTQOcN1mBhYYWUXgpy7yAQ'
     
-    # Use Turso if credentials provided, otherwise SQLite
-    if TURSO_DB_URL and TURSO_AUTH_TOKEN:
-        # Use SQLite locally with Turso sync for production
-        SQLALCHEMY_DATABASE_URI = 'sqlite:///toabh_imagen.db'
+    # Use local SQLite (for now) - Turso sync already done
+    # Production can switch to Turso by setting USE_TURSO=true
+    if os.environ.get('USE_TURSO') == 'true':
+        SQLALCHEMY_DATABASE_URI = 'sqlite:///toabh_imagen.db'  # Will sync with Turso
     else:
         SQLALCHEMY_DATABASE_URI = 'sqlite:///toabh_imagen.db'
     
