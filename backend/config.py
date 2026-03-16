@@ -5,9 +5,18 @@ load_dotenv()
 
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
-    # Use SQLite for local dev, or set DATABASE_URL for external DB
-    # Note: For production deployment, use Railway/Render for Python hosting
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///toabh_imagen.db'
+    
+    # Turso database configuration
+    TURSO_DB_URL = os.environ.get('TURSO_DB_URL')
+    TURSO_AUTH_TOKEN = os.environ.get('TURSO_AUTH_TOKEN')
+    
+    # Use Turso if credentials provided, otherwise SQLite
+    if TURSO_DB_URL and TURSO_AUTH_TOKEN:
+        # Use SQLite locally with Turso sync for production
+        SQLALCHEMY_DATABASE_URI = 'sqlite:///toabh_imagen.db'
+    else:
+        SQLALCHEMY_DATABASE_URI = 'sqlite:///toabh_imagen.db'
+    
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # Upload settings
