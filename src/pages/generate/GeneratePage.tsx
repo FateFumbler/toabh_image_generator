@@ -9,7 +9,9 @@ import {
   SlidersHorizontal,
   CheckSquare,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Search,
+  X
 } from 'lucide-react';
 import { clsx, type ClassValue } from '../../utils/clsx';
 import { useSettings } from '../../hooks/useSettings';
@@ -68,6 +70,27 @@ export function GeneratePage() {
   const [genderFilter, setGenderFilter] = useState<'all' | 'male' | 'female'>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [showFilters, setShowFilters] = useState(false);
+  
+  // Character dropdown state
+  const [showCharacterDropdown, setShowCharacterDropdown] = useState(false);
+  const [characterSearch, setCharacterSearch] = useState('');
+  const characterDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Filter characters by search
+  const filteredCharacters = characters.filter(char => 
+    char.name.toLowerCase().includes(characterSearch.toLowerCase())
+  );
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (characterDropdownRef.current && !characterDropdownRef.current.contains(e.target as Node)) {
+        setShowCharacterDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Load data
   const loadData = useCallback(async () => {
@@ -257,27 +280,96 @@ export function GeneratePage() {
                 </select>
               </div>
 
-              {/* Character/Model Selection */}
-              <div>
+              {/* Character/Model Selection - Searchable Dropdown */}
+              <div ref={characterDropdownRef}>
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">
                   Reference Character
                 </label>
-                <select
-                  value={settings.model_name}
-                  onChange={(e) => setSettings({ ...settings, model_name: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg 
-                             focus:outline-none focus:ring-2 focus:ring-indigo-500/20 
-                             focus:border-indigo-500 text-sm"
-                >
-                  {characters.length === 0 && (
-                    <option value="default_model">Default (No Reference)</option>
+                <div className="relative">
+                  {/* Dropdown trigger */}
+                  <button
+                    type="button"
+                    onClick={() => setShowCharacterDropdown(!showCharacterDropdown)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg 
+                               focus:outline-none focus:ring-2 focus:ring-indigo-500/20 
+                               focus:border-indigo-500 text-sm text-left flex items-center justify-between bg-white"
+                  >
+                    <span>
+                      {settings.model_name === 'default_model' 
+                        ? 'Default (No Reference)' 
+                        : `${settings.model_name} (${characters.find(c => c.name === settings.model_name)?.image_count || 0} images)`}
+                    </span>
+                    <ChevronDown className="w-4 h-4 text-slate-400" />
+                  </button>
+                  
+                  {/* Dropdown content */}
+                  {showCharacterDropdown && (
+                    <div className="absolute z-20 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-64 overflow-hidden">
+                      {/* Search input */}
+                      <div className="p-2 border-b border-slate-200">
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                          <input
+                            type="text"
+                            placeholder="Search characters..."
+                            value={characterSearch}
+                            onChange={(e) => setCharacterSearch(e.target.value)}
+                            className="w-full pl-9 pr-8 py-1.5 text-sm border border-slate-200 rounded-lg 
+                                       focus:outline-none focus:ring-2 focus:ring-indigo-500/20 
+                                       focus:border-indigo-500"
+                            autoFocus
+                          />
+                          {characterSearch && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setCharacterSearch(''); }}
+                              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-slate-100 rounded"
+                            >
+                              <X className="w-3 h-3 text-slate-400" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {/* Options list */}
+                      <div className="max-h-48 overflow-y-auto">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSettings({ ...settings, model_name: 'default_model' });
+                            setShowCharacterDropdown(false);
+                            setCharacterSearch('');
+                          }}
+                          className={`w-full px-3 py-2 text-left text-sm hover:bg-slate-50 ${
+                            settings.model_name === 'default_model' ? 'bg-indigo-50 text-indigo-700' : ''
+                          }`}
+                        >
+                          Default (No Reference)
+                        </button>
+                        {filteredCharacters.map(char => (
+                          <button
+                            key={char.id}
+                            type="button"
+                            onClick={() => {
+                              setSettings({ ...settings, model_name: char.name });
+                              setShowCharacterDropdown(false);
+                              setCharacterSearch('');
+                            }}
+                            className={`w-full px-3 py-2 text-left text-sm hover:bg-slate-50 ${
+                              settings.model_name === char.name ? 'bg-indigo-50 text-indigo-700' : ''
+                            }`}
+                          >
+                            {char.name} ({char.image_count} images)
+                          </button>
+                        ))}
+                        {filteredCharacters.length === 0 && characterSearch && (
+                          <div className="px-3 py-4 text-center text-sm text-slate-500">
+                            No characters found
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   )}
-                  {characters.map(char => (
-                    <option key={char.id} value={char.name}>
-                      {char.name} ({char.image_count} images)
-                    </option>
-                  ))}
-                </select>
+                </div>
                 {characters.length === 0 && (
                   <p className="mt-1 text-xs text-amber-600">
                     No characters found. <a href="/reference" className="underline">Create one</a> for consistent generation.
