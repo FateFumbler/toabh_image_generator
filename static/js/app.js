@@ -2293,6 +2293,14 @@ async function submitEdit() {
 let editStatusPollInterval = null;
 let lastEditCompleted = false;
 
+// Dismiss edit banner
+function dismissEditBanner() {
+    const banner = document.getElementById('edit-status-banner');
+    banner.style.display = 'none';
+    // Clear the queue locally so it doesn't reappear
+    lastEditCompleted = false;
+}
+
 async function pollEditStatus() {
     const banner = document.getElementById('edit-status-banner');
     const statusText = document.getElementById('edit-status-text');

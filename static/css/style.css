@@ -2162,6 +2162,27 @@ body {
     margin-bottom: 20px;
     box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
     transition: background 0.3s ease;
+    position: relative;
+}
+
+.edit-banner-dismiss {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    transition: background 0.2s;
+}
+
+.edit-banner-dismiss:hover {
+    background: rgba(255, 255, 255, 0.3);
 }
 
 .edit-status-banner.processing {
