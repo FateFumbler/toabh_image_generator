@@ -97,12 +97,13 @@ export function ReferencePage() {
       return path;
     }
     
-    // For static files (/static/), use the API URL (Flask backend) for production
-    const apiUrl = import.meta.env.VITE_API_URL || '';
+    // For static files (/static/), use the Flask backend tunnel URL
+    // Hardcoded fallback for production - update this if tunnel changes
+    const tunnelUrl = import.meta.env.VITE_API_URL || 'https://let-fairfield-your-objective.trycloudflare.com';
     const urlPath = path.startsWith('/') ? path : '/' + path;
     
-    if (path.startsWith('/static/') && apiUrl) {
-      return `${apiUrl}${urlPath}`;
+    if (path.startsWith('/static/')) {
+      return `${tunnelUrl}${urlPath}`;
     }
     
     // Fallback to current origin

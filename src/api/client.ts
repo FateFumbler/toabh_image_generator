@@ -404,13 +404,13 @@ export function getImageUrl(filePath: string): string {
     return filePath;
   }
   
-  // For static files (/static/), use the API URL (Flask backend)
-  // For other paths, use the current origin (Vercel)
-  const apiUrl = import.meta.env.VITE_API_URL || '';
+  // For static files (/static/), use the Flask backend tunnel URL
+  // Hardcoded fallback for production - update this if tunnel changes
+  const tunnelUrl = import.meta.env.VITE_API_URL || 'https://let-fairfield-your-objective.trycloudflare.com';
   const path = filePath.startsWith('/') ? filePath : '/' + filePath;
   
-  if (filePath.startsWith('/static/') && apiUrl) {
-    return `${apiUrl}${path}`;
+  if (filePath.startsWith('/static/')) {
+    return `${tunnelUrl}${path}`;
   }
   
   // Fallback to current origin
