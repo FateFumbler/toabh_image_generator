@@ -43,6 +43,148 @@ generation_status = {
     'errors': []
 }
 
+# Knowledge Base for Prompt Generator
+PROMPT_GENERATOR_KB_FILE = os.path.join(app.instance_path, 'prompt_generator_kb.txt')
+
+@app.route('/api/prompt-generator/kb', methods=['GET', 'POST'])
+def handle_prompt_kb():
+    if request.method == 'POST':
+        data = request.json
+        kb_text = data.get('kb', '')
+        # Ensure instance directory exists
+        if not os.path.exists(app.instance_path):
+            os.makedirs(app.instance_path)
+        with open(PROMPT_GENERATOR_KB_FILE, 'w') as f:
+            f.write(kb_text)
+        return jsonify({'status': 'success'})
+    
+    kb_text = ""
+    if os.path.exists(PROMPT_GENERATOR_KB_FILE):
+        with open(PROMPT_GENERATOR_KB_FILE, 'r') as f:
+            kb_text = f.read()
+    else:
+        # Default KB rules
+        kb_text = """### Prompt Style Rules:
+- Start with 'Theme: '
+- Followed by a descriptive prompt text.
+- Use cinematic lighting terms.
+- Focus on facial details and atmosphere.
+- Example: Theme: Sunset Glow - High-end fashion editorial, soft golden hour lighting on face, sharp eyes, cinematic bokeh."""
+        if not os.path.exists(app.instance_path):
+            os.makedirs(app.instance_path)
+        with open(PROMPT_GENERATOR_KB_FILE, 'w') as f:
+            f.write(kb_text)
+            
+    return jsonify({'kb': kb_text})
+
+@app.route('/api/prompt-generator/generate', methods=['POST'])
+def generate_prompts_from_images():
+    if 'images' not in request.files:
+        return jsonify({'error': 'No images provided'}), 400
+    
+    images = request.files.getlist('images')
+    if len(images) > 20:
+        return jsonify({'error': 'Maximum 20 images allowed'}), 400
+    
+    api_key = os.getenv('GEMINI_API_KEY')
+    if not api_key:
+        return jsonify({'error': 'Gemini API key not configured'}), 500
+
+    # Load KB rules
+    kb_text = ""
+    if os.path.exists(PROMPT_GENERATOR_KB_FILE):
+        with open(PROMPT_GENERATOR_KB_FILE, 'r') as f:
+            kb_text = f.read()
+    
+    try:
+        from google import genai
+        from google.genai import types
+        client = genai.Client(api_key=api_key)
+        
+        generated_prompts = []
+        
+        for img_file in images:
+            # Read image data
+            img_data = img_file.read()
+            # Reset file pointer for any other use
+            img_file.seek(0)
+            
+            # Use Gemini to analyze image
+            prompt_instruction = f"Analyze this image and generate a structured prompt for an AI image generator following these rules:\n\n{kb_text}\n\nReturn ONLY the generated prompt string."
+            
+            response = client.models.generate_content(
+                model="gemini-2.0-flash", # Using flash for faster analysis
+                contents=[
+                    types.Content(
+                        role="user",
+                        parts=[
+                            types.Part.from_text(text=prompt_instruction),
+                            types.Part.from_bytes(data=img_data, mime_type=img_file.content_type)
+                        ]
+                    )
+                ]
+            )
+            
+            if response.text:
+                generated_prompts.append(response.text.strip())
+            else:
+                generated_prompts.append("Error: Failed to generate prompt for this image.")
+                
+        return jsonify({'prompts': generated_prompts})
+        
+    except Exception as e:
+        print(f"Prompt generation error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/prompts/bulk-save', methods=['POST'])
+def bulk_save_to_library():
+    data = request.json
+    prompts_text = data.get('prompts', '')
+    category_id = data.get('category_id')
+    gender = data.get('gender', 'FEMALE')
+    
+    if not prompts_text:
+        return jsonify({'error': 'No prompts provided'}), 400
+        
+    # Standard parsing logic for prompts
+    new_prompts = []
+    lines = prompts_text.strip().split('\n')
+    for line in lines:
+        if not line.strip(): continue
+        
+        # Look for Theme: Name - Prompt format
+        match = re.match(r'Theme:\s*(.*?)\s*-\s*(.*)', line)
+        if match:
+            theme = match.group(1).strip()
+            prompt_text = match.group(2).strip()
+        else:
+            # Fallback for "Theme: Name" or just prompt text
+            if line.startswith('Theme:'):
+                theme = line.replace('Theme:', '').strip()
+                prompt_text = theme
+            else:
+                theme = line[:30] + "..." if len(line) > 30 else line
+                prompt_text = line.strip()
+                
+        prompt = Prompt(
+            theme=theme,
+            text=prompt_text,
+            category_id=category_id,
+            gender=gender
+        )
+        db.session.add(prompt)
+        new_prompts.append(prompt)
+        
+    try:
+        db.session.commit()
+        return jsonify({'status': 'success', 'count': len(new_prompts)})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+# Existing routes...
+
+
 # Track image edit status (for background editing) - queue-based for multiple edits
 # Each edit task has: id, image_id, instruction, status (queued/processing/completed/error), 
 # created_at, completed_at, error, edited_image_path

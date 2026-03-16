@@ -32,6 +32,7 @@ function initializeApp() {
     setupLightbox();
     setupEditModal(); // Initialize edit modal
     setupResultsBulkActions();
+    setupPromptGenerator(); // New: Prompt Generator
     loadInitialData();
     loadResults();
     
@@ -84,6 +85,10 @@ function setupNavigation() {
             if (section === 'favorites') loadFavorites();
             if (section === 'results') loadResults();
             if (section === 'generate') updateQueueList();
+            if (section === 'prompt-generator') {
+                loadPromptKB();
+                updateGeneratorCategories();
+            }
         });
     });
 
@@ -2516,3 +2521,190 @@ window.cancelEditCategory = cancelEditCategory;
 window.openEditModal = openEditModal;
 window.setEditInstruction = setEditInstruction;
 window.toggleImageSelection = toggleImageSelection;
+
+// Prompt Generator Module
+let generatorFiles = [];
+
+function setupPromptGenerator() {
+    const uploadArea = document.getElementById('generator-upload-area');
+    const fileInput = document.getElementById('generator-file-input');
+    const startBtn = document.getElementById('start-generator-btn');
+
+    if (!uploadArea) return;
+
+    uploadArea.addEventListener('click', () => fileInput.click());
+
+    uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.style.borderColor = '#3b82f6';
+    });
+
+    uploadArea.addEventListener('dragleave', () => {
+        uploadArea.style.borderColor = '#444';
+    });
+
+    uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.style.borderColor = '#444';
+        handleGeneratorFiles(e.dataTransfer.files);
+    });
+
+    fileInput.addEventListener('change', (e) => {
+        handleGeneratorFiles(e.target.files);
+    });
+
+    startBtn.addEventListener('click', generatePromptsFromImages);
+}
+
+function handleGeneratorFiles(files) {
+    const newFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
+    
+    if (generatorFiles.length + newFiles.length > 20) {
+        showToast('Maximum 20 images allowed', 'error');
+        return;
+    }
+
+    generatorFiles = [...generatorFiles, ...newFiles];
+    updateGeneratorPreview();
+}
+
+function updateGeneratorPreview() {
+    const grid = document.getElementById('generator-preview-grid');
+    const countDisplay = document.getElementById('upload-count');
+    const startBtn = document.getElementById('start-generator-btn');
+
+    grid.innerHTML = '';
+    countDisplay.textContent = `${generatorFiles.length}/20`;
+    startBtn.disabled = generatorFiles.length === 0;
+
+    generatorFiles.forEach((file, index) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const item = document.createElement('div');
+            item.className = 'preview-item';
+            item.innerHTML = `
+                <img src="${e.target.result}" alt="Preview">
+                <button class="remove-btn" onclick="removeGeneratorFile(${index})">✕</button>
+            `;
+            grid.appendChild(item);
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+function removeGeneratorFile(index) {
+    generatorFiles.splice(index, 1);
+    updateGeneratorPreview();
+}
+
+async function loadPromptKB() {
+    try {
+        const response = await fetch('/api/prompt-generator/kb');
+        const data = await response.json();
+        document.getElementById('generator-kb').value = data.kb;
+    } catch (error) {
+        console.error('Error loading KB:', error);
+    }
+}
+
+async function savePromptKB() {
+    const kbText = document.getElementById('generator-kb').value;
+    try {
+        const response = await fetch('/api/prompt-generator/kb', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ kb: kbText })
+        });
+        if (response.ok) {
+            showToast('Knowledge Base saved successfully', 'success');
+        }
+    } catch (error) {
+        showToast('Failed to save Knowledge Base', 'error');
+    }
+}
+
+async function generatePromptsFromImages() {
+    const startBtn = document.getElementById('start-generator-btn');
+    const resultsPanel = document.getElementById('generator-results');
+    const outputArea = document.getElementById('generated-prompts-output');
+
+    if (generatorFiles.length === 0) return;
+
+    startBtn.disabled = true;
+    startBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+    
+    const formData = new FormData();
+    generatorFiles.forEach(file => {
+        formData.append('images', file);
+    });
+
+    try {
+        const response = await fetch('/api/prompt-generator/generate', {
+            method: 'POST',
+            body: formData
+        });
+        const data = await response.json();
+
+        if (data.prompts) {
+            resultsPanel.style.display = 'block';
+            outputArea.value = data.prompts.join('\n\n');
+            showToast(`Generated ${data.prompts.length} prompts successfully`, 'success');
+        } else {
+            showToast(data.error || 'Failed to generate prompts', 'error');
+        }
+    } catch (error) {
+        showToast('Generation error', 'error');
+    } finally {
+        startBtn.disabled = false;
+        startBtn.innerHTML = '<i class="fas fa-play"></i> Generate Prompts';
+    }
+}
+
+async function updateGeneratorCategories() {
+    const select = document.getElementById('save-category');
+    try {
+        const response = await fetch('/api/categories');
+        const categories = await response.json();
+        
+        select.innerHTML = '';
+        categories.forEach(cat => {
+            const opt = document.createElement('option');
+            opt.value = cat.id;
+            opt.textContent = cat.name;
+            select.appendChild(opt);
+        });
+    } catch (error) {
+        console.error('Error loading categories:', error);
+    }
+}
+
+async function saveGeneratedToLibrary() {
+    const prompts = document.getElementById('generated-prompts-output').value;
+    const categoryId = document.getElementById('save-category').value;
+    const gender = document.getElementById('save-gender').value;
+
+    if (!prompts) return;
+
+    try {
+        const response = await fetch('/api/prompts/bulk-save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                prompts: prompts,
+                category_id: categoryId,
+                gender: gender
+            })
+        });
+        const data = await response.json();
+
+        if (response.ok) {
+            showToast(`Saved ${data.count} prompts to library`, 'success');
+            // Switch to prompts section to show results
+            document.querySelector('.nav-item[data-section="prompts"]').click();
+        } else {
+            showToast(data.error || 'Failed to save prompts', 'error');
+        }
+    } catch (error) {
+        showToast('Save error', 'error');
+    }
+}

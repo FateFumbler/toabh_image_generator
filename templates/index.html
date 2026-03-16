@@ -43,6 +43,10 @@
                     <i class="fas fa-images"></i>
                     <span>Results</span>
                 </a>
+                <a href="#prompt-generator-section" class="nav-item" data-section="prompt-generator">
+                    <i class="fas fa-wand-magic-sparkles"></i>
+                    <span>Prompt Generator</span>
+                </a>
             </nav>
             
             <div class="sidebar-footer">
@@ -393,6 +397,72 @@
                         <div class="edit-progress-fill" id="edit-progress-fill"></div>
                     </div>
                 </div>
+
+                <!-- Prompt Generator Section -->
+                <section id="prompt-generator-section" class="section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-wand-magic-sparkles"></i> Prompt Generator</h2>
+                        <p>Generate structured prompts from images using AI.</p>
+                    </div>
+
+                    <div class="generator-layout">
+                        <!-- Knowledge Base Panel -->
+                        <div class="kb-panel card">
+                            <div class="card-header">
+                                <h3><i class="fas fa-book"></i> Knowledge Base Rules</h3>
+                                <button class="btn btn-sm btn-primary" onclick="savePromptKB()">Save Rules</button>
+                            </div>
+                            <div class="card-body">
+                                <textarea id="generator-kb" placeholder="Define prompt style, structure, and consistency rules here..."></textarea>
+                                <p class="help-text">These rules guide the AI when generating prompts from your images.</p>
+                            </div>
+                        </div>
+
+                        <!-- Generator Chat/Upload Panel -->
+                        <div class="generator-panel card">
+                            <div class="card-header">
+                                <h3><i class="fas fa-upload"></i> Upload Images</h3>
+                                <span class="badge" id="upload-count">0/20</span>
+                            </div>
+                            <div class="card-body">
+                                <div class="upload-area" id="generator-upload-area">
+                                    <i class="fas fa-cloud-upload-alt fa-3x"></i>
+                                    <p>Click or drag images here to analyze</p>
+                                    <input type="file" id="generator-file-input" multiple accept="image/*" style="display: none;">
+                                </div>
+                                <div id="generator-preview-grid" class="preview-grid"></div>
+                                
+                                <div class="action-bar">
+                                    <button class="btn btn-primary btn-block" id="start-generator-btn" disabled>
+                                        <i class="fas fa-play"></i> Generate Prompts
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Generated Results -->
+                    <div id="generator-results" class="card" style="display: none; margin-top: 20px;">
+                        <div class="card-header">
+                            <h3><i class="fas fa-list-check"></i> Generated Prompts</h3>
+                            <div class="header-actions">
+                                <select id="save-gender" class="form-select sm">
+                                    <option value="FEMALE">Female</option>
+                                    <option value="MALE">Male</option>
+                                </select>
+                                <select id="save-category" class="form-select sm">
+                                    <!-- Populated dynamically -->
+                                </select>
+                                <button class="btn btn-success" onclick="saveGeneratedToLibrary()">
+                                    <i class="fas fa-save"></i> Add to Library
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <textarea id="generated-prompts-output" rows="10" class="form-control"></textarea>
+                        </div>
+                    </div>
+                </section>
 
                 <div class="results-container" id="results-container">
                     <!-- Results will be grouped by model -->
