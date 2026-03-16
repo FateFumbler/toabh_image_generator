@@ -18,7 +18,9 @@ import {
   Check,
   AlertCircle,
   Package,
-  Sparkles
+  Sparkles,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { clsx, type ClassValue } from '../../utils/clsx';
 import * as api from '../../api/client';
@@ -194,6 +196,9 @@ export function GalleryPage() {
 
   const handleDelete = async (id: number) => {
     try {
+      // Check if we're deleting the currently previewed image
+      const wasPreviewing = previewImage?.id === id;
+      
       await api.deleteGeneratedImage(id);
       setShowDeleteConfirm(null);
       setSelectedImages(prev => {
@@ -201,6 +206,12 @@ export function GalleryPage() {
         next.delete(id);
         return next;
       });
+      
+      // Close preview if we deleted the previewed image
+      if (wasPreviewing) {
+        setPreviewImage(null);
+      }
+      
       loadData();
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to delete image');
@@ -778,31 +789,106 @@ export function GalleryPage() {
       )}
 
       {/* Preview Modal */}
-      {previewImage && (
-        <div 
-          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
-          onClick={() => setPreviewImage(null)}
-        >
-          <div className="relative max-w-4xl max-h-[90vh]">
-            <img
-              src={getImageUrl(previewImage.file_path)}
-              alt="Preview"
-              className="max-w-full max-h-[85vh] object-contain rounded-lg"
+      {previewImage && (() => {
+        // Get all images in the same group for navigation
+        const groupKey = previewImage.character_name || 'Ungrouped';
+        const groupImages = groupedImages[groupKey] || [];
+        const currentIndex = groupImages.findIndex(img => img.id === previewImage.id);
+        const hasPrev = currentIndex > 0;
+        const hasNext = currentIndex < groupImages.length - 1;
+        
+        const goToPrev = () => {
+          if (hasPrev) setPreviewImage(groupImages[currentIndex - 1]);
+        };
+        const goToNext = () => {
+          if (hasNext) setPreviewImage(groupImages[currentIndex + 1]);
+        };
+        
+        return (
+          <div 
+            className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
+            onClick={() => setPreviewImage(null)}
+          >
+            {/* Left Arrow */}
+            {hasPrev && (
+              <button
+                onClick={(e) => { e.stopPropagation(); goToPrev(); }}
+                className="absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors z-10"
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+            )}
+            
+            {/* Right Arrow */}
+            {hasNext && (
+              <button
+                onClick={(e) => { e.stopPropagation(); goToNext(); }}
+                className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors z-10"
+              >
+                <ChevronRight className="w-6 h-6" />
+              </button>
+            )}
+            
+            <div 
+              className="relative max-w-4xl max-h-[90vh]"
               onClick={(e) => e.stopPropagation()}
-            />
-            <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent rounded-b-lg">
-              <p className="text-white font-medium">{previewImage.prompt_number} - {previewImage.prompt_theme}</p>
-              <p className="text-white/70 text-sm">{previewImage.character_name} • {previewImage.model_used}</p>
-            </div>
-            <button
-              onClick={() => setPreviewImage(null)}
-              className="absolute top-2 right-2 p-2 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors"
             >
-              <X className="w-5 h-5" />
-            </button>
+              <img
+                src={getImageUrl(previewImage.file_path)}
+                alt="Preview"
+                className="max-w-full max-h-[80vh] object-contain rounded-lg"
+              />
+              
+              {/* Action Buttons */}
+              <div className="absolute bottom-16 left-0 right-0 flex justify-center gap-3">
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleDownload(previewImage); }}
+                  className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                >
+                  <Download className="w-4 h-4" />
+                  Download
+                </button>
+                <button
+                  onClick={(e) => { 
+                    e.stopPropagation(); 
+                    setEditingImage(previewImage); 
+                    setShowEditModal(true); 
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  <Edit3 className="w-4 h-4" />
+                  Edit
+                </button>
+                <button
+                  onClick={(e) => { 
+                    e.stopPropagation(); 
+                    setShowDeleteConfirm('single'); 
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Delete
+                </button>
+              </div>
+              
+              {/* Image Info */}
+              <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent rounded-b-lg">
+                <p className="text-white font-medium">{previewImage.prompt_number} - {previewImage.prompt_theme}</p>
+                <p className="text-white/70 text-sm">{previewImage.character_name} • {previewImage.model_used}</p>
+                <p className="text-white/50 text-xs mt-1">{currentIndex + 1} of {groupImages.length} in {groupKey}</p>
+              </div>
+              
+              {/* Close Button */}
+              <button
+                onClick={() => setPreviewImage(null)}
+                className="absolute top-2 right-2 p-2 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Edit Modal */}
       {showEditModal && editingImage && (
