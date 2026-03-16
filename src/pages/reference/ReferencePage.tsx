@@ -11,7 +11,8 @@ import {
   User,
   ChevronDown,
   ChevronUp,
-  AlertCircle
+  AlertCircle,
+  Search
 } from 'lucide-react';
 import { clsx, type ClassValue } from '../../utils/clsx';
 import * as api from '../../api/client';
@@ -32,6 +33,7 @@ export function ReferencePage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [selectedCharacter, setSelectedCharacter] = useState<string | 'all'>('all');
   const [expandedCharacters, setExpandedCharacters] = useState<Set<number>>(new Set());
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Modal states
   const [showAddCharacter, setShowAddCharacter] = useState(false);
@@ -63,10 +65,36 @@ export function ReferencePage() {
     (char.reference_images || []).map(img => ({ ...img, character_name: char.name }))
   );
 
-  // Filter images by selected character
-  const filteredImages = selectedCharacter === 'all' 
+  // Filter images by selected character and search
+  const filteredImages = (selectedCharacter === 'all' 
     ? allImages 
-    : allImages.filter(img => img.character_name === selectedCharacter);
+    : allImages.filter(img => img.character_name === selectedCharacter)
+  ).filter(img => {
+    if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase();
+    return img.character_name?.toLowerCase().includes(query);
+  });
+
+  // Filter characters by search
+  const filteredCharacters = characters.filter(char => {
+    if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase();
+    return char.name?.toLowerCase().includes(query);
+  });
+
+  // Helper to get first image for a character
+  const getFirstImage = (character: api.Character) => {
+    if (character.reference_images && character.reference_images.length > 0) {
+      return character.reference_images[0].file_path;
+    }
+    return null;
+  };
+
+  // Helper to get image URL
+  const getImageUrl = (path: string) => {
+    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    return `${baseUrl}${path}`;
+  };
 
   // Character handlers
   const handleCreateCharacter = async (name: string, files?: File[]) => {
@@ -199,38 +227,19 @@ export function ReferencePage() {
         </div>
       )}
 
-      {/* Character Tabs */}
+      {/* Search Bar */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
-        <div className="flex items-center gap-2 overflow-x-auto pb-2">
-          <button
-            onClick={() => setSelectedCharacter('all')}
-            className={cn(
-              "px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors",
-              selectedCharacter === 'all'
-                ? "bg-indigo-100 text-indigo-700"
-                : "text-slate-600 hover:bg-slate-100"
-            )}
-          >
-            All Images ({allImages.length})
-          </button>
-          {characters.map(char => (
-            <button
-              key={char.id}
-              onClick={() => setSelectedCharacter(char.name)}
-              className={cn(
-                "px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-2",
-                selectedCharacter === char.name
-                  ? "bg-indigo-100 text-indigo-700"
-                  : "text-slate-600 hover:bg-slate-100"
-              )}
-            >
-              <User className="w-4 h-4" />
-              {char.name}
-              <span className="text-xs bg-slate-200 px-1.5 py-0.5 rounded-full">
-                {char.image_count || 0}/{MAX_IMAGES_PER_CHARACTER}
-              </span>
-            </button>
-          ))}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Search reference sets by name..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg 
+                       focus:outline-none focus:ring-2 focus:ring-indigo-500/20 
+                       focus:border-indigo-500"
+          />
         </div>
       </div>
 
@@ -259,7 +268,7 @@ export function ReferencePage() {
               </button>
             </div>
           ) : (
-            characters.map(character => (
+            filteredCharacters.map(character => (
               <div key={character.id} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                 {/* Character Header */}
                 <div 
@@ -267,8 +276,18 @@ export function ReferencePage() {
                   onClick={() => toggleExpanded(character.id)}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center">
-                      <User className="w-5 h-5 text-indigo-600" />
+                    <div className="w-12 h-12 rounded-lg overflow-hidden bg-slate-100 flex-shrink-0">
+                      {getFirstImage(character) ? (
+                        <img 
+                          src={getImageUrl(getFirstImage(character)!)} 
+                          alt={character.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <User className="w-5 h-5 text-slate-400" />
+                        </div>
+                      )}
                     </div>
                     <div>
                       <h3 className="font-semibold text-slate-900">{character.name}</h3>
