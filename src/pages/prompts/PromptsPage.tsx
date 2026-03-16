@@ -40,6 +40,11 @@ export function PromptsPage() {
 
   // Selection state
   const [selectedPrompts, setSelectedPrompts] = useState<number[]>([]);
+
+  // Persist selection to localStorage
+  useEffect(() => {
+    localStorage.setItem('toabh_selected_prompts', JSON.stringify(selectedPrompts));
+  }, [selectedPrompts]);
   
   // Category scroll state
   const categoryRef = useRef<HTMLDivElement>(null);

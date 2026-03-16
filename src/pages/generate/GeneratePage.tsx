@@ -66,6 +66,21 @@ export function GeneratePage() {
   const [selectedPrompts, setSelectedPrompts] = useState<Set<number>>(new Set());
   const [selectAll, setSelectAll] = useState(false);
 
+  // Load pre-selected prompts from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('toabh_selected_prompts');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          setSelectedPrompts(new Set(parsed));
+        }
+      } catch (e) {
+        console.error('Failed to parse saved prompts:', e);
+      }
+    }
+  }, []);
+
   // Filter state
   const [genderFilter, setGenderFilter] = useState<'all' | 'male' | 'female'>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');

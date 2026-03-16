@@ -25,7 +25,8 @@ import type {
   BulkSaveToLibraryRequest,
 } from '../types';
 
-const API_BASE = '/api';
+// Use environment variable for production, proxy for development
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
 // Helper for handling fetch responses
 async function handleResponse<T>(response: Response): Promise<T> {
