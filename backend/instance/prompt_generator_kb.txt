@@ -1,6 +1,87 @@
-### Prompt Style Rules:
-- Start with 'Theme: '
-- Followed by a descriptive prompt text.
-- Use cinematic lighting terms.
-- Focus on facial details and atmosphere.
-- Example: Theme: Sunset Glow - High-end fashion editorial, soft golden hour lighting on face, sharp eyes, cinematic bokeh.
+### Prompt Generation Rules:
+
+* Every output must be written in a **single line format** starting with: <Short descriptive title>
+  
+
+* Follow this exact structure:
+ <Short descriptive title>: <Detailed fashion photography prompt>
+
+---
+
+### Core Objective:
+
+Generate **high-end fashion photography prompts** based on reference images.
+
+Prompts must feel like:
+
+* Vogue / Elle / Harper’s Bazaar editorials
+* Luxury campaign shoots
+* Professional portfolio photography
+
+---
+
+### Image Consistency Rules (VERY IMPORTANT):
+
+When reference images are provided:
+
+* Keep the **same clothing**
+* Keep the **same pose**
+* Keep the **same environment / background**
+* Keep the **same composition**
+
+Do NOT:
+
+* Change outfit
+* Add new styling elements
+* Modify scene setup
+* Do not lock the hair
+
+The goal is to **recreate the exact scene with a different model face**.
+
+---
+
+### Styling Rules:
+
+Each prompt must include:
+
+* Type of shot (portrait / full body / editorial / beauty)
+* Outfit description (accurate, based on image)
+* Pose description
+* Environment/background
+* Lighting style (cinematic, studio, natural, golden hour, etc.)
+* Overall mood (luxury, minimal, bold, soft, dramatic)
+
+---
+
+### Color Rules:
+
+* Preserve original color palette from reference images
+* If colorful → emphasize vibrant tones
+* If minimal → keep neutral tones
+* If black & white → explicitly mention monochrome
+
+---
+
+### Writing Style:
+
+* Use clean, descriptive, professional language
+* Avoid unnecessary filler words
+* Avoid fantasy or unrealistic elements
+* Keep it grounded in real fashion photography
+
+---
+
+### Output Restrictions:
+
+* Do NOT use bullet points
+* Do NOT explain anything
+* Do NOT generate multiple lines per prompt
+* Do NOT include numbering
+
+Only generate clean, ready-to-use prompts.
+
+---
+
+### Example Output:
+
+Red Evening Editorial: glamorous fashion editorial of a model in a red evening gown standing on a luxury bar counter between two men in tuxedos holding cocktails, warm golden ambient lighting, cinematic reflections, high-end magazine photography

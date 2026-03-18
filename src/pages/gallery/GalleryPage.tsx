@@ -20,9 +20,11 @@ import {
   Package,
   Sparkles,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Wand2
 } from 'lucide-react';
 import { clsx, type ClassValue } from '../../utils/clsx';
+import { useGenerationProgress } from '../../hooks/useGenerationProgress';
 import * as api from '../../api/client';
 
 function cn(...inputs: ClassValue[]) {
@@ -54,6 +56,9 @@ export function GalleryPage() {
   // Edit queue state
   const [editQueue, setEditQueue] = useState<api.EditTask[]>([]);
   const [pollingEditStatus, setPollingEditStatus] = useState(false);
+  
+  // Generation progress - global state
+  const { status: generationStatus } = useGenerationProgress();
   
   // Load dismissed edits from localStorage
   const [dismissedEdits, setDismissedEdits] = useState<Set<number>>(() => {
@@ -168,19 +173,18 @@ export function GalleryPage() {
     setExpandedGroups(new Set());
   };
 
-  // Download all images in a group
+  // Download all images in a group as a ZIP
   const handleDownloadAllGroup = async (groupKey: string) => {
     const groupImages = groupedImages[groupKey];
-    for (const image of groupImages) {
-      const filename = `${image.prompt_number}_${image.character_name || 'ungrouped'}.png`;
-      try {
-        const blob = await api.downloadImage(image.id);
-        downloadBlob(blob, filename);
-        // Small delay between downloads
-        await new Promise(resolve => setTimeout(resolve, 500));
-      } catch (err) {
-        console.error(`Failed to download ${filename}:`, err);
-      }
+    const imageIds = groupImages.map(img => img.id);
+    
+    try {
+      const blob = await api.bulkDownloadImages(imageIds);
+      const filename = `${groupKey.replace(/[^a-z0-9]/gi, '_')}_images.zip`;
+      downloadBlob(blob, filename);
+    } catch (err) {
+      console.error(`Failed to download group:`, err);
+      alert(err instanceof Error ? err.message : 'Failed to download images');
     }
   };
 
@@ -353,6 +357,68 @@ export function GalleryPage() {
           </button>
         </div>
       </div>
+
+      {/* Generation Queue - Global progress from any page */}
+      {generationStatus.is_generating && (
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 animate-fade-in">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-medium text-slate-900 flex items-center gap-2">
+              <Wand2 className="w-4 h-4 text-violet-600" />
+              Generation Queue
+              <span className="ml-1 px-2 py-0.5 bg-violet-100 text-violet-700 text-xs rounded-full">
+                Active
+              </span>
+            </h3>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-slate-500">
+                {generationStatus.completed} / {generationStatus.total} completed
+              </span>
+              <a 
+                href="/generate" 
+                className="text-xs text-indigo-600 hover:text-indigo-700"
+              >
+                View in Generate
+              </a>
+            </div>
+          </div>
+
+          {/* Progress Bar */}
+          <div className="h-2 bg-slate-100 rounded-full overflow-hidden mb-3">
+            <div
+              className="h-full bg-gradient-to-r from-violet-500 to-indigo-500 transition-all duration-500"
+              style={{ width: `${generationStatus.total > 0 ? (generationStatus.completed / generationStatus.total) * 100 : 0}%` }}
+            />
+          </div>
+
+          {/* Current Prompt */}
+          {generationStatus.current_prompt && (
+            <div className="p-3 bg-violet-50 border border-violet-100 rounded-lg">
+              <p className="text-xs text-violet-600 mb-1">Currently generating:</p>
+              <p className="text-sm text-slate-700 truncate">{generationStatus.current_prompt}</p>
+            </div>
+          )}
+
+          {/* Errors */}
+          {generationStatus.errors.length > 0 && (
+            <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <div className="flex items-center gap-2 text-red-700">
+                <AlertCircle className="w-4 h-4" />
+                <span className="text-sm font-medium">
+                  {generationStatus.errors.length} error{generationStatus.errors.length !== 1 ? 's' : ''}
+                </span>
+              </div>
+              <ul className="mt-2 text-xs text-red-600 space-y-1">
+                {generationStatus.errors.slice(0, 3).map((error, idx) => (
+                  <li key={idx} className="truncate">• {error}</li>
+                ))}
+                {generationStatus.errors.length > 3 && (
+                  <li>...and {generationStatus.errors.length - 3} more</li>
+                )}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Edit Queue Status */}
       {editQueue.filter(t => !dismissedEdits.has(t.id)).length > 0 && (
@@ -947,7 +1013,7 @@ export function GalleryPage() {
                 Cancel
               </button>
               <button
-                onClick={() => showDeleteConfirm === 'bulk' ? handleBulkDelete() : setShowDeleteConfirm(null)}
+                onClick={() => showDeleteConfirm === 'bulk' ? handleBulkDelete() : previewImage && handleDelete(previewImage.id)}
                 className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
               >
                 Delete

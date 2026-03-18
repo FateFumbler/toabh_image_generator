@@ -10,6 +10,9 @@ class Config:
     TURSO_DB_URL = os.environ.get('TURSO_DB_URL') or 'libsql://toabh-images-fatefumbler.aws-ap-south-1.turso.io'
     TURSO_AUTH_TOKEN = os.environ.get('TURSO_AUTH_TOKEN') or 'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJleHAiOjE4MDUyMzY2MjQsImlhdCI6MTc3MzcwMDYyNCwiaWQiOiIwMTljZjg4OS0xNjAxLTczMDEtYmJlMy1mY2MxNDQ5NjAzNWQiLCJyaWQiOiJiMmQ5MjY4OC0xODNlLTQwZWEtODBmMC0yNmY1YjM2YzI0Y2YifQ.-CwP35cmQC303vlvOrMM7UnnpBiS7KJcv0oUQsQGwSFYqFEG0NHumCgHl9_PtcJppp84p39PB_kTLkrpoGUhAQ'
     
+    # Enable Turso sync (set to True to enable automatic sync to Turso)
+    USE_TURSO = os.environ.get('USE_TURSO', 'false').lower() == 'true'
+    
     # Get instance folder path
     instance_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'instance')
     

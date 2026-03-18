@@ -119,16 +119,25 @@ def sync_to_turso():
 from sqlalchemy import event
 
 def after_commit(session):
-    """Automatically sync to Turso after each database commit."""
+    """Automatically sync to Turso after each database commit.
+    
+    Uses a background thread to avoid session state issues - the after_commit
+    hook runs after the transaction is committed, so we can't use the same session.
+    """
     if Config.USE_TURSO:
-        try:
-            result = sync_to_turso()
-            if result.get('success'):
-                print(f"Auto-sync to Turso: {result.get('message')}")
-            else:
-                print(f"Auto-sync warning: {result.get('message')}")
-        except Exception as e:
-            print(f"Auto-sync error: {e}")
+        # Defer the sync to a background thread to avoid session state issues
+        def deferred_sync():
+            with app.app_context():
+                try:
+                    result = sync_to_turso()
+                    if result.get('success'):
+                        print(f"Auto-sync to Turso: {result.get('message')}")
+                    else:
+                        print(f"Auto-sync warning: {result.get('message')}")
+                except Exception as e:
+                    print(f"Auto-sync error: {e}")
+        
+        threading.Thread(target=deferred_sync, daemon=True).start()
 
 # Hook into SQLAlchemy session
 from database import db
@@ -351,9 +360,13 @@ def generate_prompts_from_images():
     if len(images) > 20:
         return jsonify({'error': 'Maximum 20 images allowed'}), 400
     
-    api_key = os.getenv('GEMINI_API_KEY')
+    # Use OpenAI GPT-4.1 for image analysis
+    from openai import OpenAI
+    api_key = os.getenv('OPENAI_API_KEY')
     if not api_key:
-        return jsonify({'error': 'Gemini API key not configured'}), 500
+        return jsonify({'error': 'OpenAI API key not configured'}), 500
+
+    client = OpenAI(api_key=api_key)
 
     # Load KB rules
     kb_text = ""
@@ -362,10 +375,6 @@ def generate_prompts_from_images():
             kb_text = f.read()
     
     try:
-        from google import genai
-        from google.genai import types
-        client = genai.Client(api_key=api_key)
-        
         generated_prompts = []
         
         for img_file in images:
@@ -374,7 +383,21 @@ def generate_prompts_from_images():
             # Reset file pointer for any other use
             img_file.seek(0)
             
-            # Use Gemini to analyze image
+            # Convert image to base64
+            img_base64 = base64.b64encode(img_data).decode('utf-8')
+            
+            # Determine mime type for OpenAI
+            mime_type = img_file.content_type
+            if mime_type == 'image/jpeg':
+                mime_type = 'image/jpeg'  # OpenAI supports jpeg
+            elif mime_type == 'image/png':
+                mime_type = 'image/png'
+            elif mime_type == 'image/gif':
+                mime_type = 'image/gif'
+            elif mime_type == 'image/webp':
+                mime_type = 'image/webp'
+            
+            # Use GPT-4.1 to analyze image
             prompt_instruction = f"""Analyze this image and generate a structured prompt for an AI image generator.
 
 STRICT RULES - FOLLOW EXACTLY:
@@ -385,21 +408,27 @@ Theme: [Theme Name] - [Detailed prompt description]
 
 DO NOT include any other text, explanation, or formatting. Return ONLY the Theme line."""
             
-            response = client.models.generate_content(
-                model="gemini-2.0-flash", # Using flash for faster analysis
-                contents=[
-                    types.Content(
-                        role="user",
-                        parts=[
-                            types.Part.from_text(text=prompt_instruction),
-                            types.Part.from_bytes(data=img_data, mime_type=img_file.content_type)
+            response = client.chat.completions.create(
+                model="gpt-4.1",
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": prompt_instruction},
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:{mime_type};base64,{img_base64}"
+                                }
+                            }
                         ]
-                    )
-                ]
+                    }
+                ],
+                max_tokens=1000
             )
             
-            if response.text:
-                generated_prompts.append(response.text.strip())
+            if response.choices and response.choices[0].message.content:
+                generated_prompts.append(response.choices[0].message.content.strip())
             else:
                 generated_prompts.append("Error: Failed to generate prompt for this image.")
                 

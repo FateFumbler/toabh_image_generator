@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { clsx, type ClassValue } from '../../utils/clsx';
 import { useSettings } from '../../hooks/useSettings';
+import { useGenerationProgress } from '../../hooks/useGenerationProgress';
 import * as api from '../../api/client';
 
 function cn(...inputs: ClassValue[]) {
@@ -34,10 +35,9 @@ export function GeneratePage() {
   const [characters, setCharacters] = useState<api.Character[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Generation state
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [generationStatus, setGenerationStatus] = useState<api.GenerationStatus | null>(null);
-  const statusPollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Use global generation progress context
+  const { status: generationStatus, isPolling, startGeneration, stopGeneration } = useGenerationProgress();
+  const isGenerating = generationStatus.is_generating;
 
   // Get default settings
   const { settings: defaultSettings, loaded: settingsLoaded } = useSettings();
@@ -165,8 +165,8 @@ export function GeneratePage() {
     setSelectAll(!selectAll);
   };
 
-  // Generation handlers
-  const startGeneration = async () => {
+  // Generation handlers - use global context
+  const handleStartGeneration = async () => {
     if (selectedPrompts.size === 0) {
       alert('Please select at least one prompt');
       return;
@@ -180,52 +180,19 @@ export function GeneratePage() {
         aspect_ratio: settings.aspect_ratio,
         model_name: settings.model_name,
       };
-      await api.generateImages(request);
-      setIsGenerating(true);
-      startStatusPolling();
+      await startGeneration(request);
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to start generation');
     }
   };
 
-  const stopGeneration = async () => {
+  const handleStopGeneration = async () => {
     try {
-      await api.stopGeneration();
+      await stopGeneration();
     } catch (err) {
       console.error('Failed to stop generation:', err);
     }
   };
-
-  const startStatusPolling = () => {
-    if (statusPollingRef.current) {
-      clearInterval(statusPollingRef.current);
-    }
-
-    statusPollingRef.current = setInterval(async () => {
-      try {
-        const status = await api.getGenerationStatus();
-        setGenerationStatus(status);
-
-        if (!status.is_generating) {
-          setIsGenerating(false);
-          if (statusPollingRef.current) {
-            clearInterval(statusPollingRef.current);
-            statusPollingRef.current = null;
-          }
-        }
-      } catch (err) {
-        console.error('Failed to get generation status:', err);
-      }
-    }, 1000);
-  };
-
-  useEffect(() => {
-    return () => {
-      if (statusPollingRef.current) {
-        clearInterval(statusPollingRef.current);
-      }
-    };
-  }, []);
 
   const progress = generationStatus 
     ? (generationStatus.total > 0 ? (generationStatus.completed / generationStatus.total) * 100 : 0)
@@ -242,7 +209,7 @@ export function GeneratePage() {
         <div className="flex items-center gap-2">
           {!isGenerating ? (
             <button
-              onClick={startGeneration}
+              onClick={handleStartGeneration}
               disabled={selectedPrompts.size === 0}
               className={cn(
                 "inline-flex items-center gap-2 px-6 py-2.5 rounded-lg font-medium transition-all",
@@ -256,7 +223,7 @@ export function GeneratePage() {
             </button>
           ) : (
             <button
-              onClick={stopGeneration}
+              onClick={handleStopGeneration}
               className="inline-flex items-center gap-2 px-6 py-2.5 bg-red-600 text-white 
                          rounded-lg hover:bg-red-700 transition-colors font-medium"
             >
