@@ -40,6 +40,9 @@ export function ReferencePage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<api.Character | null>(null);
   const [uploadingCharacter, setUploadingCharacter] = useState<api.Character | null>(null);
 
+  // Track which character to upload to when file input is triggered
+  const [uploadTargetCharacter, setUploadTargetCharacter] = useState<api.Character | null>(null);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Load data
@@ -317,8 +320,8 @@ export function ReferencePage() {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
+                        setUploadTargetCharacter(character);
                         fileInputRef.current?.click();
-                        setSelectedCharacter(character.name);
                       }}
                       disabled={(character.image_count || 0) >= MAX_IMAGES_PER_CHARACTER || uploadingCharacter?.id === character.id}
                       className="px-3 py-1.5 text-sm bg-indigo-50 text-indigo-600 rounded-lg 
@@ -368,7 +371,10 @@ export function ReferencePage() {
                             ? "border-indigo-500 bg-indigo-50"
                             : "border-slate-300 hover:border-indigo-400"
                         )}
-                        onClick={() => fileInputRef.current?.click()}
+                        onClick={() => {
+                          setUploadTargetCharacter(character);
+                          fileInputRef.current?.click();
+                        }}
                       >
                         <FolderOpen className="w-8 h-8 text-slate-400 mx-auto mb-2" />
                         <p className="text-sm text-slate-600">Drop images here or click to upload</p>
@@ -401,7 +407,10 @@ export function ReferencePage() {
                         {/* Add More Slot */}
                         {(character.image_count || 0) < MAX_IMAGES_PER_CHARACTER && (
                           <button
-                            onClick={() => fileInputRef.current?.click()}
+                            onClick={() => {
+                              setUploadTargetCharacter(character);
+                              fileInputRef.current?.click();
+                            }}
                             className="aspect-square rounded-lg border-2 border-dashed border-slate-300 
                                        hover:border-indigo-400 hover:bg-indigo-50 transition-all
                                        flex flex-col items-center justify-center gap-1"
@@ -450,7 +459,11 @@ export function ReferencePage() {
                 <List className="w-5 h-5" />
               </button>
               <button
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => {
+                  const char = characters.find(c => c.name === selectedCharacter);
+                  if (char) setUploadTargetCharacter(char);
+                  fileInputRef.current?.click();
+                }}
                 className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white 
                            rounded-lg hover:bg-indigo-700 transition-colors font-medium ml-2"
               >
@@ -583,13 +596,20 @@ export function ReferencePage() {
         onChange={(e) => {
           const files = e.target.files;
           if (files && files.length > 0) {
-            const char = selectedCharacter === 'all' 
-              ? characters[0] 
-              : characters.find(c => c.name === selectedCharacter);
+            // Use uploadTargetCharacter if set, otherwise fall back to old logic
+            const char = uploadTargetCharacter || (
+              selectedCharacter === 'all' 
+                ? characters[0] 
+                : characters.find(c => c.name === selectedCharacter)
+            );
             if (char) {
               handleUploadImages(char, Array.from(files));
             }
           }
+          // Clear the target after use
+          setUploadTargetCharacter(null);
+          // Reset file input value so same file can be selected again
+          e.target.value = '';
         }}
       />
 
