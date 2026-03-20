@@ -105,4 +105,21 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+  
+  /* Custom scrollbar for dark mode */
+  .dark ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .dark ::-webkit-scrollbar-track {
+    background: hsl(217.2 32.6% 17.5%);
+    border-radius: 4px;
+  }
+  .dark ::-webkit-scrollbar-thumb {
+    background: hsl(215 20.2% 65.1%);
+    border-radius: 4px;
+  }
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: hsl(215 20.2% 75%);
+  }
 }
