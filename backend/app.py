@@ -1267,7 +1267,7 @@ def generate_image_with_leonardo(prompt_text, reference_images=None, aspect_rati
                 raise Exception("Generation stopped by user")
             
             poll_response = requests.get(
-                f"{api_url}/generations/{generation_id}",
+                f"https://cloud.leonardo.ai/api/rest/v1/generations/{generation_id}",
                 headers=headers,
                 timeout=30
             )
