@@ -33,25 +33,24 @@ export function Button({
 
   const variants = {
     primary: cn(
-      'bg-indigo-600 text-white hover:bg-indigo-700',
+      'bg-indigo-600 text-white hover:bg-indigo-700 dark:bg-indigo-700 dark:hover:bg-indigo-800',
       'focus:ring-indigo-500',
       'shadow-sm hover:shadow-md'
     ),
     secondary: cn(
-      'bg-slate-100 text-slate-900 hover:bg-slate-200',
+      'bg-slate-100 text-slate-900 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600',
       'focus:ring-slate-500'
     ),
     outline: cn(
-      'bg-white text-slate-700 border border-slate-200',
-      'hover:bg-slate-50 hover:border-slate-300',
+      'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 hover:border-slate-300 dark:bg-slate-800 dark:text-slate-100 dark:border-slate-700 dark:hover:bg-slate-700',
       'focus:ring-indigo-500'
     ),
     ghost: cn(
-      'bg-transparent text-slate-700 hover:bg-slate-100',
+      'bg-transparent text-slate-700 hover:bg-slate-100 dark:text-slate-100 dark:hover:bg-slate-700',
       'focus:ring-slate-500'
     ),
     danger: cn(
-      'bg-red-600 text-white hover:bg-red-700',
+      'bg-red-600 text-white hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800',
       'focus:ring-red-500',
       'shadow-sm hover:shadow-md'
     ),

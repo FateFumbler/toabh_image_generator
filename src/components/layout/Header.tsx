@@ -161,15 +161,7 @@ export function Header({ onMenuClick, isCollapsed }: HeaderProps) {
           <Menu className="w-5 h-5 text-slate-600" />
         </button>
         
-        {/* Search bar */}
-        <div className="hidden sm:flex items-center gap-2 px-3 py-2 bg-slate-100 rounded-lg">
-          <Search className="w-4 h-4 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Search..."
-            className="bg-transparent border-none outline-none text-sm w-48 lg:w-64 placeholder:text-slate-400"
-          />
-        </div>
+
       </div>
 
       {/* Right side */}
@@ -262,6 +254,20 @@ export function Header({ onMenuClick, isCollapsed }: HeaderProps) {
 
               {/* Footer */}
               {logs.length > 0 && (
+                <div className="px-4 py-2 border-t border-slate-100 bg-slate-50/50 text-center">
+                  <span className="text-xs text-slate-400">
+                    {logs.length} notification{logs.length !== 1 ? 's' : ''}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </header>
+  );
+}
+& (
                 <div className="px-4 py-2 border-t border-slate-100 bg-slate-50/50 text-center">
                   <span className="text-xs text-slate-400">
                     {logs.length} notification{logs.length !== 1 ? 's' : ''}

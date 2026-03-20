@@ -20,10 +20,10 @@ export function Card({
   ...props
 }: CardProps) {
   const variants = {
-    default: 'bg-white border border-slate-200 shadow-sm',
-    bordered: 'bg-white border-2 border-slate-200',
-    elevated: 'bg-white border border-slate-200 shadow-lg',
-    ghost: 'bg-slate-50/50 border border-slate-100',
+    default: 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm',
+    bordered: 'bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700',
+    elevated: 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg',
+    ghost: 'bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700',
   };
 
   const paddings = {
@@ -76,16 +76,16 @@ export function CardHeader({
     >
       <div className="flex items-start gap-3 min-w-0">
         {icon && (
-          <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center">
+          <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-indigo-50 dark:bg-indigo-950 flex items-center justify-center">
             {icon}
           </div>
         )}
         <div className="min-w-0">
           {title && (
-            <h3 className="font-semibold text-slate-900 truncate">{title}</h3>
+            <h3 className="font-semibold text-slate-900 dark:text-white truncate">{title}</h3>
           )}
           {subtitle && (
-            <p className="text-sm text-slate-500 truncate">{subtitle}</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400 truncate">{subtitle}</p>
           )}
           {children}
         </div>
@@ -109,7 +109,7 @@ export function CardContent({
   return (
     <div
       className={cn(
-        divider && 'pt-4 mt-4 border-t border-slate-100',
+        divider && 'pt-4 mt-4 border-t border-slate-100 dark:border-slate-700',
         className
       )}
       {...props}
@@ -140,7 +140,7 @@ export function CardFooter({
   return (
     <div
       className={cn(
-        'flex items-center gap-3 pt-4 mt-4 border-t border-slate-100',
+        'flex items-center gap-3 pt-4 mt-4 border-t border-slate-100 dark:border-slate-700',
         aligns[align],
         className
       )}
@@ -174,29 +174,29 @@ export function StatsCard({
 }: StatsCardProps) {
   const colors = {
     blue: {
-      bg: 'bg-blue-50',
-      icon: 'text-blue-600',
-      trend: 'text-blue-600',
+      bg: 'bg-blue-50 dark:bg-blue-950',
+      icon: 'text-blue-600 dark:text-blue-400',
+      trend: 'text-blue-600 dark:text-blue-400',
     },
     green: {
-      bg: 'bg-emerald-50',
-      icon: 'text-emerald-600',
-      trend: 'text-emerald-600',
+      bg: 'bg-emerald-50 dark:bg-emerald-950',
+      icon: 'text-emerald-600 dark:text-emerald-400',
+      trend: 'text-emerald-600 dark:text-emerald-400',
     },
     purple: {
-      bg: 'bg-violet-50',
-      icon: 'text-violet-600',
-      trend: 'text-violet-600',
+      bg: 'bg-violet-50 dark:bg-violet-950',
+      icon: 'text-violet-600 dark:text-violet-400',
+      trend: 'text-violet-600 dark:text-violet-400',
     },
     amber: {
-      bg: 'bg-amber-50',
-      icon: 'text-amber-600',
-      trend: 'text-amber-600',
+      bg: 'bg-amber-50 dark:bg-amber-950',
+      icon: 'text-amber-600 dark:text-amber-400',
+      trend: 'text-amber-600 dark:text-amber-400',
     },
     red: {
-      bg: 'bg-red-50',
-      icon: 'text-red-600',
-      trend: 'text-red-600',
+      bg: 'bg-red-50 dark:bg-red-950',
+      icon: 'text-red-600 dark:text-red-400',
+      trend: 'text-red-600 dark:text-red-400',
     },
   };
 
@@ -210,14 +210,14 @@ export function StatsCard({
     >
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-sm font-medium text-slate-500">{title}</p>
-          <p className="text-2xl font-bold text-slate-900 mt-1">{value}</p>
+          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{title}</p>
+          <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">{value}</p>
           {trend && (
             <div className="flex items-center gap-1 mt-2">
               <svg
                 className={cn(
                   'w-3.5 h-3.5',
-                  trend.positive !== false ? 'text-emerald-600' : 'text-red-600',
+                  trend.positive !== false ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400',
                   trend.positive !== false ? '' : 'rotate-180'
                 )}
                 fill="none"
@@ -234,7 +234,7 @@ export function StatsCard({
               <span
                 className={cn(
                   'text-xs font-medium',
-                  trend.positive !== false ? 'text-emerald-600' : 'text-red-600'
+                  trend.positive !== false ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
                 )}
               >
                 {trend.value}
@@ -275,32 +275,32 @@ export function InfoCard({
 }: InfoCardProps) {
   const variants = {
     info: {
-      bg: 'bg-blue-50',
-      border: 'border-blue-200',
-      icon: 'text-blue-600',
-      title: 'text-blue-900',
-      description: 'text-blue-700',
+      bg: 'bg-blue-50 dark:bg-blue-950',
+      border: 'border-blue-200 dark:border-blue-800',
+      icon: 'text-blue-600 dark:text-blue-400',
+      title: 'text-blue-900 dark:text-blue-100',
+      description: 'text-blue-700 dark:text-blue-300',
     },
     success: {
-      bg: 'bg-emerald-50',
-      border: 'border-emerald-200',
-      icon: 'text-emerald-600',
-      title: 'text-emerald-900',
-      description: 'text-emerald-700',
+      bg: 'bg-emerald-50 dark:bg-emerald-950',
+      border: 'border-emerald-200 dark:border-emerald-800',
+      icon: 'text-emerald-600 dark:text-emerald-400',
+      title: 'text-emerald-900 dark:text-emerald-100',
+      description: 'text-emerald-700 dark:text-emerald-300',
     },
     warning: {
-      bg: 'bg-amber-50',
-      border: 'border-amber-200',
-      icon: 'text-amber-600',
-      title: 'text-amber-900',
-      description: 'text-amber-700',
+      bg: 'bg-amber-50 dark:bg-amber-950',
+      border: 'border-amber-200 dark:border-amber-800',
+      icon: 'text-amber-600 dark:text-amber-400',
+      title: 'text-amber-900 dark:text-amber-100',
+      description: 'text-amber-700 dark:text-amber-300',
     },
     error: {
-      bg: 'bg-red-50',
-      border: 'border-red-200',
-      icon: 'text-red-600',
-      title: 'text-red-900',
-      description: 'text-red-700',
+      bg: 'bg-red-50 dark:bg-red-950',
+      border: 'border-red-200 dark:border-red-800',
+      icon: 'text-red-600 dark:text-red-400',
+      title: 'text-red-900 dark:text-red-100',
+      description: 'text-red-700 dark:text-red-300',
     },
   };
 
@@ -340,10 +340,10 @@ export function SkeletonCard({
     <Card variant="default" padding="md">
       {hasHeader && (
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-lg bg-slate-200 animate-pulse" />
+          <div className="w-10 h-10 rounded-lg bg-slate-200 dark:bg-slate-700 animate-pulse" />
           <div className="flex-1">
-            <div className="h-4 bg-slate-200 rounded animate-pulse w-1/3" />
-            <div className="h-3 bg-slate-200 rounded animate-pulse w-1/2 mt-2" />
+            <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded animate-pulse w-1/3" />
+            <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded animate-pulse w-1/2 mt-2" />
           </div>
         </div>
       )}
@@ -352,16 +352,16 @@ export function SkeletonCard({
           <div
             key={i}
             className={cn(
-              'h-3 bg-slate-200 rounded animate-pulse',
+              'h-3 bg-slate-200 dark:bg-slate-700 rounded animate-pulse',
               i === lines - 1 ? 'w-2/3' : 'w-full'
             )}
           />
         ))}
       </div>
       {hasFooter && (
-        <div className="flex items-center justify-between pt-4 mt-4 border-t border-slate-100">
-          <div className="h-8 w-20 bg-slate-200 rounded animate-pulse" />
-          <div className="h-8 w-20 bg-slate-200 rounded animate-pulse" />
+        <div className="flex items-center justify-between pt-4 mt-4 border-t border-slate-100 dark:border-slate-700">
+          <div className="h-8 w-20 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
+          <div className="h-8 w-20 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
         </div>
       )}
     </Card>

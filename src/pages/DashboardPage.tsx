@@ -43,8 +43,8 @@ export function DashboardPage() {
       value: stats?.total_prompts || 0, 
       icon: MessageSquare, 
       color: 'from-blue-500 to-blue-600',
-      bgColor: 'bg-blue-50',
-      textColor: 'text-blue-600',
+      bgColor: 'bg-blue-50 dark:bg-blue-950',
+      textColor: 'text-blue-600 dark:text-blue-400',
       link: '/prompts'
     },
     { 
@@ -52,8 +52,8 @@ export function DashboardPage() {
       value: stats?.total_reference_images || 0, 
       icon: Images, 
       color: 'from-emerald-500 to-emerald-600',
-      bgColor: 'bg-emerald-50',
-      textColor: 'text-emerald-600',
+      bgColor: 'bg-emerald-50 dark:bg-emerald-950',
+      textColor: 'text-emerald-600 dark:text-emerald-400',
       link: '/reference'
     },
     { 
@@ -61,8 +61,8 @@ export function DashboardPage() {
       value: stats?.total_generated || 0, 
       icon: Sparkles, 
       color: 'from-violet-500 to-violet-600',
-      bgColor: 'bg-violet-50',
-      textColor: 'text-violet-600',
+      bgColor: 'bg-violet-50 dark:bg-violet-950',
+      textColor: 'text-violet-600 dark:text-violet-400',
       link: '/gallery'
     },
     { 
@@ -70,8 +70,8 @@ export function DashboardPage() {
       value: stats?.total_generated || 0, 
       icon: Grid3X3, 
       color: 'from-amber-500 to-amber-600',
-      bgColor: 'bg-amber-50',
-      textColor: 'text-amber-600',
+      bgColor: 'bg-amber-50 dark:bg-amber-950',
+      textColor: 'text-amber-600 dark:text-amber-400',
       link: '/gallery'
     },
   ];
@@ -81,13 +81,13 @@ export function DashboardPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
-          <p className="text-slate-500 mt-1">Welcome back to TOABH Dashboard</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Dashboard</h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">Welcome back to TOABH Dashboard</p>
         </div>
         <div className="flex items-center gap-2">
           <span className={cn(
             "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium",
-            error ? "bg-red-50 text-red-700" : "bg-emerald-50 text-emerald-700"
+            error ? "bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-400" : "bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400"
           )}>
             <Activity className="w-4 h-4" />
             {error ? 'Connection Error' : 'System Online'}
@@ -102,7 +102,7 @@ export function DashboardPage() {
             key={card.title}
             href={card.link}
             className={cn(
-              "bg-white rounded-xl p-5 border border-slate-200 shadow-sm",
+              "bg-white dark:bg-slate-800 rounded-xl p-5 border border-slate-200 dark:border-slate-700 shadow-sm",
               "hover:shadow-md transition-shadow duration-200 block"
             )}
             style={{ animationDelay: `${index * 50}ms` }}
@@ -119,10 +119,10 @@ export function DashboardPage() {
               )}
             </div>
             <div className="mt-4">
-              <p className="text-2xl font-bold text-slate-900">
+              <p className="text-2xl font-bold text-slate-900 dark:text-white">
                 {loading ? '-' : card.value.toLocaleString()}
               </p>
-              <p className="text-sm text-slate-500 mt-0.5">{card.title}</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{card.title}</p>
             </div>
           </a>
         ))}
@@ -131,8 +131,8 @@ export function DashboardPage() {
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Quick Actions */}
-        <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm p-5">
-          <h2 className="text-lg font-semibold text-slate-900 mb-4">Quick Actions</h2>
+        <div className="lg:col-span-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-5">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Quick Actions</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <QuickActionButton
               icon={MessageSquare}
@@ -180,18 +180,18 @@ export function DashboardPage() {
         </div>
 
         {/* System Info */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-5">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-slate-900">System Status</h2>
-            <Clock className="w-4 h-4 text-slate-400" />
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">System Status</h2>
+            <Clock className="w-4 h-4 text-slate-400 dark:text-slate-500" />
           </div>
           
           {error ? (
-            <div className="p-4 bg-red-50 rounded-lg border border-red-200">
-              <p className="text-sm text-red-700">{error}</p>
+            <div className="p-4 bg-red-50 dark:bg-red-950 rounded-lg border border-red-200 dark:border-red-800">
+              <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
               <button
                 onClick={loadStats}
-                className="mt-2 text-sm text-red-600 hover:text-red-800 font-medium"
+                className="mt-2 text-sm text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 font-medium"
               >
                 Retry
               </button>
@@ -217,8 +217,8 @@ export function DashboardPage() {
             </div>
           )}
           
-          <div className="mt-6 pt-4 border-t border-slate-200">
-            <p className="text-xs text-slate-500">
+          <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               Last updated: {new Date().toLocaleTimeString()}
             </p>
           </div>
@@ -282,10 +282,10 @@ function StatusItem({ label, status }: StatusItemProps) {
 
   return (
     <div className="flex items-center justify-between py-2">
-      <span className="text-sm text-slate-600">{label}</span>
+      <span className="text-sm text-slate-600 dark:text-slate-300">{label}</span>
       <div className="flex items-center gap-2">
         <div className={cn("w-2 h-2 rounded-full", config.color)} />
-        <span className="text-sm text-slate-500">{config.text}</span>
+        <span className="text-sm text-slate-500 dark:text-slate-400">{config.text}</span>
       </div>
     </div>
   );

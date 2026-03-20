@@ -37,14 +37,14 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         {label && (
           <label
             htmlFor={inputId}
-            className="block text-sm font-medium text-slate-700 mb-1.5"
+            className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5"
           >
             {label}
           </label>
         )}
         <div className="relative">
           {leftIcon && (
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none">
               {leftIcon}
             </div>
           )}
@@ -54,32 +54,32 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             className={cn(
               'block rounded-lg border text-sm transition-colors duration-200',
               'focus:outline-none focus:ring-2 focus:ring-offset-0',
-              'disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed',
-              'placeholder:text-slate-400',
+              'disabled:bg-slate-100 dark:disabled:bg-slate-800 disabled:text-slate-500 disabled:cursor-not-allowed',
+              'placeholder:text-slate-400 dark:placeholder:text-slate-500',
               fullWidth && 'w-full',
               leftIcon && 'pl-10',
               rightIcon && 'pr-10',
               error
-                ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20 text-red-900'
-                : 'border-slate-200 focus:border-indigo-500 focus:ring-indigo-500/20',
+                ? 'border-red-300 dark:border-red-700 focus:border-red-500 focus:ring-red-500/20 text-red-900 dark:text-red-100 bg-white dark:bg-slate-900'
+                : 'border-slate-200 dark:border-slate-700 focus:border-indigo-500 focus:ring-indigo-500/20 bg-white dark:bg-slate-900 text-slate-900 dark:text-white',
               'px-3 py-2',
               className
             )}
             {...props}
           />
           {rightIcon && (
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500">
               {rightIcon}
             </div>
           )}
         </div>
         {(helperText || error) && (
           <div className="mt-1.5 flex items-start gap-1.5">
-            {error && <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />}
+            {error && <AlertCircle className="w-4 h-4 text-red-500 dark:text-red-400 flex-shrink-0 mt-0.5" />}
             <p
               className={cn(
                 'text-xs',
-                error ? 'text-red-600' : 'text-slate-500'
+                error ? 'text-red-600 dark:text-red-400' : 'text-slate-500 dark:text-slate-400'
               )}
             >
               {error || helperText}
@@ -159,7 +159,7 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
         {label && (
           <label
             htmlFor={inputId}
-            className="block text-sm font-medium text-slate-700 mb-1.5"
+            className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5"
           >
             {label}
           </label>
@@ -170,24 +170,24 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
           className={cn(
             'block w-full rounded-lg border text-sm transition-colors duration-200',
             'focus:outline-none focus:ring-2 focus:ring-offset-0',
-            'disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed',
-            'placeholder:text-slate-400',
+            'disabled:bg-slate-100 dark:disabled:bg-slate-800 disabled:text-slate-500 disabled:cursor-not-allowed',
+            'placeholder:text-slate-400 dark:placeholder:text-slate-500',
             !resizable && 'resize-none',
             error
-              ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20'
-              : 'border-slate-200 focus:border-indigo-500 focus:ring-indigo-500/20',
-            'px-3 py-2',
+              ? 'border-red-300 dark:border-red-700 focus:border-red-500 focus:ring-red-500/20'
+              : 'border-slate-200 dark:border-slate-700 focus:border-indigo-500 focus:ring-indigo-500/20',
+            'px-3 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white',
             className
           )}
           {...props}
         />
         {(helperText || error) && (
           <div className="mt-1.5 flex items-start gap-1.5">
-            {error && <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />}
+            {error && <AlertCircle className="w-4 h-4 text-red-500 dark:text-red-400 flex-shrink-0 mt-0.5" />}
             <p
               className={cn(
                 'text-xs',
-                error ? 'text-red-600' : 'text-slate-500'
+                error ? 'text-red-600 dark:text-red-400' : 'text-slate-500 dark:text-slate-400'
               )}
             >
               {error || helperText}
@@ -222,7 +222,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
         {label && (
           <label
             htmlFor={inputId}
-            className="block text-sm font-medium text-slate-700 mb-1.5"
+            className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5"
           >
             {label}
           </label>
@@ -233,11 +233,11 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           className={cn(
             'block w-full rounded-lg border text-sm transition-colors duration-200',
             'focus:outline-none focus:ring-2 focus:ring-offset-0',
-            'disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed',
+            'disabled:bg-slate-100 dark:disabled:bg-slate-800 disabled:text-slate-500 disabled:cursor-not-allowed',
             error
-              ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20'
-              : 'border-slate-200 focus:border-indigo-500 focus:ring-indigo-500/20',
-            'px-3 py-2 bg-white',
+              ? 'border-red-300 dark:border-red-700 focus:border-red-500 focus:ring-red-500/20'
+              : 'border-slate-200 dark:border-slate-700 focus:border-indigo-500 focus:ring-indigo-500/20',
+            'px-3 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white',
             className
           )}
           {...props}
@@ -256,7 +256,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           <p
             className={cn(
               'mt-1.5 text-xs',
-              error ? 'text-red-600' : 'text-slate-500'
+              error ? 'text-red-600 dark:text-red-400' : 'text-slate-500 dark:text-slate-400'
             )}
           >
             {error || helperText}
