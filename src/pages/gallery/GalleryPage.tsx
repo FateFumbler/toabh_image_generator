@@ -299,8 +299,8 @@ export function GalleryPage() {
     });
   }, []);
 
-  // Image URL helper - works on both mobile and desktop
-  const getImageUrl = (filePath: string) => {
+  // Image URL helper - works on both mobile and desktop with cache-busting for edited images
+  const getImageUrl = (filePath: string, timestamp?: string | null) => {
     // Use relative path for images - works on both mobile and desktop
     if (filePath.startsWith('http')) {
       return filePath;
@@ -311,12 +311,19 @@ export function GalleryPage() {
     const tunnelUrl = import.meta.env.VITE_API_URL || 'https://welding-heaven-resistant-aviation.trycloudflare.com';
     const path = filePath.startsWith('/') ? filePath : '/' + filePath;
     
+    let baseUrl;
     if (filePath.startsWith('/static/')) {
-      return `${tunnelUrl}${path}`;
+      baseUrl = `${tunnelUrl}${path}`;
+    } else {
+      baseUrl = `${window.location.origin}${path}`;
     }
     
-    // Fallback to current origin
-    return `${window.location.origin}${path}`;
+    // Add cache-busting timestamp if available
+    if (timestamp) {
+      return `${baseUrl}?t=${timestamp.replace(/[:.]/g, '-')}`;
+    }
+    
+    return baseUrl;
   };
 
   return (
@@ -981,7 +988,7 @@ export function GalleryPage() {
             >
               {/* Image */}
               <img
-                src={getImageUrl(previewImage.file_path)}
+                src={getImageUrl(previewImage.file_path, previewImage.edited_at || previewImage.created_at)}
                 alt="Preview"
                 className="max-w-full max-h-[75vh] object-contain rounded-lg mx-auto"
               />

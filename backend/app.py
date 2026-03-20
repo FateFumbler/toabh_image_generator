@@ -1526,7 +1526,7 @@ def get_generated_images():
     if prompt_id:
         query = query.filter_by(prompt_id=prompt_id)
     
-    images = query.order_by(GeneratedImage.created_at.desc()).all()
+    images = query.order_by(db.func.coalesce(GeneratedImage.edited_at, GeneratedImage.created_at).desc()).all()
     
     result = []
     for img in images:
