@@ -206,8 +206,8 @@ export function PromptsPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowBulkAddModal(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 border border-slate-200 
-                       rounded-lg hover:bg-slate-50 transition-colors font-medium text-slate-700"
+            className="inline-flex items-center gap-2 px-4 py-2 border border-slate-200 dark:border-slate-600 
+                       rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors font-medium text-slate-700 dark:text-slate-200"
           >
             <FileText className="w-4 h-4" />
             Bulk Add
