@@ -324,8 +324,8 @@ export function GalleryPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Results Gallery</h1>
-          <p className="text-slate-500 mt-1">Browse, download, and edit generated images</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Results Gallery</h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">Browse, download, and edit generated images</p>
         </div>
         <div className="flex items-center gap-2">
           {selectedImages.size > 0 && (
@@ -333,7 +333,7 @@ export function GalleryPage() {
               <button 
                 onClick={handleBulkDownload}
                 className="inline-flex items-center gap-1.5 px-3 py-2 text-sm 
-                           text-indigo-600 bg-indigo-50 hover:bg-indigo-100 
+                           text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950 hover:bg-indigo-100 dark:hover:bg-indigo-900 
                            rounded-lg transition-colors"
               >
                 <Package className="w-4 h-4" />
@@ -342,7 +342,7 @@ export function GalleryPage() {
               <button 
                 onClick={() => setShowDeleteConfirm('bulk')}
                 className="inline-flex items-center gap-1.5 px-3 py-2 text-sm 
-                           text-red-600 bg-red-50 hover:bg-red-100 
+                           text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950 hover:bg-red-100 dark:hover:bg-red-900 
                            rounded-lg transition-colors"
               >
                 <Trash2 className="w-4 h-4" />
@@ -352,7 +352,7 @@ export function GalleryPage() {
           )}
           <button
             onClick={loadData}
-            className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+            className="p-2 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
             title="Refresh"
           >
             <RefreshCw className={cn("w-5 h-5", loading && "animate-spin")} />
@@ -362,22 +362,22 @@ export function GalleryPage() {
 
       {/* Generation Queue - Global progress from any page */}
       {generationStatus.is_generating && (
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 animate-fade-in">
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-4 animate-fade-in">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="font-medium text-slate-900 flex items-center gap-2">
-              <Wand2 className="w-4 h-4 text-violet-600" />
+            <h3 className="font-medium text-slate-900 dark:text-white flex items-center gap-2">
+              <Wand2 className="w-4 h-4 text-violet-600 dark:text-violet-400" />
               Generation Queue
-              <span className="ml-1 px-2 py-0.5 bg-violet-100 text-violet-700 text-xs rounded-full">
+              <span className="ml-1 px-2 py-0.5 bg-violet-100 dark:bg-violet-900 text-violet-700 dark:text-violet-300 text-xs rounded-full">
                 Active
               </span>
             </h3>
             <div className="flex items-center gap-2">
-              <span className="text-sm text-slate-500">
+              <span className="text-sm text-slate-500 dark:text-slate-400">
                 {generationStatus.completed} / {generationStatus.total} completed
               </span>
               <a 
                 href="/generate" 
-                className="text-xs text-indigo-600 hover:text-indigo-700"
+                className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300"
               >
                 View in Generate
               </a>
@@ -385,7 +385,7 @@ export function GalleryPage() {
           </div>
 
           {/* Progress Bar */}
-          <div className="h-2 bg-slate-100 rounded-full overflow-hidden mb-3">
+          <div className="h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden mb-3">
             <div
               className="h-full bg-gradient-to-r from-violet-500 to-indigo-500 transition-all duration-500"
               style={{ width: `${generationStatus.total > 0 ? (generationStatus.completed / generationStatus.total) * 100 : 0}%` }}
@@ -394,22 +394,22 @@ export function GalleryPage() {
 
           {/* Current Prompt */}
           {generationStatus.current_prompt && (
-            <div className="p-3 bg-violet-50 border border-violet-100 rounded-lg">
-              <p className="text-xs text-violet-600 mb-1">Currently generating:</p>
-              <p className="text-sm text-slate-700 truncate">{generationStatus.current_prompt}</p>
+            <div className="p-3 bg-violet-50 dark:bg-violet-950 border border-violet-100 dark:border-violet-900 rounded-lg">
+              <p className="text-xs text-violet-600 dark:text-violet-400 mb-1">Currently generating:</p>
+              <p className="text-sm text-slate-700 dark:text-slate-300 truncate">{generationStatus.current_prompt}</p>
             </div>
           )}
 
           {/* Errors */}
           {generationStatus.errors.length > 0 && (
-            <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
-              <div className="flex items-center gap-2 text-red-700">
+            <div className="mt-3 p-3 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg">
+              <div className="flex items-center gap-2 text-red-700 dark:text-red-400">
                 <AlertCircle className="w-4 h-4" />
                 <span className="text-sm font-medium">
                   {generationStatus.errors.length} error{generationStatus.errors.length !== 1 ? 's' : ''}
                 </span>
               </div>
-              <ul className="mt-2 text-xs text-red-600 space-y-1">
+              <ul className="mt-2 text-xs text-red-600 dark:text-red-400 space-y-1">
                 {generationStatus.errors.slice(0, 3).map((error, idx) => (
                   <li key={idx} className="truncate">• {error}</li>
                 ))}
@@ -424,24 +424,24 @@ export function GalleryPage() {
 
       {/* Edit Queue Status */}
       {editQueue.filter(t => !dismissedEdits.has(t.id)).length > 0 && (
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-4">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="font-medium text-slate-900 flex items-center gap-2">
+            <h3 className="font-medium text-slate-900 dark:text-white flex items-center gap-2">
               <Edit3 className="w-4 h-4" />
               Edit Queue
               {pollingEditStatus && (
-                <Loader2 className="w-4 h-4 animate-spin text-indigo-600" />
+                <Loader2 className="w-4 h-4 animate-spin text-indigo-600 dark:text-indigo-400" />
               )}
             </h3>
             <div className="flex items-center gap-2">
-              <span className="text-sm text-slate-500">
+              <span className="text-sm text-slate-500 dark:text-slate-400">
                 {editQueue.filter(t => t.status === 'queued' && !dismissedEdits.has(t.id)).length} queued,{' '}
                 {editQueue.filter(t => t.status === 'processing' && !dismissedEdits.has(t.id)).length} processing
               </span>
               {editQueue.some(t => dismissedEdits.has(t.id)) && (
                 <button
                   onClick={clearAllDismissed}
-                  className="text-xs text-indigo-600 hover:text-indigo-700"
+                  className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300"
                 >
                   Show dismissed
                 </button>
@@ -454,10 +454,10 @@ export function GalleryPage() {
                 key={task.id}
                 className={cn(
                   "flex items-center gap-3 px-3 py-2 rounded-lg text-sm",
-                  task.status === 'completed' && "bg-emerald-50 text-emerald-700",
-                  task.status === 'processing' && "bg-blue-50 text-blue-700",
-                  task.status === 'queued' && "bg-slate-50 text-slate-600",
-                  task.status === 'error' && "bg-red-50 text-red-700"
+                  task.status === 'completed' && "bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400",
+                  task.status === 'processing' && "bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-400",
+                  task.status === 'queued' && "bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-300",
+                  task.status === 'error' && "bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-400"
                 )}
               >
                 {task.status === 'completed' && <Check className="w-4 h-4" />}
@@ -481,11 +481,11 @@ export function GalleryPage() {
 
       {/* Error Message */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center justify-between">
-          <p className="text-sm text-red-700">{error}</p>
+        <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg p-4 flex items-center justify-between">
+          <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
           <button
             onClick={loadData}
-            className="text-sm text-red-600 hover:text-red-800 font-medium"
+            className="text-sm text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 font-medium"
           >
             Retry
           </button>
@@ -493,19 +493,20 @@ export function GalleryPage() {
       )}
 
       {/* Toolbar */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-4">
         <div className="flex flex-col lg:flex-row gap-4">
           {/* Search */}
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500" />
             <input
               type="text"
               placeholder="Search by prompt, character, or number..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg 
+              className="w-full pl-10 pr-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg 
                          focus:outline-none focus:ring-2 focus:ring-indigo-500/20 
-                         focus:border-indigo-500"
+                         focus:border-indigo-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white
+                         placeholder:text-slate-400 dark:placeholder:text-slate-500"
             />
           </div>
           
@@ -516,8 +517,8 @@ export function GalleryPage() {
               className={cn(
                 "inline-flex items-center gap-2 px-4 py-2 border rounded-lg transition-colors",
                 showFilters
-                  ? "border-indigo-500 text-indigo-600 bg-indigo-50"
-                  : "border-slate-200 hover:bg-slate-50 text-slate-700"
+                  ? "border-indigo-500 text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950"
+                  : "border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200"
               )}
             >
               <Filter className="w-4 h-4" />
@@ -528,8 +529,8 @@ export function GalleryPage() {
               className={cn(
                 "p-2 rounded-lg transition-colors",
                 viewMode === 'grid' 
-                  ? "bg-indigo-100 text-indigo-600" 
-                  : "text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                  ? "bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-400" 
+                  : "text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
               )}
             >
               <Grid3X3 className="w-5 h-5" />
@@ -539,8 +540,8 @@ export function GalleryPage() {
               className={cn(
                 "p-2 rounded-lg transition-colors",
                 viewMode === 'list' 
-                  ? "bg-indigo-100 text-indigo-600" 
-                  : "text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                  ? "bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-400" 
+                  : "text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
               )}
             >
               <List className="w-5 h-5" />
@@ -550,15 +551,15 @@ export function GalleryPage() {
 
         {/* Gender Filter Toggles */}
         <div className="flex items-center gap-2 mt-4">
-          <span className="text-sm font-medium text-slate-700">Gender:</span>
-          <div className="inline-flex rounded-lg border border-slate-200 overflow-hidden">
+          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Gender:</span>
+          <div className="inline-flex rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
             <button
               onClick={() => setGenderFilter('all')}
               className={cn(
                 "px-4 py-2 text-sm font-medium transition-colors",
                 genderFilter === 'all'
                   ? "bg-indigo-600 text-white"
-                  : "bg-white text-slate-600 hover:bg-slate-50"
+                  : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
               )}
             >
               ALL
@@ -566,10 +567,10 @@ export function GalleryPage() {
             <button
               onClick={() => setGenderFilter('female')}
               className={cn(
-                "px-4 py-2 text-sm font-medium transition-colors border-l border-slate-200",
+                "px-4 py-2 text-sm font-medium transition-colors border-l border-slate-200 dark:border-slate-700",
                 genderFilter === 'female'
                   ? "bg-indigo-600 text-white"
-                  : "bg-white text-slate-600 hover:bg-slate-50"
+                  : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
               )}
             >
               FEMALE
@@ -577,10 +578,10 @@ export function GalleryPage() {
             <button
               onClick={() => setGenderFilter('male')}
               className={cn(
-                "px-4 py-2 text-sm font-medium transition-colors border-l border-slate-200",
+                "px-4 py-2 text-sm font-medium transition-colors border-l border-slate-200 dark:border-slate-700",
                 genderFilter === 'male'
                   ? "bg-indigo-600 text-white"
-                  : "bg-white text-slate-600 hover:bg-slate-50"
+                  : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
               )}
             >
               MALE
@@ -589,7 +590,7 @@ export function GalleryPage() {
           {genderFilter !== 'all' && (
             <button
               onClick={() => setGenderFilter('all')}
-              className="text-xs text-slate-400 hover:text-slate-600 ml-2"
+              className="text-xs text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 ml-2"
             >
               Clear
             </button>
@@ -598,32 +599,34 @@ export function GalleryPage() {
 
         {/* Filter Panel */}
         {showFilters && (
-          <div className="mt-4 pt-4 border-t border-slate-200 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="flex items-center gap-2 text-sm font-medium text-slate-700 mb-1.5">
+              <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                 <User className="w-4 h-4" />
                 Character
               </label>
               <select
                 value={characterFilter}
                 onChange={(e) => setCharacterFilter(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm
-                           focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm
+                           focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500
+                           bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
               >
                 <option value="all">All Characters</option>
                 {characters.map(char => <option key={char} value={char}>{char}</option>)}
               </select>
             </div>
             <div>
-              <label className="flex items-center gap-2 text-sm font-medium text-slate-700 mb-1.5">
+              <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                 <Tag className="w-4 h-4" />
                 Model
               </label>
               <select
                 value={modelFilter}
                 onChange={(e) => setModelFilter(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm
-                           focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm
+                           focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500
+                           bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
               >
                 <option value="all">All Models</option>
                 {models.map(model => <option key={model} value={model}>{model}</option>)}
@@ -636,16 +639,16 @@ export function GalleryPage() {
       {/* Gallery */}
       {loading ? (
         <div className="text-center py-16">
-          <Loader2 className="w-12 h-12 text-indigo-600 animate-spin mx-auto mb-4" />
-          <p className="text-slate-500">Loading images...</p>
+          <Loader2 className="w-12 h-12 text-indigo-600 dark:text-indigo-400 animate-spin mx-auto mb-4" />
+          <p className="text-slate-500 dark:text-slate-400">Loading images...</p>
         </div>
       ) : filteredImages.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-xl border border-slate-200">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-100 flex items-center justify-center">
-            <ImageIcon className="w-8 h-8 text-slate-400" />
+        <div className="text-center py-16 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
+            <ImageIcon className="w-8 h-8 text-slate-400 dark:text-slate-500" />
           </div>
-          <h3 className="text-lg font-medium text-slate-900">No images found</h3>
-          <p className="text-slate-500 mt-1">
+          <h3 className="text-lg font-medium text-slate-900 dark:text-white">No images found</h3>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">
             {searchQuery || characterFilter !== 'all' || modelFilter !== 'all'
               ? 'Try adjusting your filters'
               : 'Generate some images to see them here'}
@@ -653,7 +656,7 @@ export function GalleryPage() {
           {!searchQuery && characterFilter === 'all' && modelFilter === 'all' && (
             <a 
               href="/generate"
-              className="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+              className="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 dark:bg-indigo-700 dark:hover:bg-indigo-800"
             >
               <Sparkles className="w-4 h-4" />
               Generate Images
@@ -666,20 +669,20 @@ export function GalleryPage() {
           {/* Expand/Collapse All */}
           {Object.keys(groupedImages).length > 1 && (
             <div className="flex items-center justify-between">
-              <span className="text-sm text-slate-500">
+              <span className="text-sm text-slate-500 dark:text-slate-400">
                 {Object.keys(groupedImages).length} groups
               </span>
               <div className="flex items-center gap-2">
                 <button
                   onClick={expandAllGroups}
-                  className="text-xs text-indigo-600 hover:text-indigo-700"
+                  className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300"
                 >
                   Expand all
                 </button>
-                <span className="text-slate-300">|</span>
+                <span className="text-slate-300 dark:text-slate-600">|</span>
                 <button
                   onClick={collapseAllGroups}
-                  className="text-xs text-indigo-600 hover:text-indigo-700"
+                  className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300"
                 >
                   Collapse all
                 </button>
@@ -690,17 +693,17 @@ export function GalleryPage() {
           {Object.entries(groupedImages).map(([groupKey, groupImages]) => {
             const isExpanded = expandedGroups.has(groupKey) || expandedGroups.size === 0;
             return (
-              <div key={groupKey} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+              <div key={groupKey} className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
                 {/* Group Header */}
                 <button
                   onClick={() => toggleGroup(groupKey)}
-                  className="w-full flex items-center justify-between p-4 hover:bg-slate-50 transition-colors"
+                  className="w-full flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
                 >
                   <div className="flex items-center gap-3">
-                    <Package className="w-5 h-5 text-indigo-600" />
+                    <Package className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
                     <div className="text-left">
-                      <h3 className="font-medium text-slate-900">{groupKey}</h3>
-                      <p className="text-sm text-slate-500">{groupImages.length} images</p>
+                      <h3 className="font-medium text-slate-900 dark:text-white">{groupKey}</h3>
+                      <p className="text-sm text-slate-500 dark:text-slate-400">{groupImages.length} images</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -709,14 +712,14 @@ export function GalleryPage() {
                         e.stopPropagation();
                         handleDownloadAllGroup(groupKey);
                       }}
-                      className="flex items-center gap-1 px-3 py-1.5 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition-colors"
+                      className="flex items-center gap-1 px-3 py-1.5 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 dark:bg-indigo-700 dark:hover:bg-indigo-800 transition-colors"
                     >
                       <Download className="w-4 h-4" />
                       Download All
                     </button>
                     <X 
                       className={cn(
-                        "w-5 h-5 text-slate-400 transition-transform",
+                        "w-5 h-5 text-slate-400 dark:text-slate-500 transition-transform",
                         isExpanded ? "rotate-180" : ""
                       )} 
                     />
@@ -734,7 +737,7 @@ export function GalleryPage() {
                 "border-2 transition-all duration-200",
                 selectedImages.has(image.id)
                   ? "border-indigo-500 ring-2 ring-indigo-500/20"
-                  : "border-slate-200 hover:border-indigo-300"
+                  : "border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-600"
               )}
               onClick={() => toggleSelection(image.id)}
             >
@@ -758,13 +761,13 @@ export function GalleryPage() {
                               transition-opacity flex items-center justify-center gap-2">
                 <button 
                   onClick={(e) => { e.stopPropagation(); setPreviewImage(image); }}
-                  className="p-2 bg-white rounded-lg text-slate-700 hover:text-indigo-600 transition-colors"
+                  className="p-2 bg-white dark:bg-slate-800 rounded-lg text-slate-700 dark:text-slate-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
                 >
                   <Eye className="w-4 h-4" />
                 </button>
                 <button 
                   onClick={(e) => { e.stopPropagation(); handleDownload(image); }}
-                  className="p-2 bg-white rounded-lg text-slate-700 hover:text-indigo-600 transition-colors"
+                  className="p-2 bg-white dark:bg-slate-800 rounded-lg text-slate-700 dark:text-slate-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
                 >
                   <Download className="w-4 h-4" />
                 </button>
@@ -774,13 +777,13 @@ export function GalleryPage() {
                     setEditingImage(image); 
                     setShowEditModal(true); 
                   }}
-                  className="p-2 bg-white rounded-lg text-slate-700 hover:text-indigo-600 transition-colors"
+                  className="p-2 bg-white dark:bg-slate-800 rounded-lg text-slate-700 dark:text-slate-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
                 >
                   <Edit3 className="w-4 h-4" />
                 </button>
                 <button 
                   onClick={(e) => { e.stopPropagation(); handleDelete(image.id); }}
-                  className="p-2 bg-white rounded-lg text-slate-700 hover:text-red-600 transition-colors"
+                  className="p-2 bg-white dark:bg-slate-800 rounded-lg text-slate-700 dark:text-slate-200 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -801,48 +804,48 @@ export function GalleryPage() {
           })}
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
           <table className="w-full">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-200">
+              <tr className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
                 <th className="px-4 py-3 w-12">
                   <button 
                     onClick={toggleAll}
                     className="flex items-center justify-center w-5 h-5 rounded border 
-                               border-slate-300 hover:border-indigo-500 transition-colors"
+                               border-slate-300 dark:border-slate-600 hover:border-indigo-500 transition-colors"
                   >
                     {selectedImages.size === filteredImages.length && filteredImages.length > 0 && (
-                      <CheckSquare className="w-4 h-4 text-indigo-600" />
+                      <CheckSquare className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
                     )}
                   </button>
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   Preview
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   Prompt
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   Character
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   Model
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   Created
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200">
+            <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
               {filteredImages.map((image) => (
                 <tr 
                   key={image.id}
                   className={cn(
-                    "hover:bg-slate-50 transition-colors",
-                    selectedImages.has(image.id) && "bg-indigo-50/50"
+                    "hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors",
+                    selectedImages.has(image.id) && "bg-indigo-50/50 dark:bg-indigo-950/50"
                   )}
                 >
                   <td className="px-4 py-3">
@@ -852,7 +855,7 @@ export function GalleryPage() {
                         "w-5 h-5 rounded border transition-colors flex items-center justify-center",
                         selectedImages.has(image.id)
                           ? "bg-indigo-600 border-indigo-600"
-                          : "border-slate-300 hover:border-indigo-500"
+                          : "border-slate-300 dark:border-slate-600 hover:border-indigo-500"
                       )}
                     >
                       {selectedImages.has(image.id) && (
@@ -862,7 +865,7 @@ export function GalleryPage() {
                   </td>
                   <td className="px-4 py-3">
                     <div 
-                      className="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center overflow-hidden cursor-pointer"
+                      className="w-12 h-12 rounded-lg bg-slate-100 dark:bg-slate-700 flex items-center justify-center overflow-hidden cursor-pointer"
                       onClick={() => setPreviewImage(image)}
                     >
                       <img
@@ -874,42 +877,42 @@ export function GalleryPage() {
                   </td>
                   <td className="px-4 py-3">
                     <div>
-                      <p className="text-sm font-medium text-slate-900">{image.prompt_number}</p>
-                      <p className="text-xs text-slate-500 truncate max-w-xs">{image.prompt_theme}</p>
+                      <p className="text-sm font-medium text-slate-900 dark:text-white">{image.prompt_number}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 truncate max-w-xs">{image.prompt_theme}</p>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-sm text-slate-600">
+                  <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
                     <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs 
-                                     font-medium bg-slate-100 text-slate-800">
+                                     font-medium bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200">
                       {image.character_name}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-sm text-slate-600">
+                  <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
                     {image.model_used}
                   </td>
-                  <td className="px-4 py-3 text-sm text-slate-500">
+                  <td className="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">
                     {new Date(image.created_at).toLocaleDateString()}
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex items-center justify-end gap-1">
                       <button 
                         onClick={() => handleDownload(image)}
-                        className="p-1.5 text-slate-400 hover:text-indigo-600 
-                                   hover:bg-indigo-50 rounded-lg transition-colors"
+                        className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 
+                                   hover:bg-indigo-50 dark:hover:bg-indigo-950 rounded-lg transition-colors"
                       >
                         <Download className="w-4 h-4" />
                       </button>
                       <button 
                         onClick={() => { setEditingImage(image); setShowEditModal(true); }}
-                        className="p-1.5 text-slate-400 hover:text-indigo-600 
-                                   hover:bg-indigo-50 rounded-lg transition-colors"
+                        className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 
+                                   hover:bg-indigo-50 dark:hover:bg-indigo-950 rounded-lg transition-colors"
                       >
                         <Edit3 className="w-4 h-4" />
                       </button>
                       <button 
                         onClick={() => handleDelete(image.id)}
-                        className="p-1.5 text-slate-400 hover:text-red-600 
-                                   hover:bg-red-50 rounded-lg transition-colors"
+                        className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 
+                                   hover:bg-red-50 dark:hover:bg-red-950 rounded-lg transition-colors"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -1046,11 +1049,11 @@ export function GalleryPage() {
       {/* Delete Confirmation */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
-            <h3 className="text-lg font-semibold text-slate-900 mb-2">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl max-w-md w-full p-6">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
               {showDeleteConfirm === 'bulk' ? 'Delete Multiple Images' : 'Delete Image'}
             </h3>
-            <p className="text-slate-600 mb-4">
+            <p className="text-slate-600 dark:text-slate-300 mb-4">
               {showDeleteConfirm === 'bulk' 
                 ? `Are you sure you want to delete ${selectedImages.size} images? This action cannot be undone.`
                 : 'Are you sure you want to delete this image? This action cannot be undone.'}
@@ -1058,13 +1061,13 @@ export function GalleryPage() {
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setShowDeleteConfirm(null)}
-                className="px-4 py-2 text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+                className="px-4 py-2 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={() => showDeleteConfirm === 'bulk' ? handleBulkDelete() : previewImage && handleDelete(previewImage.id)}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800 transition-colors"
               >
                 Delete
               </button>
@@ -1118,26 +1121,26 @@ function EditModal({ image, onClose, onSubmit }: EditModalProps) {
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-xl max-w-lg w-full">
-        <div className="p-6 border-b border-slate-200 flex items-center justify-between">
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl max-w-lg w-full">
+        <div className="p-6 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-slate-900">Edit Image with Gemini</h3>
-            <p className="text-sm text-slate-500">{image.prompt_number} - {image.prompt_theme}</p>
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Edit Image with Gemini</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{image.prompt_number} - {image.prompt_theme}</p>
           </div>
-          <button onClick={onClose} className="p-1 hover:bg-slate-100 rounded-lg">
-            <X className="w-5 h-5 text-slate-500" />
+          <button onClick={onClose} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg">
+            <X className="w-5 h-5 text-slate-500 dark:text-slate-400" />
           </button>
         </div>
         
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <p className="text-sm text-blue-700">
+          <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            <p className="text-sm text-blue-700 dark:text-blue-300">
               The image will be edited using Gemini AI in the background. You'll be notified when complete.
             </p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
               Edit Instruction
             </label>
             <textarea
@@ -1145,14 +1148,16 @@ function EditModal({ image, onClose, onSubmit }: EditModalProps) {
               rows={3}
               value={instruction}
               onChange={(e) => setInstruction(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-200 rounded-lg 
-                         focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-y"
+              className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg 
+                         focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-y
+                         bg-white dark:bg-slate-900 text-slate-900 dark:text-white
+                         placeholder:text-slate-400 dark:placeholder:text-slate-500"
               placeholder="e.g., Remove the background, fix lighting, enhance colors..."
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
               Quick Presets
             </label>
             <div className="flex flex-wrap gap-2">
@@ -1161,8 +1166,8 @@ function EditModal({ image, onClose, onSubmit }: EditModalProps) {
                   key={preset}
                   type="button"
                   onClick={() => setInstruction(preset)}
-                  className="px-3 py-1.5 text-xs bg-slate-100 text-slate-700 rounded-full
-                             hover:bg-indigo-100 hover:text-indigo-700 transition-colors"
+                  className="px-3 py-1.5 text-xs bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-full
+                             hover:bg-indigo-100 dark:hover:bg-indigo-900 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
                 >
                   {preset}
                 </button>
@@ -1170,11 +1175,11 @@ function EditModal({ image, onClose, onSubmit }: EditModalProps) {
             </div>
           </div>
           
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+              className="px-4 py-2 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
               disabled={loading}
             >
               Cancel
@@ -1183,7 +1188,7 @@ function EditModal({ image, onClose, onSubmit }: EditModalProps) {
               type="submit"
               disabled={loading || !instruction.trim()}
               className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 
-                         transition-colors disabled:opacity-50 flex items-center gap-2"
+                         dark:bg-indigo-700 dark:hover:bg-indigo-800 transition-colors disabled:opacity-50 flex items-center gap-2"
             >
               {loading && <Loader2 className="w-4 h-4 animate-spin" />}
               Queue Edit

@@ -57,21 +57,21 @@ export function NotFoundPage() {
         </div>
 
         {/* Help Section */}
-        <div className="mt-12 pt-8 border-t border-slate-200">
-          <div className="flex items-center justify-center gap-2 text-slate-500 mb-4">
+        <div className="mt-12 pt-8 border-t border-slate-200 dark:border-slate-700">
+          <div className="flex items-center justify-center gap-2 text-slate-500 dark:text-slate-400 mb-4">
             <HelpCircle className="w-5 h-5" />
             <span className="text-sm font-medium">Need help?</span>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-4 text-sm">
-            <a href="/prompts" className="text-indigo-600 hover:text-indigo-700 font-medium">
+            <a href="/prompts" className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium">
               Browse Prompts
             </a>
-            <span className="text-slate-300">•</span>
-            <a href="/gallery" className="text-indigo-600 hover:text-indigo-700 font-medium">
+            <span className="text-slate-300 dark:text-slate-600">•</span>
+            <a href="/gallery" className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium">
               View Gallery
             </a>
-            <span className="text-slate-300">•</span>
-            <a href="/generate" className="text-indigo-600 hover:text-indigo-700 font-medium">
+            <span className="text-slate-300 dark:text-slate-600">•</span>
+            <a href="/generate" className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium">
               Generate Images
             </a>
           </div>
@@ -89,12 +89,12 @@ export function NotFoundPage() {
               key={link.href}
               href={link.href}
               className={cn(
-                "p-4 bg-white border border-slate-200 rounded-xl text-center",
-                "transition-all duration-200 hover:border-indigo-300 hover:shadow-md"
+                "p-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-center",
+                "transition-all duration-200 hover:border-indigo-300 dark:hover:border-indigo-600 hover:shadow-md"
               )}
             >
               <span className="text-2xl mb-2 block">{link.icon}</span>
-              <span className="text-sm font-medium text-slate-700">{link.label}</span>
+              <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{link.label}</span>
             </a>
           ))}
         </div>

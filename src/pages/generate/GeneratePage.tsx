@@ -203,8 +203,8 @@ export function GeneratePage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Generate Images</h1>
-          <p className="text-slate-500 mt-1">Create images from your prompts using AI models</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Generate Images</h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">Create images from your prompts using AI models</p>
         </div>
         <div className="flex items-center gap-2">
           {!isGenerating ? (
@@ -238,24 +238,24 @@ export function GeneratePage() {
         {/* Left Column - Settings & Prompts */}
         <div className="lg:col-span-1 space-y-6">
           {/* Settings Card */}
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+          <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-5">
             <div className="flex items-center gap-2 mb-4">
-              <Settings2 className="w-5 h-5 text-indigo-600" />
-              <h2 className="text-lg font-semibold text-slate-900">Generation Settings</h2>
+              <Settings2 className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Generation Settings</h2>
             </div>
 
             <div className="space-y-4">
               {/* Model Selection */}
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                   Model
                 </label>
                 <select
                   value={settings.model}
                   onChange={(e) => setSettings({ ...settings, model: e.target.value as any })}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg 
+                  className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg 
                              focus:outline-none focus:ring-2 focus:ring-indigo-500/20 
-                             focus:border-indigo-500 text-sm"
+                             focus:border-indigo-500 text-sm bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
                 >
                   <option value="flux">FLUX 2 Pro</option>
                   <option value="gemini">Gemini</option>
@@ -265,7 +265,7 @@ export function GeneratePage() {
 
               {/* Character/Model Selection - Searchable Dropdown */}
               <div ref={characterDropdownRef}>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                   Reference Character
                 </label>
                 <div className="relative">
@@ -273,41 +273,41 @@ export function GeneratePage() {
                   <button
                     type="button"
                     onClick={() => setShowCharacterDropdown(!showCharacterDropdown)}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg 
+                    className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg 
                                focus:outline-none focus:ring-2 focus:ring-indigo-500/20 
-                               focus:border-indigo-500 text-sm text-left flex items-center justify-between bg-white"
+                               focus:border-indigo-500 text-sm text-left flex items-center justify-between bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
                   >
                     <span>
                       {settings.model_name === 'default_model' 
                         ? 'Default (No Reference)' 
                         : `${settings.model_name} (${characters.find(c => c.name === settings.model_name)?.image_count || 0} images)`}
                     </span>
-                    <ChevronDown className="w-4 h-4 text-slate-400" />
+                    <ChevronDown className="w-4 h-4 text-slate-400 dark:text-slate-500" />
                   </button>
                   
                   {/* Dropdown content */}
                   {showCharacterDropdown && (
-                    <div className="absolute z-20 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-64 overflow-hidden">
+                    <div className="absolute z-20 w-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg max-h-64 overflow-hidden">
                       {/* Search input */}
-                      <div className="p-2 border-b border-slate-200">
+                      <div className="p-2 border-b border-slate-200 dark:border-slate-700">
                         <div className="relative">
-                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500" />
                           <input
                             type="text"
                             placeholder="Search characters..."
                             value={characterSearch}
                             onChange={(e) => setCharacterSearch(e.target.value)}
-                            className="w-full pl-9 pr-8 py-1.5 text-sm border border-slate-200 rounded-lg 
+                            className="w-full pl-9 pr-8 py-1.5 text-sm border border-slate-200 dark:border-slate-700 rounded-lg 
                                        focus:outline-none focus:ring-2 focus:ring-indigo-500/20 
-                                       focus:border-indigo-500"
+                                       focus:border-indigo-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
                             autoFocus
                           />
                           {characterSearch && (
                             <button
                               onClick={(e) => { e.stopPropagation(); setCharacterSearch(''); }}
-                              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-slate-100 rounded"
+                              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded"
                             >
-                              <X className="w-3 h-3 text-slate-400" />
+                              <X className="w-3 h-3 text-slate-400 dark:text-slate-500" />
                             </button>
                           )}
                         </div>
@@ -322,8 +322,8 @@ export function GeneratePage() {
                             setShowCharacterDropdown(false);
                             setCharacterSearch('');
                           }}
-                          className={`w-full px-3 py-2 text-left text-sm hover:bg-slate-50 ${
-                            settings.model_name === 'default_model' ? 'bg-indigo-50 text-indigo-700' : ''
+                          className={`w-full px-3 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-700 ${
+                            settings.model_name === 'default_model' ? 'bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300' : ''
                           }`}
                         >
                           Default (No Reference)
@@ -337,15 +337,15 @@ export function GeneratePage() {
                               setShowCharacterDropdown(false);
                               setCharacterSearch('');
                             }}
-                            className={`w-full px-3 py-2 text-left text-sm hover:bg-slate-50 ${
-                              settings.model_name === char.name ? 'bg-indigo-50 text-indigo-700' : ''
+                            className={`w-full px-3 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-700 ${
+                              settings.model_name === char.name ? 'bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300' : ''
                             }`}
                           >
                             {char.name} ({char.image_count} images)
                           </button>
                         ))}
                         {filteredCharacters.length === 0 && characterSearch && (
-                          <div className="px-3 py-4 text-center text-sm text-slate-500">
+                          <div className="px-3 py-4 text-center text-sm text-slate-500 dark:text-slate-400">
                             No characters found
                           </div>
                         )}
@@ -354,7 +354,7 @@ export function GeneratePage() {
                   )}
                 </div>
                 {characters.length === 0 && (
-                  <p className="mt-1 text-xs text-amber-600">
+                  <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
                     No characters found. <a href="/reference" className="underline">Create one</a> for consistent generation.
                   </p>
                 )}
@@ -362,15 +362,15 @@ export function GeneratePage() {
 
               {/* Resolution */}
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                   Resolution
                 </label>
                 <select
                   value={settings.resolution}
                   onChange={(e) => setSettings({ ...settings, resolution: e.target.value as any })}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg 
+                  className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg 
                              focus:outline-none focus:ring-2 focus:ring-indigo-500/20 
-                             focus:border-indigo-500 text-sm"
+                             focus:border-indigo-500 text-sm bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
                 >
                   <option value="1k">1K (1024px)</option>
                   <option value="2k">2K (2048px)</option>
@@ -380,7 +380,7 @@ export function GeneratePage() {
 
               {/* Aspect Ratio */}
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                   Aspect Ratio
                 </label>
                 <div className="grid grid-cols-3 gap-2">
@@ -392,7 +392,7 @@ export function GeneratePage() {
                         "px-3 py-2 rounded-lg text-sm font-medium transition-all",
                         settings.aspect_ratio === ratio
                           ? "bg-indigo-600 text-white"
-                          : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                          : "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600"
                       )}
                     >
                       {ratio}
@@ -405,19 +405,19 @@ export function GeneratePage() {
 
           {/* Progress Card */}
           {isGenerating && generationStatus && (
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 animate-fade-in">
+            <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-5 animate-fade-in">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <Loader2 className="w-5 h-5 text-indigo-600 animate-spin" />
-                  <h2 className="text-lg font-semibold text-slate-900">Generating...</h2>
+                  <Loader2 className="w-5 h-5 text-indigo-600 dark:text-indigo-400 animate-spin" />
+                  <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Generating...</h2>
                 </div>
-                <span className="text-sm font-medium text-slate-600">
+                <span className="text-sm font-medium text-slate-600 dark:text-slate-300">
                   {generationStatus.completed} / {generationStatus.total}
                 </span>
               </div>
 
               {/* Progress Bar */}
-              <div className="h-2 bg-slate-100 rounded-full overflow-hidden mb-4">
+              <div className="h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden mb-4">
                 <div
                   className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 
                              transition-all duration-500"
@@ -427,22 +427,22 @@ export function GeneratePage() {
 
               {/* Current Prompt */}
               {generationStatus.current_prompt && (
-                <div className="p-3 bg-slate-50 rounded-lg">
-                  <p className="text-xs text-slate-500 mb-1">Current:</p>
-                  <p className="text-sm text-slate-700 truncate">{generationStatus.current_prompt}</p>
+                <div className="p-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Current:</p>
+                  <p className="text-sm text-slate-700 dark:text-slate-200 truncate">{generationStatus.current_prompt}</p>
                 </div>
               )}
 
               {/* Errors */}
               {generationStatus.errors.length > 0 && (
-                <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                  <div className="flex items-center gap-2 text-red-700">
+                <div className="mt-4 p-3 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg">
+                  <div className="flex items-center gap-2 text-red-700 dark:text-red-400">
                     <AlertCircle className="w-4 h-4" />
                     <span className="text-sm font-medium">
                       {generationStatus.errors.length} error{generationStatus.errors.length !== 1 ? 's' : ''}
                     </span>
                   </div>
-                  <ul className="mt-2 text-xs text-red-600 space-y-1">
+                  <ul className="mt-2 text-xs text-red-600 dark:text-red-400 space-y-1">
                     {generationStatus.errors.slice(0, 3).map((error, idx) => (
                       <li key={idx} className="truncate">• {error}</li>
                     ))}
@@ -459,7 +459,7 @@ export function GeneratePage() {
         {/* Right Column - Prompt Selection */}
         <div className="lg:col-span-2 space-y-6">
           {/* Filters & Selection */}
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <button
@@ -467,14 +467,14 @@ export function GeneratePage() {
                   className={cn(
                     "flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors",
                     selectAll
-                      ? "bg-indigo-100 text-indigo-700"
-                      : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                      ? "bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300"
+                      : "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600"
                   )}
                 >
                   <CheckSquare className="w-4 h-4" />
                   {selectAll ? 'Deselect All' : 'Select All'}
                 </button>
-                <span className="text-sm text-slate-500">
+                <span className="text-sm text-slate-500 dark:text-slate-400">
                   {selectedPrompts.size} of {filteredPrompts.length} selected
                 </span>
               </div>
@@ -484,8 +484,8 @@ export function GeneratePage() {
                 className={cn(
                   "inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors",
                   showFilters
-                    ? "bg-indigo-100 text-indigo-700"
-                    : "text-slate-600 hover:bg-slate-100"
+                    ? "bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300"
+                    : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
                 )}
               >
                 <SlidersHorizontal className="w-4 h-4" />
@@ -496,14 +496,15 @@ export function GeneratePage() {
 
             {/* Filter Panel */}
             {showFilters && (
-              <div className="mt-4 pt-4 border-t border-slate-200 grid grid-cols-2 gap-4">
+              <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Gender</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Gender</label>
                   <select
                     value={genderFilter}
                     onChange={(e) => setGenderFilter(e.target.value as any)}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm
-                               focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                    className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm
+                               focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500
+                               bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
                   >
                     <option value="all">All Genders</option>
                     <option value="female">Female</option>
@@ -511,12 +512,13 @@ export function GeneratePage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Category</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Category</label>
                   <select
                     value={categoryFilter}
                     onChange={(e) => setCategoryFilter(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm
-                               focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                    className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm
+                               focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500
+                               bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
                   >
                     <option value="all">All Categories</option>
                     {categories.map(cat => (
@@ -529,58 +531,58 @@ export function GeneratePage() {
           </div>
 
           {/* Prompts List */}
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
             <div className="max-h-[600px] overflow-y-auto">
               {loading ? (
                 <div className="p-12 text-center">
-                  <Loader2 className="w-8 h-8 text-indigo-600 animate-spin mx-auto mb-2" />
-                  <p className="text-slate-500">Loading prompts...</p>
+                  <Loader2 className="w-8 h-8 text-indigo-600 dark:text-indigo-400 animate-spin mx-auto mb-2" />
+                  <p className="text-slate-500 dark:text-slate-400">Loading prompts...</p>
                 </div>
               ) : filteredPrompts.length === 0 ? (
                 <div className="p-12 text-center">
-                  <Sparkles className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                  <p className="text-slate-500">No prompts found</p>
-                  <a href="/prompts" className="text-indigo-600 hover:text-indigo-700 text-sm mt-1 inline-block">
+                  <Sparkles className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+                  <p className="text-slate-500 dark:text-slate-400">No prompts found</p>
+                  <a href="/prompts" className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 text-sm mt-1 inline-block">
                     Create some prompts first
                   </a>
                 </div>
               ) : (
-                <div className="divide-y divide-slate-200">
+                <div className="divide-y divide-slate-200 dark:divide-slate-700">
                   {filteredPrompts.map((prompt) => (
                     <label
                       key={prompt.id}
                       className={cn(
                         "flex items-start gap-3 p-4 cursor-pointer transition-colors",
                         selectedPrompts.has(prompt.id)
-                          ? "bg-indigo-50 border-l-4 border-indigo-500"
-                          : "hover:bg-slate-50 border-l-4 border-transparent"
+                          ? "bg-indigo-50 dark:bg-indigo-950 border-l-4 border-indigo-500"
+                          : "hover:bg-slate-50 dark:hover:bg-slate-700 border-l-4 border-transparent"
                       )}
                     >
                       <input
                         type="checkbox"
                         checked={selectedPrompts.has(prompt.id)}
                         onChange={() => togglePromptSelection(prompt.id)}
-                        className="mt-1 w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500"
+                        className="mt-1 w-4 h-4 text-indigo-600 dark:text-indigo-400 border-slate-300 dark:border-slate-600 rounded focus:ring-indigo-500 dark:focus:ring-indigo-400"
                       />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-xs font-medium text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
+                          <span className="text-xs font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950 px-2 py-0.5 rounded">
                             {prompt.prompt_number}
                           </span>
                           <span className={cn(
                             "text-xs px-2 py-0.5 rounded capitalize",
                             prompt.gender === 'female'
-                              ? "bg-pink-100 text-pink-800"
-                              : "bg-blue-100 text-blue-800"
+                              ? "bg-pink-100 dark:bg-pink-900 text-pink-800 dark:text-pink-200"
+                              : "bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200"
                           )}>
                             {prompt.gender}
                           </span>
-                          <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
+                          <span className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded">
                             {prompt.category}
                           </span>
                         </div>
-                        <h3 className="font-medium text-slate-900 mt-1">{prompt.theme}</h3>
-                        <p className="text-sm text-slate-600 mt-0.5 line-clamp-2">{prompt.prompt_text}</p>
+                        <h3 className="font-medium text-slate-900 dark:text-white mt-1">{prompt.theme}</h3>
+                        <p className="text-sm text-slate-600 dark:text-slate-300 mt-0.5 line-clamp-2">{prompt.prompt_text}</p>
                       </div>
                     </label>
                   ))}
@@ -590,14 +592,14 @@ export function GeneratePage() {
           </div>
 
           {/* Tips Card */}
-          <div className="bg-gradient-to-r from-indigo-50 to-violet-50 rounded-xl border border-indigo-100 p-5">
+          <div className="bg-gradient-to-r from-indigo-50 dark:from-indigo-950 to-violet-50 dark:to-violet-950 rounded-xl border border-indigo-100 dark:border-indigo-800 p-5">
             <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
-                <Sparkles className="w-4 h-4 text-indigo-600" />
+              <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center flex-shrink-0">
+                <Sparkles className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
               </div>
               <div>
-                <h3 className="font-medium text-slate-900">Generation Tips</h3>
-                <ul className="mt-2 text-sm text-slate-600 space-y-1">
+                <h3 className="font-medium text-slate-900 dark:text-white">Generation Tips</h3>
+                <ul className="mt-2 text-sm text-slate-600 dark:text-slate-300 space-y-1">
                   <li>• Use reference images for consistent character generation</li>
                   <li>• FLUX 2 Pro works best with detailed prompts</li>
                   <li>• Gemini supports up to 14 reference images per generation</li>

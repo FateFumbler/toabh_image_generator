@@ -134,7 +134,7 @@ export function SettingsPage() {
                 "flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap",
                 activeTab === tab.id
                   ? "border-indigo-600 text-indigo-600"
-                  : "border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300"
+                  : "border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-600"
               )}
             >
               <tab.icon className="w-4 h-4" />
@@ -304,7 +304,7 @@ export function SettingsPage() {
                         </form>
                       ) : (
                         <>
-                          <span className="font-medium text-slate-900">{category.name}</span>
+                          <span className="font-medium text-slate-900 dark:text-white">{category.name}</span>
                           <div className="flex items-center gap-1">
                             <button
                               onClick={() => setEditingCategory(category)}
@@ -362,13 +362,13 @@ export function SettingsPage() {
                 </InputField>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
-                    <h4 className="font-medium text-slate-900 mb-1">FLUX API</h4>
-                    <p className="text-sm text-slate-500">Configured via FLUX_API_KEY env variable</p>
+                  <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+                    <h4 className="font-medium text-slate-900 dark:text-white mb-1">FLUX API</h4>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Configured via FLUX_API_KEY env variable</p>
                   </div>
-                  <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
-                    <h4 className="font-medium text-slate-900 mb-1">Gemini API</h4>
-                    <p className="text-sm text-slate-500">Configured via GEMINI_API_KEY env variable</p>
+                  <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+                    <h4 className="font-medium text-slate-900 dark:text-white mb-1">Gemini API</h4>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Configured via GEMINI_API_KEY env variable</p>
                   </div>
                 </div>
               </div>
@@ -424,7 +424,7 @@ export function SettingsPage() {
                       type="text"
                       defaultValue="./static/uploads"
                       readOnly
-                      className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm bg-slate-50"
+                      className="flex-1 px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
                     />
                   </div>
                 </InputField>
@@ -435,7 +435,7 @@ export function SettingsPage() {
                       type="text"
                       defaultValue="./static/generated"
                       readOnly
-                      className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm bg-slate-50"
+                      className="flex-1 px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
                     />
                   </div>
                 </InputField>
@@ -446,7 +446,7 @@ export function SettingsPage() {
                       type="text"
                       defaultValue="./toabh_imagen.db"
                       readOnly
-                      className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm bg-slate-50"
+                      className="flex-1 px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
                     />
                   </div>
                 </InputField>
@@ -460,20 +460,20 @@ export function SettingsPage() {
             >
               <div className="space-y-4">
                 <div className="grid grid-cols-3 gap-4">
-                  <div className="p-4 bg-slate-50 rounded-lg text-center">
-                    <Image className="w-6 h-6 text-slate-400 mx-auto mb-2" />
-                    <p className="text-2xl font-bold text-slate-900">-</p>
-                    <p className="text-xs text-slate-500">Reference Images</p>
+                  <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg text-center">
+                    <Image className="w-6 h-6 text-slate-400 dark:text-slate-500 mx-auto mb-2" />
+                    <p className="text-2xl font-bold text-slate-900 dark:text-white">-</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Reference Images</p>
                   </div>
-                  <div className="p-4 bg-slate-50 rounded-lg text-center">
-                    <Image className="w-6 h-6 text-slate-400 mx-auto mb-2" />
-                    <p className="text-2xl font-bold text-slate-900">-</p>
-                    <p className="text-xs text-slate-500">Generated Images</p>
+                  <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg text-center">
+                    <Image className="w-6 h-6 text-slate-400 dark:text-slate-500 mx-auto mb-2" />
+                    <p className="text-2xl font-bold text-slate-900 dark:text-white">-</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Generated Images</p>
                   </div>
-                  <div className="p-4 bg-slate-50 rounded-lg text-center">
-                    <Database className="w-6 h-6 text-slate-400 mx-auto mb-2" />
-                    <p className="text-2xl font-bold text-slate-900">-</p>
-                    <p className="text-xs text-slate-500">Database</p>
+                  <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg text-center">
+                    <Database className="w-6 h-6 text-slate-400 dark:text-slate-500 mx-auto mb-2" />
+                    <p className="text-2xl font-bold text-slate-900 dark:text-white">-</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Database</p>
                   </div>
                 </div>
 
@@ -489,11 +489,11 @@ export function SettingsPage() {
       {/* Add Category Modal */}
       {showAddCategory && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl max-w-md w-full p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-slate-900">Add Category</h3>
-              <button onClick={() => setShowAddCategory(false)} className="p-1 hover:bg-slate-100 rounded-lg">
-                <X className="w-5 h-5 text-slate-500" />
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Add Category</h3>
+              <button onClick={() => setShowAddCategory(false)} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg">
+                <X className="w-5 h-5 text-slate-500 dark:text-slate-400" />
               </button>
             </div>
             <form
@@ -505,13 +505,13 @@ export function SettingsPage() {
               className="space-y-4"
             >
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Category Name</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Category Name</label>
                 <input
                   name="name"
                   type="text"
                   required
                   autoFocus
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg 
+                  className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white
                              focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                   placeholder="e.g., Fashion, Portrait"
                 />
@@ -520,7 +520,7 @@ export function SettingsPage() {
                 <button
                   type="button"
                   onClick={() => setShowAddCategory(false)}
-                  className="px-4 py-2 text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+                  className="px-4 py-2 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
                 >
                   Cancel
                 </button>
@@ -574,9 +574,9 @@ interface InputFieldProps {
 function InputField({ label, description, children }: InputFieldProps) {
   return (
     <div className="space-y-2">
-      <label className="block text-sm font-medium text-slate-700">{label}</label>
+      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">{label}</label>
       {children}
-      {description && <p className="text-xs text-slate-500">{description}</p>}
+      {description && <p className="text-xs text-slate-500 dark:text-slate-400">{description}</p>}
     </div>
   );
 }

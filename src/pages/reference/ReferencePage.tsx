@@ -281,7 +281,7 @@ export function ReferencePage() {
       )}
 
       {/* Search Bar */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-4">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
@@ -322,14 +322,14 @@ export function ReferencePage() {
             </div>
           ) : (
             filteredCharacters.map(character => (
-              <div key={character.id} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+              <div key={character.id} className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
                 {/* Character Header */}
                 <div 
-                  className="p-4 flex items-center justify-between cursor-pointer hover:bg-slate-50 transition-colors"
+                  className="p-4 flex items-center justify-between cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
                   onClick={() => toggleExpanded(character.id)}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-lg overflow-hidden bg-slate-100 flex-shrink-0">
+                    <div className="w-12 h-12 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-700 flex-shrink-0">
                       {getFirstImage(character) ? (
                         <img 
                           src={getImageUrl(getFirstImage(character)!)} 
@@ -338,7 +338,7 @@ export function ReferencePage() {
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
-                          <User className="w-5 h-5 text-slate-400" />
+                          <User className="w-5 h-5 text-slate-400 dark:text-slate-500" />
                         </div>
                       )}
                     </div>
@@ -353,19 +353,19 @@ export function ReferencePage() {
                               if (e.key === 'Enter') handleEditCharacter(character);
                               if (e.key === 'Escape') cancelEditing();
                             }}
-                            className="px-2 py-1 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm flex-1 min-w-0"
+                            className="px-2 py-1 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm flex-1 min-w-0"
                             autoFocus
                           />
                           <button
                             onClick={() => handleEditCharacter(character)}
-                            className="p-1.5 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors"
+                            className="p-1.5 text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/50 rounded-lg transition-colors"
                             title="Save"
                           >
                             <Check className="w-4 h-4" />
                           </button>
                           <button
                             onClick={cancelEditing}
-                            className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                            className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
                             title="Cancel"
                           >
                             <XCircle className="w-4 h-4" />
@@ -373,11 +373,11 @@ export function ReferencePage() {
                         </div>
                       ) : (
                         <>
-                          <h3 className="font-semibold text-slate-900 truncate">{character.name}</h3>
-                          <p className="text-sm text-slate-500">
+                          <h3 className="font-semibold text-slate-900 dark:text-white truncate">{character.name}</h3>
+                          <p className="text-sm text-slate-500 dark:text-slate-400">
                             {character.image_count || 0} images 
                             {(character.image_count || 0) >= MAX_IMAGES_PER_CHARACTER && (
-                              <span className="text-amber-600 ml-1">(Max reached)</span>
+                              <span className="text-amber-600 dark:text-amber-400 ml-1">(Max reached)</span>
                             )}
                           </p>
                         </>
@@ -392,7 +392,7 @@ export function ReferencePage() {
                             e.stopPropagation();
                             startEditing(character);
                           }}
-                          className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                          className="p-2 text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/50 rounded-lg transition-colors"
                           title="Edit name"
                         >
                           <Pencil className="w-4 h-4" />
@@ -441,7 +441,7 @@ export function ReferencePage() {
 
                 {/* Images Grid */}
                 {expandedCharacters.has(character.id) && (
-                  <div className="p-4 border-t border-slate-200 bg-slate-50/50">
+                  <div className="p-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50">
                     {(character.reference_images || []).length === 0 ? (
                       <div
                         onDragOver={handleDragOver}
@@ -450,16 +450,16 @@ export function ReferencePage() {
                         className={cn(
                           "border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer",
                           isDragging
-                            ? "border-indigo-500 bg-indigo-50"
-                            : "border-slate-300 hover:border-indigo-400"
+                            ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20"
+                            : "border-slate-300 dark:border-slate-600 hover:border-indigo-400"
                         )}
                         onClick={() => {
                           setUploadTargetCharacter(character);
                           fileInputRef.current?.click();
                         }}
                       >
-                        <FolderOpen className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-                        <p className="text-sm text-slate-600">Drop images here or click to upload</p>
+                        <FolderOpen className="w-8 h-8 text-slate-400 dark:text-slate-500 mx-auto mb-2" />
+                        <p className="text-sm text-slate-600 dark:text-slate-400">Drop images here or click to upload</p>
                       </div>
                     ) : (
                       <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
@@ -474,8 +474,8 @@ export function ReferencePage() {
                                 (e.target as HTMLImageElement).className = 'hidden';
                               }}
                             />
-                            <div className="absolute inset-0 bg-slate-100 flex items-center justify-center -z-10">
-                              <ImageIcon className="w-8 h-8 text-slate-300" />
+                            <div className="absolute inset-0 bg-slate-100 dark:bg-slate-700 flex items-center justify-center -z-10">
+                              <ImageIcon className="w-8 h-8 text-slate-300 dark:text-slate-600" />
                             </div>
                             <button
                               onClick={() => handleDeleteImage(image.id)}
@@ -523,8 +523,8 @@ export function ReferencePage() {
                 className={cn(
                   "p-2 rounded-lg transition-colors",
                   viewMode === 'grid' 
-                    ? "bg-indigo-100 text-indigo-600" 
-                    : "text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                    ? "bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400" 
+                    : "text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
                 )}
               >
                 <Grid3X3 className="w-5 h-5" />
@@ -534,8 +534,8 @@ export function ReferencePage() {
                 className={cn(
                   "p-2 rounded-lg transition-colors",
                   viewMode === 'list' 
-                    ? "bg-indigo-100 text-indigo-600" 
-                    : "text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                    ? "bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400" 
+                    : "text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
                 )}
               >
                 <List className="w-5 h-5" />
@@ -564,17 +564,17 @@ export function ReferencePage() {
               className={cn(
                 "border-2 border-dashed rounded-xl p-12 text-center transition-all",
                 isDragging 
-                  ? "border-indigo-500 bg-indigo-50" 
-                  : "border-slate-300 hover:border-indigo-400 hover:bg-slate-50"
+                  ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20" 
+                  : "border-slate-300 dark:border-slate-600 hover:border-indigo-400 hover:bg-slate-50 dark:hover:bg-slate-800/50"
               )}
             >
-              <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-slate-100 flex items-center justify-center">
-                <FolderOpen className="w-6 h-6 text-slate-500" />
+              <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
+                <FolderOpen className="w-6 h-6 text-slate-500 dark:text-slate-400" />
               </div>
-              <p className="text-sm font-medium text-slate-900">
+              <p className="text-sm font-medium text-slate-900 dark:text-white">
                 Drag and drop images here
               </p>
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                 or click the upload button above
               </p>
             </div>
@@ -706,24 +706,24 @@ export function ReferencePage() {
       {/* Delete Confirmation */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl max-w-md w-full p-6">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
-                <AlertCircle className="w-5 h-5 text-red-600" />
+              <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/50 flex items-center justify-center">
+                <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-slate-900">Delete Character</h3>
-                <p className="text-sm text-slate-500">This action cannot be undone</p>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Delete Character</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400">This action cannot be undone</p>
               </div>
             </div>
-            <p className="text-slate-600 mb-4">
+            <p className="text-slate-600 dark:text-slate-300 mb-4">
               Are you sure you want to delete <strong>{showDeleteConfirm.name}</strong>? 
               This will also delete all {showDeleteConfirm.image_count} reference images.
             </p>
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setShowDeleteConfirm(null)}
-                className="px-4 py-2 text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+                className="px-4 py-2 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
               >
                 Cancel
               </button>
@@ -770,20 +770,20 @@ function AddCharacterModal({ onClose, onSubmit }: AddCharacterModalProps) {
         
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">Character Name</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Character Name</label>
             <input
               type="text"
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-200 rounded-lg 
+              className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white
                          focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
               placeholder="e.g., Emma, Model A"
             />
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
               Initial Images (optional)
             </label>
             <input
@@ -797,12 +797,12 @@ function AddCharacterModal({ onClose, onSubmit }: AddCharacterModalProps) {
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="w-full py-3 border-2 border-dashed border-slate-300 rounded-lg
-                         hover:border-indigo-400 hover:bg-indigo-50 transition-all
+              className="w-full py-3 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg
+                         hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all
                          flex flex-col items-center gap-1"
             >
-              <Upload className="w-5 h-5 text-slate-400" />
-              <span className="text-sm text-slate-600">
+              <Upload className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+              <span className="text-sm text-slate-600 dark:text-slate-400">
                 {files.length > 0 ? `${files.length} images selected` : 'Click to upload images'}
               </span>
             </button>
@@ -810,18 +810,18 @@ function AddCharacterModal({ onClose, onSubmit }: AddCharacterModalProps) {
               <button
                 type="button"
                 onClick={() => setFiles([])}
-                className="mt-2 text-xs text-red-600 hover:text-red-800"
+                className="mt-2 text-xs text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
               >
                 Clear selection
               </button>
             )}
           </div>
           
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+              className="px-4 py-2 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
             >
               Cancel
             </button>

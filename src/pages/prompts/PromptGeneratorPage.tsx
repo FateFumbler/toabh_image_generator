@@ -150,7 +150,7 @@ export function PromptGeneratorPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Prompt Generator</h1>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Prompt Generator</h1>
           <p className="text-slate-500 mt-1">
             Upload reference images and generate prompts using Gemini AI
           </p>
@@ -173,17 +173,17 @@ export function PromptGeneratorPage() {
 
       {/* KB Editor */}
       {showKbEditor && (
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 animate-fade-in">
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-5 animate-fade-in">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <FileText className="w-5 h-5 text-indigo-600" />
-              <h2 className="text-lg font-semibold text-slate-900">Knowledge Base Rules</h2>
+              <FileText className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Knowledge Base Rules</h2>
             </div>
             <button 
               onClick={() => setShowKbEditor(false)}
-              className="p-1 hover:bg-slate-100 rounded-lg transition-colors"
+              className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
             >
-              <X className="w-4 h-4 text-slate-400" />
+              <X className="w-4 h-4 text-slate-400 dark:text-slate-500" />
             </button>
           </div>
           
@@ -193,8 +193,8 @@ export function PromptGeneratorPage() {
             </div>
           ) : (
             <>
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
-                <p className="text-sm text-blue-700">
+              <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mb-4">
+                <p className="text-sm text-blue-700 dark:text-blue-400">
                   These rules guide how Gemini generates prompts from your reference images.
                   Changes will apply to future generations.
                 </p>
@@ -204,7 +204,7 @@ export function PromptGeneratorPage() {
                 value={kbContent}
                 onChange={(e) => setKbContent(e.target.value)}
                 rows={12}
-                className="w-full px-4 py-3 border border-slate-200 rounded-lg font-mono text-sm
+                className="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-lg font-mono text-sm bg-white dark:bg-slate-900 text-slate-900 dark:text-white
                            focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500
                            resize-y"
               />
@@ -212,7 +212,7 @@ export function PromptGeneratorPage() {
               <div className="mt-4 flex justify-end gap-3">
                 <button
                   onClick={() => setShowKbEditor(false)}
-                  className="px-4 py-2 text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+                  className="px-4 py-2 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
                 >
                   Cancel
                 </button>
@@ -243,23 +243,23 @@ export function PromptGeneratorPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Image Upload Section */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-5">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <ImageIcon className="w-5 h-5 text-indigo-600" />
-              <h2 className="text-lg font-semibold text-slate-900">Reference Images</h2>
+              <ImageIcon className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Reference Images</h2>
             </div>
             <div className="flex items-center gap-2">
               <span className={cn(
                 "text-sm",
-                uploadedFiles.length >= MAX_IMAGES ? "text-red-500 font-medium" : "text-slate-500"
+                uploadedFiles.length >= MAX_IMAGES ? "text-red-500 dark:text-red-400 font-medium" : "text-slate-500 dark:text-slate-400"
               )}>
                 {uploadedFiles.length}/{MAX_IMAGES} images
               </span>
               {uploadedFiles.length > 0 && (
                 <button
                   onClick={() => { setUploadedFiles([]); setUploadedPreviews([]); }}
-                  className="text-xs text-red-600 hover:text-red-800"
+                  className="text-xs text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
                 >
                   Clear all
                 </button>
@@ -274,8 +274,8 @@ export function PromptGeneratorPage() {
             className={cn(
               "w-full border-2 border-dashed rounded-xl p-8 text-center transition-all",
               uploadedFiles.length >= MAX_IMAGES 
-                ? "border-slate-200 opacity-50 cursor-not-allowed bg-slate-50"
-                : "border-slate-300 hover:border-indigo-500 hover:bg-indigo-50/30"
+                ? "border-slate-200 dark:border-slate-700 opacity-50 cursor-not-allowed bg-slate-50 dark:bg-slate-700"
+                : "border-slate-300 dark:border-slate-600 hover:border-indigo-500 hover:bg-indigo-50/30 dark:hover:bg-indigo-900/20"
             )}
           >
             <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-indigo-50 flex items-center justify-center">
@@ -303,7 +303,7 @@ export function PromptGeneratorPage() {
           {uploadedPreviews.length > 0 && (
             <div className="mt-4 grid grid-cols-3 sm:grid-cols-4 gap-3">
               {uploadedPreviews.map((preview, index) => (
-                <div key={index} className="relative aspect-square rounded-lg overflow-hidden group border border-slate-200">
+                <div key={index} className="relative aspect-square rounded-lg overflow-hidden group border border-slate-200 dark:border-slate-700">
                   <img
                     src={preview}
                     alt={`Upload ${index + 1}`}
@@ -372,11 +372,11 @@ export function PromptGeneratorPage() {
           </div>
 
           {generatedPrompts.length === 0 ? (
-            <div className="text-center py-12 border border-dashed border-slate-200 rounded-xl bg-slate-50/50">
-              <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-slate-100 flex items-center justify-center">
-                <Wand2 className="w-6 h-6 text-slate-400" />
+            <div className="text-center py-12 border border-dashed border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50/50 dark:bg-slate-800/50">
+              <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
+                <Wand2 className="w-6 h-6 text-slate-400 dark:text-slate-500" />
               </div>
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-slate-500 dark:text-slate-400">
                 Upload images and click generate to create prompts
               </p>
             </div>
@@ -385,12 +385,12 @@ export function PromptGeneratorPage() {
               {generatedPrompts.map((prompt, index) => (
                 <div
                   key={index}
-                  className="p-4 bg-slate-50 rounded-lg border border-slate-200 
-                             hover:border-indigo-300 transition-colors group"
+                  className="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg border border-slate-200 dark:border-slate-700 
+                             hover:border-indigo-300 dark:hover:border-indigo-600 transition-colors group"
                 >
                   <div className="flex items-start gap-3">
                     {uploadedPreviews[index] && (
-                      <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 border border-slate-200">
+                      <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 border border-slate-200 dark:border-slate-700">
                         <img 
                           src={uploadedPreviews[index]} 
                           alt="" 
@@ -400,11 +400,11 @@ export function PromptGeneratorPage() {
                     )}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
-                        <p className="text-sm text-slate-700 flex-1">{prompt}</p>
+                        <p className="text-sm text-slate-700 dark:text-slate-200 flex-1">{prompt}</p>
                         <button 
                           onClick={() => handleCopyPrompt(prompt)}
-                          className="opacity-0 group-hover:opacity-100 p-1.5 text-slate-400 
-                                     hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all flex-shrink-0"
+                          className="opacity-0 group-hover:opacity-100 p-1.5 text-slate-400 dark:text-slate-500 
+                                     hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/50 rounded-lg transition-all flex-shrink-0"
                           title="Copy to clipboard"
                         >
                           <CopyIcon className="w-4 h-4" />
@@ -419,7 +419,7 @@ export function PromptGeneratorPage() {
 
           {/* Bulk Actions */}
           {generatedPrompts.length > 0 && (
-            <div className="mt-4 pt-4 border-t border-slate-200 flex gap-3">
+            <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 flex gap-3">
               <button 
                 onClick={() => setShowBulkSave(true)}
                 className="flex-1 py-2 bg-indigo-600 text-white rounded-lg 
@@ -431,8 +431,8 @@ export function PromptGeneratorPage() {
               </button>
               <button 
                 onClick={() => { setGeneratedPrompts([]); setUploadedFiles([]); setUploadedPreviews([]); }}
-                className="flex-1 py-2 border border-slate-200 text-slate-700 
-                           rounded-lg hover:bg-slate-50 transition-colors font-medium text-sm"
+                className="flex-1 py-2 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 
+                           rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors font-medium text-sm"
               >
                 Clear All
               </button>
@@ -494,24 +494,24 @@ function BulkSaveModal({ prompts, categories, onClose, onSuccess }: BulkSaveModa
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-xl max-w-md w-full">
-        <div className="p-6 border-b border-slate-200 flex items-center justify-between">
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl max-w-md w-full">
+        <div className="p-6 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-slate-900">Save to Library</h3>
-            <p className="text-sm text-slate-500">Save {prompts.length} generated prompts</p>
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Save to Library</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Save {prompts.length} generated prompts</p>
           </div>
-          <button onClick={onClose} className="p-1 hover:bg-slate-100 rounded-lg">
-            <X className="w-5 h-5 text-slate-500" />
+          <button onClick={onClose} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg">
+            <X className="w-5 h-5 text-slate-500 dark:text-slate-400" />
           </button>
         </div>
         
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">Category</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Category</label>
             <select
               value={categoryId}
               onChange={(e) => setCategoryId(Number(e.target.value))}
-              className="w-full px-3 py-2 border border-slate-200 rounded-lg 
+              className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white
                          focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
             >
               {categories.map(cat => (
@@ -521,11 +521,11 @@ function BulkSaveModal({ prompts, categories, onClose, onSuccess }: BulkSaveModa
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">Gender</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Gender</label>
             <select
               value={gender}
               onChange={(e) => setGender(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-200 rounded-lg 
+              className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white
                          focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
             >
               <option value="female">Female</option>
@@ -533,21 +533,21 @@ function BulkSaveModal({ prompts, categories, onClose, onSuccess }: BulkSaveModa
             </select>
           </div>
 
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+          <div className="bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
             <div className="flex items-start gap-2">
-              <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
-              <p className="text-xs text-amber-700">
+              <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+              <p className="text-xs text-amber-700 dark:text-amber-400">
                 Prompts will be parsed and saved to your prompt library. Make sure they follow the 
                 &quot;Theme: Description&quot; format for best results.
               </p>
             </div>
           </div>
           
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+              className="px-4 py-2 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
               disabled={loading}
             >
               Cancel

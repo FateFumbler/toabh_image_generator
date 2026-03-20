@@ -109,8 +109,8 @@ export function FavoritesPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Favorites</h1>
-          <p className="text-slate-500 mt-1">Your favorited prompts for quick access</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Favorites</h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">Your favorited prompts for quick access</p>
         </div>
       </div>
 
@@ -247,7 +247,7 @@ export function FavoritesPage() {
                     <td className="px-4 py-3 text-center">
                       <button
                         onClick={() => handleToggleFavorite(prompt.id)}
-                        className="p-1 hover:bg-slate-100 rounded transition-colors"
+                        className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors"
                       >
                         <Heart className={cn(
                           "w-5 h-5",

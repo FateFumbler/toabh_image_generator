@@ -170,11 +170,11 @@ export function Header({ onMenuClick, isCollapsed }: HeaderProps) {
         <div className="relative" ref={dropdownRef}>
           <button 
             onClick={handleToggleDropdown}
-            className="relative p-2 hover:bg-slate-100 rounded-lg transition-colors"
+            className="relative p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
           >
             <Bell className={cn(
               "w-5 h-5 transition-colors",
-              isOpen ? "text-indigo-600" : "text-slate-600"
+              isOpen ? "text-indigo-600 dark:text-indigo-400" : "text-slate-600 dark:text-slate-400"
             )} />
             {unreadCount > 0 && (
               <span className="absolute top-1.5 right-1.5 min-w-[18px] h-[18px] px-1 bg-red-500 rounded-full 
@@ -186,11 +186,11 @@ export function Header({ onMenuClick, isCollapsed }: HeaderProps) {
 
           {/* Dropdown */}
           {isOpen && (
-            <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-lg border border-slate-200 
+            <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 
                           overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-50">
               {/* Header */}
-              <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-slate-50/50">
-                <h3 className="font-semibold text-slate-800 text-sm">Notifications</h3>
+              <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/80">
+                <h3 className="font-semibold text-slate-800 dark:text-slate-200 text-sm">Notifications</h3>
                 <div className="flex items-center gap-2">
                   {logs.length > 0 && (
                     <button
@@ -213,18 +213,18 @@ export function Header({ onMenuClick, isCollapsed }: HeaderProps) {
               {/* Log List */}
               <div className="max-h-80 overflow-y-auto">
                 {logs.length === 0 ? (
-                  <div className="px-4 py-8 text-center text-slate-500">
-                    <Bell className="w-8 h-8 mx-auto mb-2 text-slate-300" />
+                  <div className="px-4 py-8 text-center text-slate-500 dark:text-slate-400">
+                    <Bell className="w-8 h-8 mx-auto mb-2 text-slate-300 dark:text-slate-600" />
                     <p className="text-sm">No notifications yet</p>
                   </div>
                 ) : (
-                  <div className="divide-y divide-slate-100">
+                  <div className="divide-y divide-slate-100 dark:divide-slate-700">
                     {logs.map((log) => (
                       <div
                         key={log.id}
                         className={cn(
-                          "flex items-start gap-3 px-4 py-3 hover:bg-slate-50 transition-colors",
-                          !log.read && "bg-slate-50/50"
+                          "flex items-start gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors",
+                          !log.read && "bg-slate-50/50 dark:bg-slate-700/50"
                         )}
                       >
                         {log.type === 'success' ? (
@@ -235,11 +235,11 @@ export function Header({ onMenuClick, isCollapsed }: HeaderProps) {
                         <div className="flex-1 min-w-0">
                           <p className={cn(
                             "text-sm leading-relaxed",
-                            log.type === 'success' ? "text-green-700" : "text-red-700"
+                            log.type === 'success' ? "text-green-700 dark:text-green-400" : "text-red-700 dark:text-red-400"
                           )}>
                             {log.message}
                           </p>
-                          <p className="text-xs text-slate-400 mt-1">
+                          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
                             {formatTime(log.timestamp)}
                           </p>
                         </div>
@@ -254,22 +254,8 @@ export function Header({ onMenuClick, isCollapsed }: HeaderProps) {
 
               {/* Footer */}
               {logs.length > 0 && (
-                <div className="px-4 py-2 border-t border-slate-100 bg-slate-50/50 text-center">
-                  <span className="text-xs text-slate-400">
-                    {logs.length} notification{logs.length !== 1 ? 's' : ''}
-                  </span>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-    </header>
-  );
-}
-& (
-                <div className="px-4 py-2 border-t border-slate-100 bg-slate-50/50 text-center">
-                  <span className="text-xs text-slate-400">
+                <div className="px-4 py-2 border-t border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/80 text-center">
+                  <span className="text-xs text-slate-400 dark:text-slate-500">
                     {logs.length} notification{logs.length !== 1 ? 's' : ''}
                   </span>
                 </div>
