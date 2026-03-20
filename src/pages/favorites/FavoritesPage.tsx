@@ -21,6 +21,7 @@ export function FavoritesPage() {
 
   // Filter state
   const [searchQuery, setSearchQuery] = useState('');
+  const [genderFilter, setGenderFilter] = useState<'all' | 'male' | 'female'>('all');
 
   // Selection state
   const [selectedPrompts, setSelectedPrompts] = useState<number[]>([]);
@@ -47,15 +48,22 @@ export function FavoritesPage() {
     loadData();
   }, [loadData]);
 
-  // Filter prompts by search query
+  // Filter prompts by search query and gender
   const filteredPrompts = prompts.filter(prompt => {
-    if (!searchQuery) return true;
+    if (!searchQuery) {
+      return true;
+    }
     const query = searchQuery.toLowerCase();
     return (
       prompt.theme.toLowerCase().includes(query) ||
       prompt.prompt_text.toLowerCase().includes(query) ||
       (prompt.prompt_number || '').toLowerCase().includes(query)
     );
+  }).filter(prompt => {
+    if (genderFilter === 'all') return true;
+    if (genderFilter === 'male') return prompt.gender === 'Male' || prompt.gender === 'male';
+    if (genderFilter === 'female') return prompt.gender === 'Female' || prompt.gender === 'female';
+    return true;
   });
 
   // Selection handlers
@@ -111,6 +119,43 @@ export function FavoritesPage() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Favorites</h1>
           <p className="text-slate-500 dark:text-slate-400 mt-1">Your favorited prompts for quick access</p>
+        </div>
+
+        {/* Gender Filter Toggle */}
+        <div className="flex items-center gap-1 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg p-1">
+          <button
+            onClick={() => setGenderFilter('all')}
+            className={cn(
+              "px-3 py-1.5 text-sm font-medium rounded-md transition-colors",
+              genderFilter === 'all'
+                ? "bg-indigo-600 text-white"
+                : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-600"
+            )}
+          >
+            ALL
+          </button>
+          <button
+            onClick={() => setGenderFilter('male')}
+            className={cn(
+              "px-3 py-1.5 text-sm font-medium rounded-md transition-colors",
+              genderFilter === 'male'
+                ? "bg-indigo-600 text-white"
+                : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-600"
+            )}
+          >
+            MEN
+          </button>
+          <button
+            onClick={() => setGenderFilter('female')}
+            className={cn(
+              "px-3 py-1.5 text-sm font-medium rounded-md transition-colors",
+              genderFilter === 'female'
+                ? "bg-indigo-600 text-white"
+                : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-600"
+            )}
+          >
+            WOMEN
+          </button>
         </div>
       </div>
 
