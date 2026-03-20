@@ -12,7 +12,10 @@ import {
   ChevronDown,
   ChevronUp,
   AlertCircle,
-  Search
+  Search,
+  Pencil,
+  Check,
+  XCircle
 } from 'lucide-react';
 import { clsx, type ClassValue } from '../../utils/clsx';
 import * as api from '../../api/client';
@@ -39,6 +42,10 @@ export function ReferencePage() {
   const [showAddCharacter, setShowAddCharacter] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<api.Character | null>(null);
   const [uploadingCharacter, setUploadingCharacter] = useState<api.Character | null>(null);
+  
+  // Edit character state
+  const [editingCharacterId, setEditingCharacterId] = useState<number | null>(null);
+  const [editingCharacterName, setEditingCharacterName] = useState('');
 
   // Track which character to upload to when file input is triggered
   const [uploadTargetCharacter, setUploadTargetCharacter] = useState<api.Character | null>(null);
@@ -102,7 +109,7 @@ export function ReferencePage() {
     
     // For static files (/static/), use the Flask backend tunnel URL
     // Hardcoded fallback for production - update this if tunnel changes
-    const tunnelUrl = import.meta.env.VITE_API_URL || 'https://let-fairfield-your-objective.trycloudflare.com';
+    const tunnelUrl = import.meta.env.VITE_API_URL || 'https://welding-heaven-resistant-aviation.trycloudflare.com';
     const urlPath = path.startsWith('/') ? path : '/' + path;
     
     if (path.startsWith('/static/')) {
@@ -137,6 +144,35 @@ export function ReferencePage() {
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to delete character');
     }
+  };
+
+  const handleEditCharacter = async (character: api.Character) => {
+    const newName = editingCharacterName.trim();
+    if (!newName) {
+      alert('Character name cannot be empty');
+      return;
+    }
+    if (newName === character.name) {
+      setEditingCharacterId(null);
+      return;
+    }
+    try {
+      await api.updateCharacter(character.id, newName);
+      setEditingCharacterId(null);
+      loadData();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to update character');
+    }
+  };
+
+  const startEditing = (character: api.Character) => {
+    setEditingCharacterId(character.id);
+    setEditingCharacterName(character.name);
+  };
+
+  const cancelEditing = () => {
+    setEditingCharacterId(null);
+    setEditingCharacterName('');
   };
 
   const handleDeleteImage = async (imageId: number) => {
@@ -306,40 +342,86 @@ export function ReferencePage() {
                         </div>
                       )}
                     </div>
-                    <div>
-                      <h3 className="font-semibold text-slate-900">{character.name}</h3>
-                      <p className="text-sm text-slate-500">
-                        {character.image_count || 0} images 
-                        {(character.image_count || 0) >= MAX_IMAGES_PER_CHARACTER && (
-                          <span className="text-amber-600 ml-1">(Max reached)</span>
-                        )}
-                      </p>
+                    <div className="flex-1 min-w-0">
+                      {editingCharacterId === character.id ? (
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={editingCharacterName}
+                            onChange={(e) => setEditingCharacterName(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleEditCharacter(character);
+                              if (e.key === 'Escape') cancelEditing();
+                            }}
+                            className="px-2 py-1 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm flex-1 min-w-0"
+                            autoFocus
+                          />
+                          <button
+                            onClick={() => handleEditCharacter(character)}
+                            className="p-1.5 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors"
+                            title="Save"
+                          >
+                            <Check className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={cancelEditing}
+                            className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                            title="Cancel"
+                          >
+                            <XCircle className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          <h3 className="font-semibold text-slate-900 truncate">{character.name}</h3>
+                          <p className="text-sm text-slate-500">
+                            {character.image_count || 0} images 
+                            {(character.image_count || 0) >= MAX_IMAGES_PER_CHARACTER && (
+                              <span className="text-amber-600 ml-1">(Max reached)</span>
+                            )}
+                          </p>
+                        </>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setUploadTargetCharacter(character);
-                        fileInputRef.current?.click();
-                      }}
-                      disabled={(character.image_count || 0) >= MAX_IMAGES_PER_CHARACTER || uploadingCharacter?.id === character.id}
-                      className="px-3 py-1.5 text-sm bg-indigo-50 text-indigo-600 rounded-lg 
-                                 hover:bg-indigo-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed
-                                 flex items-center gap-1.5"
-                    >
-                      {uploadingCharacter?.id === character.id ? (
-                        <>
-                          <div className="w-3 h-3 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-                          Uploading...
-                        </>
-                      ) : (
-                        <>
-                          <Upload className="w-3.5 h-3.5" />
-                          Upload
-                        </>
-                      )}
-                    </button>
+                    {editingCharacterId !== character.id && (
+                      <>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            startEditing(character);
+                          }}
+                          className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                          title="Edit name"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setUploadTargetCharacter(character);
+                            fileInputRef.current?.click();
+                          }}
+                          disabled={(character.image_count || 0) >= MAX_IMAGES_PER_CHARACTER || uploadingCharacter?.id === character.id}
+                          className="px-3 py-1.5 text-sm bg-indigo-50 text-indigo-600 rounded-lg 
+                                     hover:bg-indigo-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed
+                                     flex items-center gap-1.5"
+                        >
+                          {uploadingCharacter?.id === character.id ? (
+                            <>
+                              <div className="w-3 h-3 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                              Uploading...
+                            </>
+                          ) : (
+                            <>
+                              <Upload className="w-3.5 h-3.5" />
+                              Upload
+                            </>
+                          )}
+                        </button>
+                      </>
+                    )}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
