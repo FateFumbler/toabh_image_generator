@@ -37,7 +37,7 @@ export function MainLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[var(--color-background)]">
       {/* Sidebar */}
       <Sidebar
         isOpen={sidebarOpen}
