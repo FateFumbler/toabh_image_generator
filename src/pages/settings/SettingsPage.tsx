@@ -106,8 +106,8 @@ export function SettingsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Settings</h1>
-          <p className="text-slate-500 mt-1">Configure your dashboard preferences</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Settings</h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">Configure your dashboard preferences</p>
         </div>
         <button
           onClick={handleSave}
@@ -124,7 +124,7 @@ export function SettingsPage() {
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-slate-200">
+      <div className="border-b border-slate-200 dark:border-slate-700">
         <nav className="flex gap-1 overflow-x-auto">
           {tabs.map((tab) => (
             <button
@@ -163,8 +163,8 @@ export function SettingsPage() {
                         className={cn(
                           "flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-all",
                           settings.theme === t
-                            ? "border-indigo-600 bg-indigo-50 text-indigo-700"
-                            : "border-slate-200 hover:border-slate-300 text-slate-700"
+                            ? "border-indigo-600 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300"
+                            : "border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-500 text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700"
                         )}
                       >
                         {t === 'light' && <Sun className="w-4 h-4" />}
@@ -177,7 +177,7 @@ export function SettingsPage() {
                 </InputField>
 
                 <InputField label="Language" description="Select your preferred language">
-                  <select className="w-full max-w-xs px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
+                  <select className="w-full max-w-xs px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
                     <option value="en">English</option>
                   </select>
                 </InputField>
@@ -194,7 +194,7 @@ export function SettingsPage() {
                   <select
                     value={settings.defaultModel}
                     onChange={(e) => setSettings({ defaultModel: e.target.value as 'flux' | 'gemini' })}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                    className="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                   >
                     {MODEL_OPTIONS.map(opt => (
                       <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -206,7 +206,7 @@ export function SettingsPage() {
                   <select
                     value={settings.defaultResolution}
                     onChange={(e) => setSettings({ defaultResolution: e.target.value as '1k' | '2k' | '4k' })}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                    className="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                   >
                     {RESOLUTION_OPTIONS.map(opt => (
                       <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -218,7 +218,7 @@ export function SettingsPage() {
                   <select
                     value={settings.defaultAspectRatio}
                     onChange={(e) => setSettings({ defaultAspectRatio: e.target.value as '1:1' | '16:9' | '9:16' | '4:3' | '3:4' })}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                    className="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                   >
                     {ASPECT_RATIO_OPTIONS.map(opt => (
                       <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -230,7 +230,7 @@ export function SettingsPage() {
                   <select
                     value={settings.defaultFormat}
                     onChange={(e) => setSettings({ defaultFormat: e.target.value as 'png' | 'jpg' | 'webp' })}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                    className="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                   >
                     {FORMAT_OPTIONS.map(opt => (
                       <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -250,7 +250,7 @@ export function SettingsPage() {
           >
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-slate-500 dark:text-slate-400">
                   {categories.length} categories defined
                 </p>
                 <button
@@ -268,9 +268,9 @@ export function SettingsPage() {
                   <Loader2 className="w-6 h-6 animate-spin text-indigo-600 mx-auto" />
                 </div>
               ) : (
-                <div className="border border-slate-200 rounded-lg divide-y divide-slate-200">
+                <div className="border border-slate-200 dark:border-slate-700 rounded-lg divide-y divide-slate-200 dark:divide-slate-700">
                   {categories.map((category) => (
-                    <div key={category.id} className="flex items-center justify-between p-4 hover:bg-slate-50">
+                    <div key={category.id} className="flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-slate-700/50">
                       {editingCategory?.id === category.id ? (
                         <form
                           onSubmit={(e) => {
@@ -285,19 +285,19 @@ export function SettingsPage() {
                             type="text"
                             defaultValue={category.name}
                             autoFocus
-                            className="flex-1 px-3 py-1.5 border border-slate-200 rounded-lg text-sm
+                            className="flex-1 px-3 py-1.5 border border-slate-200 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-900 text-slate-900 dark:text-white
                                        focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                           />
                           <button
                             type="submit"
-                            className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg"
+                            className="p-1.5 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-lg"
                           >
                             <Check className="w-4 h-4" />
                           </button>
                           <button
                             type="button"
                             onClick={() => setEditingCategory(null)}
-                            className="p-1.5 text-slate-400 hover:bg-slate-100 rounded-lg"
+                            className="p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg"
                           >
                             <X className="w-4 h-4" />
                           </button>
@@ -308,13 +308,13 @@ export function SettingsPage() {
                           <div className="flex items-center gap-1">
                             <button
                               onClick={() => setEditingCategory(category)}
-                              className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                              className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"
                             >
                               <Edit2 className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => handleDeleteCategory(category.id)}
-                              className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -324,7 +324,7 @@ export function SettingsPage() {
                     </div>
                   ))}
                   {categories.length === 0 && (
-                    <div className="p-8 text-center text-slate-500">
+                    <div className="p-8 text-center text-slate-500 dark:text-slate-400">
                       No categories found
                     </div>
                   )}
@@ -342,9 +342,9 @@ export function SettingsPage() {
               icon={Key}
             >
               <div className="space-y-4">
-                <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg flex gap-3">
-                  <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0" />
-                  <p className="text-sm text-amber-800">
+                <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg flex gap-3">
+                  <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+                  <p className="text-sm text-amber-800 dark:text-amber-200">
                     API keys are configured in the Flask backend environment variables. 
                     Contact your administrator to update them.
                   </p>
@@ -356,7 +356,7 @@ export function SettingsPage() {
                       type="text"
                       defaultValue="http://localhost:5000"
                       readOnly
-                      className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm bg-slate-50"
+                      className="flex-1 px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-lg text-sm bg-slate-50 dark:bg-slate-700 text-slate-900 dark:text-white"
                     />
                   </div>
                 </InputField>
@@ -384,9 +384,9 @@ export function SettingsPage() {
                   <input
                     type="checkbox"
                     id="useProxy"
-                    className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500"
+                    className="w-4 h-4 text-indigo-600 border-slate-300 dark:border-slate-600 rounded focus:ring-indigo-500 dark:bg-slate-800"
                   />
-                  <label htmlFor="useProxy" className="text-sm text-slate-700">
+                  <label htmlFor="useProxy" className="text-sm text-slate-700 dark:text-slate-300">
                     Use proxy for API requests
                   </label>
                 </div>
@@ -395,7 +395,7 @@ export function SettingsPage() {
                   <input
                     type="text"
                     placeholder="http://proxy.example.com:8080"
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                    className="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                   />
                 </InputField>
               </div>
@@ -411,8 +411,8 @@ export function SettingsPage() {
               icon={FolderOpen}
             >
               <div className="space-y-4">
-                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <p className="text-sm text-blue-700">
+                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                  <p className="text-sm text-blue-700 dark:text-blue-200">
                     Storage paths are configured in the Flask backend. 
                     Contact your administrator to update them.
                   </p>
@@ -424,7 +424,7 @@ export function SettingsPage() {
                       type="text"
                       defaultValue="./static/uploads"
                       readOnly
-                      className="flex-1 px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
+                      className="flex-1 px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-lg text-sm bg-slate-50 dark:bg-slate-700 text-slate-900 dark:text-white"
                     />
                   </div>
                 </InputField>
@@ -435,7 +435,7 @@ export function SettingsPage() {
                       type="text"
                       defaultValue="./static/generated"
                       readOnly
-                      className="flex-1 px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
+                      className="flex-1 px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-lg text-sm bg-slate-50 dark:bg-slate-700 text-slate-900 dark:text-white"
                     />
                   </div>
                 </InputField>
@@ -446,7 +446,7 @@ export function SettingsPage() {
                       type="text"
                       defaultValue="./toabh_imagen.db"
                       readOnly
-                      className="flex-1 px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
+                      className="flex-1 px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-lg text-sm bg-slate-50 dark:bg-slate-700 text-slate-900 dark:text-white"
                     />
                   </div>
                 </InputField>
@@ -477,7 +477,7 @@ export function SettingsPage() {
                   </div>
                 </div>
 
-                <button className="w-full py-2 text-sm text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors">
+                <button className="w-full py-2 text-sm text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
                   Clear Generated Images Cache
                 </button>
               </div>
@@ -548,15 +548,15 @@ interface SettingSectionProps {
 
 function SettingSection({ title, description, icon: Icon, children }: SettingSectionProps) {
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-      <div className="px-6 py-4 border-b border-slate-200 bg-slate-50/50">
+    <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+      <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-700/50">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center">
-            <Icon className="w-4 h-4 text-indigo-600" />
+          <div className="w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center">
+            <Icon className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
           </div>
           <div>
-            <h3 className="font-semibold text-slate-900">{title}</h3>
-            {description && <p className="text-sm text-slate-500">{description}</p>}
+            <h3 className="font-semibold text-slate-900 dark:text-white">{title}</h3>
+            {description && <p className="text-sm text-slate-500 dark:text-slate-400">{description}</p>}
           </div>
         </div>
       </div>
@@ -575,16 +575,6 @@ function InputField({ label, description, children }: InputFieldProps) {
   return (
     <div className="space-y-2">
       <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">{label}</label>
-      {children}
-      {description && <p className="text-xs text-slate-500 dark:text-slate-400">{description}</p>}
-    </div>
-  );
-}
-"text-xs text-slate-500 dark:text-slate-400">{description}</p>}
-    </div>
-  );
-}
-te-300">{label}</label>
       {children}
       {description && <p className="text-xs text-slate-500 dark:text-slate-400">{description}</p>}
     </div>
