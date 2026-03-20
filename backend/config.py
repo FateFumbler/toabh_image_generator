@@ -1,7 +1,8 @@
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
+# Load .env from parent directory (react_dashboard/)
+load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env'))
 
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
@@ -41,6 +42,10 @@ class Config:
     # API Keys (should be set in environment variables)
     FLUX_API_KEY = os.environ.get('FLUX_API_KEY')
     GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
+    LEONARDO_API_KEY = os.environ.get('LEONARDO_API_KEY') or 'efe32a90-7188-4f43-9078-d667ad5d1255'
+    
+    # Leonardo AI settings
+    LEONARDO_API_URL = "https://cloud.leonardo.ai/api/rest/v2"
     
     # Categories
     CATEGORIES = ['Polaroids', 'Portfolio', 'Indian', 'Swimwear/Lingerie']
@@ -48,7 +53,8 @@ class Config:
     # Models
     MODELS = {
         'flux': 'FLUX 2 Pro',
-        'gemini': 'Gemini Pro 3'
+        'gemini': 'Gemini Pro 3',
+        'leonardo': 'Leonardo AI'
     }
     
     # Model-specific settings

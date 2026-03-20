@@ -10,7 +10,7 @@ import sys
 import io
 import zipfile
 from datetime import datetime
-from flask import Flask, render_template, request, jsonify, send_file
+from flask import Flask, render_template, request, jsonify, send_file, send_from_directory
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
 from PIL import Image
@@ -1014,8 +1014,12 @@ def generate_image_with_gemini(prompt_text, reference_images=None, aspect_ratio=
     if not api_key:
         raise Exception("GEMINI_API_KEY not found in environment or .env file")
     
-    # Initialize Client
-    client = genai.Client(api_key=api_key)
+    # Initialize Client with longer timeout for image operations
+    import httpx
+    client = genai.Client(api_key=api_key, http_options=types.HttpOptions(
+        timeout=1200000,
+        client_args={'timeout': httpx.Timeout(timeout=1200, connect=10.0)}
+    ))
     
     # Prepare contents
     contents = []
@@ -1025,7 +1029,11 @@ def generate_image_with_gemini(prompt_text, reference_images=None, aspect_ratio=
         for ref_path in reference_images[:14]:
             try:
                 if os.path.exists(ref_path):
-                    contents.append(Image.open(ref_path))
+                    img = Image.open(ref_path)
+                    # Resize if too large to prevent upload timeouts
+                    if max(img.size) > 1024:
+                        img.thumbnail((1024, 1024), Image.Resampling.LANCZOS)
+                    contents.append(img)
             except Exception as e:
                 print(f"Warning: Could not load reference image {ref_path}: {e}")
                 continue
@@ -1051,6 +1059,20 @@ def generate_image_with_gemini(prompt_text, reference_images=None, aspect_ratio=
             )
         )
         
+        # Debug logging for empty responses
+        if response.parts is None:
+            feedback = response.prompt_feedback
+            candidates = response.candidates
+            error_msg = "Gemini returned empty response."
+            if feedback:
+                error_msg += f" Prompt feedback: {feedback}"
+            if candidates:
+                for c in candidates:
+                    if hasattr(c, 'finish_reason'):
+                        error_msg += f" Finish reason: {c.finish_reason}"
+            print(f"[GEN ERROR] {error_msg} | Model: {Config.GEMINI_MODEL}")
+            raise Exception(error_msg)
+        
         # Process response and extract image data
         for part in response.parts:
             if part.inline_data is not None:
@@ -1066,6 +1088,221 @@ def generate_image_with_gemini(prompt_text, reference_images=None, aspect_ratio=
         
     except Exception as e:
         raise Exception(f"Gemini generation failed: {str(e)}")
+
+
+def generate_image_with_leonardo(prompt_text, reference_images=None, aspect_ratio='1:1', resolution='1K'):
+    """Generate image using Leonardo AI API with support for reference images.
+    
+    Uses Nano Banana Pro model (gemini-image-2) via Leonardo AI API v2.
+    
+    Leonardo AI uses an async workflow:
+    1. Create generation job via POST
+    2. Poll for completion
+    3. Download the generated image
+    
+    Args:
+        prompt_text: The text prompt for image generation
+        reference_images: List of file paths to reference images (optional, for img2img)
+        aspect_ratio: Aspect ratio string (e.g., '1:1', '16:9', '9:16')
+        resolution: '1K', '2K', or '4K' (maps to pixel dimensions)
+        
+    Returns:
+        Bytes of the generated image
+    """
+    import time
+    
+    api_key = Config.LEONARDO_API_KEY
+    if not api_key:
+        raise Exception("LEONARDO_API_KEY not found in config or .env file")
+    
+    api_url = Config.LEONARDO_API_URL  # v2 endpoint
+    
+    # Map aspect ratio to Leonardo dimensions
+    # Leonardo uses width x height
+    aspect_ratio_dims = {
+        '1:1': (1024, 1024),
+        '16:9': (1024, 576),
+        '9:16': (576, 1024),
+        '4:3': (1024, 768),
+        '3:4': (768, 1024)
+    }
+    
+    # Map resolution to dimension multiplier
+    resolution_scale = {
+        '1K': 1.0,
+        '2K': 2.0,
+        '4K': 4.0
+    }
+    
+    width, height = aspect_ratio_dims.get(aspect_ratio, (1024, 1024))
+    scale = resolution_scale.get(resolution, 1.0)
+    width = int(width * scale)
+    height = int(height * scale)
+    
+    # Nano Banana Pro supports up to 5504px, but cap at 4096 for safety
+    max_dim = 4096
+    if width > max_dim or height > max_dim:
+        if width > height:
+            height = int(height * max_dim / width)
+            width = max_dim
+        else:
+            width = int(width * max_dim / height)
+            height = max_dim
+    
+    # Prepare generation payload for v2 API with Nano Banana Pro (gemini-image-2)
+    # Nano Banana Pro model ID: gemini-image-2
+    generation_payload = {
+        "model": "gemini-image-2",  # Nano Banana Pro
+        "parameters": {
+            "width": width,
+            "height": height,
+            "prompt": prompt_text,
+            "quantity": 1,
+            "prompt_enhance": "OFF",
+        }
+    }
+    
+    # Add reference images for img2img if provided
+    # v2 API uses guidances.image_reference for control images
+    if reference_images and len(reference_images) > 0:
+        ref_path = reference_images[0]  # Use first reference image
+        try:
+            # Upload reference image first to get an image ID
+            with open(ref_path, 'rb') as f:
+                ref_data = f.read()
+            
+            # Get mime type from file extension
+            ext = ref_path.rsplit('.', 1)[-1].lower() if '.' in ref_path else 'png'
+            mime_type = {
+                'jpg': 'image/jpeg',
+                'jpeg': 'image/jpeg',
+                'png': 'image/png',
+                'webp': 'image/webp'
+            }.get(ext, 'image/png')
+            
+            # Upload to Leonardo
+            upload_response = requests.post(
+                f"{api_url}/init-images",
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": mime_type
+                },
+                data=ref_data,
+                timeout=60
+            )
+            
+            if upload_response.status_code == 200:
+                upload_data = upload_response.json()
+                uploaded_images = upload_data.get('upload_images', [])
+                if uploaded_images:
+                    ref_image_id = uploaded_images[0].get('id')
+                    if ref_image_id:
+                        # Add reference image guidance
+                        generation_payload["parameters"]["guidances"] = {
+                            "image_reference": [
+                                {
+                                    "image": {
+                                        "id": ref_image_id,
+                                        "type": "UPLOADED"
+                                    },
+                                    "strength": "MID"
+                                }
+                            ]
+                        }
+            else:
+                print(f"[LEONARDO WARNING] Reference image upload failed: {upload_response.status_code}")
+        except Exception as e:
+            print(f"Warning: Could not load reference image for Leonardo: {e}")
+    
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
+    
+    try:
+        # Step 1: Create generation job
+        create_response = requests.post(
+            f"{api_url}/generations",
+            headers=headers,
+            json=generation_payload,
+            timeout=60
+        )
+        
+        if create_response.status_code != 200:
+            error_msg = create_response.text
+            print(f"[LEONARDO ERROR] Create generation failed: {error_msg}")
+            raise Exception(f"Leonardo creation failed: {error_msg}")
+        
+        create_data = create_response.json()
+        generation_id = create_data.get('generations_by_pk', {}).get('id')
+        
+        if not generation_id:
+            print(f"[LEONARDO ERROR] No generation ID returned: {create_data}")
+            raise Exception("Leonardo did not return a generation ID")
+        
+        print(f"[LEONARDO] Started generation {generation_id} with Nano Banana Pro (gemini-image-2)")
+        
+        # Step 2: Poll for completion
+        max_polls = 60  # Max ~2 minutes with 2s interval
+        poll_interval = 2  # seconds
+        
+        for poll_count in range(max_polls):
+            # Check if generation was stopped
+            if generation_status.get('stop_requested'):
+                raise Exception("Generation stopped by user")
+            
+            poll_response = requests.get(
+                f"{api_url}/generations/{generation_id}",
+                headers=headers,
+                timeout=30
+            )
+            
+            if poll_response.status_code != 200:
+                print(f"[LEONARDO WARNING] Poll {poll_count}: {poll_response.status_code}")
+                time.sleep(poll_interval)
+                continue
+            
+            poll_data = poll_response.json()
+            gen_data = poll_data.get('generations_by_pk', {})
+            status = gen_data.get('status', '')
+            
+            print(f"[LEONARDO] Poll {poll_count}: status={status}")
+            
+            if status == 'COMPLETE':
+                # Get the generated image URL
+                generations = gen_data.get('generations', [])
+                if not generations:
+                    raise Exception("Leonardo returned no generations data")
+                
+                image_url = generations[0].get('url')
+                if not image_url:
+                    raise Exception("Leonardo returned no image URL")
+                
+                # Step 3: Download the image
+                download_response = requests.get(image_url, timeout=120)
+                if download_response.status_code != 200:
+                    raise Exception(f"Failed to download Leonardo image: {download_response.status_code}")
+                
+                return download_response.content
+            
+            elif status == 'FAILED':
+                raise Exception(f"Leonardo generation failed: {gen_data.get('error', 'Unknown error')}")
+            
+            elif status in ['PENDING', 'PROCESSING', 'IN_QUEUE']:
+                time.sleep(poll_interval)
+                continue
+            
+            else:
+                # Unknown status, wait and retry
+                print(f"[LEONARDO] Unknown status '{status}', waiting...")
+                time.sleep(poll_interval)
+        
+        raise Exception(f"Leonardo generation timed out after {max_polls} polls")
+        
+    except Exception as e:
+        if "stopped" in str(e).lower() or "timed out" in str(e).lower():
+            raise
+        raise Exception(f"Leonardo generation failed: {str(e)}")
 
 
 def generate_single_image(prompt, model, resolution, aspect_ratio, selected_model_name):
@@ -1134,6 +1371,25 @@ def generate_single_image(prompt, model, resolution, aspect_ratio, selected_mode
             
             if img_data is None:
                 raise Exception("Gemini image generation returned None - check API key and model availability")
+            
+            # Save the generated image
+            with open(output_path, 'wb') as f:
+                f.write(img_data)
+        
+        elif model == 'leonardo':
+            # Use Leonardo AI for generation
+            # Map resolution string ('1k', '2k') to API values ('1K', '2K')
+            api_resolution = Config.RESOLUTIONS.get(resolution, '1K')
+            
+            img_data = generate_image_with_leonardo(
+                prompt_text=full_prompt,
+                reference_images=reference_images if reference_images else None,
+                aspect_ratio=aspect_ratio,
+                resolution=api_resolution
+            )
+            
+            if img_data is None:
+                raise Exception("Leonardo image generation returned None - check API key and model availability")
             
             # Save the generated image
             with open(output_path, 'wb') as f:
@@ -1508,6 +1764,55 @@ def get_edit_task_status(task_id):
     return jsonify({'error': 'Task not found'}), 404
 
 
+@app.route('/api/edit-dismiss/<int:task_id>', methods=['POST'])
+def dismiss_edit_task(task_id):
+    """Remove a completed or error task from the queue."""
+    with edit_queue_lock:
+        edit_queue[:] = [t for t in edit_queue if t['id'] != task_id]
+    return jsonify({'dismissed': True, 'task_id': task_id})
+
+
+@app.route('/api/edit-retry/<int:task_id>', methods=['POST'])
+def retry_edit_task(task_id):
+    """Retry a failed edit task."""
+    # Find the original task
+    original_task = None
+    with edit_queue_lock:
+        for task in edit_queue:
+            if task['id'] == task_id and task['status'] == 'error':
+                original_task = task.copy()
+                break
+    
+    if not original_task:
+        return jsonify({'error': 'Task not found or not in error state'}), 404
+    
+    # Create new task with same parameters
+    new_task_id = get_next_edit_id()
+    new_task = {
+        'id': new_task_id,
+        'image_id': original_task['image_id'],
+        'instruction': original_task['instruction'],
+        'status': 'queued',
+        'created_at': datetime.utcnow().isoformat(),
+        'started_at': None,
+        'completed_at': None,
+        'error': None,
+        'success': False,
+        'edited_image_path': None
+    }
+    
+    with edit_queue_lock:
+        edit_queue.append(new_task)
+    
+    start_edit_processor()
+    
+    return jsonify({
+        'success': True,
+        'message': 'Edit task requeued',
+        'task_id': new_task_id
+    })
+
+
 def edit_image_with_gemini(original_image_path, instruction):
     """Edit an image using Google Gemini API.
     
@@ -1530,7 +1835,11 @@ def edit_image_with_gemini(original_image_path, instruction):
         raise Exception("GEMINI_API_KEY not found in environment or .env file")
     
     # Initialize Client with longer timeout for image operations
-    client = genai.Client(api_key=api_key, http_options={'timeout': 600})
+    import httpx
+    client = genai.Client(api_key=api_key, http_options=types.HttpOptions(
+        timeout=1200000,
+        client_args={'timeout': httpx.Timeout(timeout=1200, connect=10.0)}
+    ))
     
     # Get original image dimensions for consistent output
     with Image.open(original_image_path) as img:
@@ -1550,9 +1859,14 @@ def edit_image_with_gemini(original_image_path, instruction):
     # Prepare contents - original image + instruction
     contents = []
     
-    # Add the original image as reference
+    # Add the original image as reference - resize to reduce upload time
     try:
-        contents.append(Image.open(original_image_path))
+        original = Image.open(original_image_path)
+        # Resize if too large (Gemini handles large images but upload can timeout)
+        max_dim = 1024
+        if max(original.size) > max_dim:
+            original.thumbnail((max_dim, max_dim), Image.Resampling.LANCZOS)
+        contents.append(original)
     except Exception as e:
         raise Exception(f"Could not load original image: {str(e)}")
     
@@ -1565,15 +1879,8 @@ def edit_image_with_gemini(original_image_path, instruction):
     # Use the original image's aspect ratio
     image_cfg_kwargs["aspect_ratio"] = aspect_ratio
     
-    # Try to use the original resolution (within API limits)
-    max_dim = max(width, height)
-    if max_dim >= 2048:
-        resolution = '4K'
-    elif max_dim >= 1024:
-        resolution = '2K'
-    else:
-        resolution = '1K'
-    image_cfg_kwargs["image_size"] = resolution
+    # Cap resolution at 2K (4K is overkill for edits and increases generation time)
+    image_cfg_kwargs["image_size"] = "2K"
     
     # Generate the edited image
     try:
@@ -1582,10 +1889,23 @@ def edit_image_with_gemini(original_image_path, instruction):
             contents=contents,
             config=types.GenerateContentConfig(
                 response_modalities=["TEXT", "IMAGE"],
-                image_config=types.ImageConfig(**image_cfg_kwargs),
-                http_options=types.HttpOptions(timeout=1200)
+                image_config=types.ImageConfig(**image_cfg_kwargs)
             )
         )
+        
+        # Debug logging for empty responses
+        if response.parts is None:
+            feedback = response.prompt_feedback
+            candidates = response.candidates
+            error_msg = "Gemini returned empty response."
+            if feedback:
+                error_msg += f" Prompt feedback: {feedback}"
+            if candidates:
+                for c in candidates:
+                    if hasattr(c, 'finish_reason'):
+                        error_msg += f" Finish reason: {c.finish_reason}"
+            print(f"[EDIT ERROR] {error_msg} | Model: {Config.GEMINI_MODEL}")
+            raise Exception(error_msg)
         
         # Process response and extract image data
         for part in response.parts:
@@ -1959,6 +2279,15 @@ def debug_images():
         'count': len(images),
         'sample': result,
         'generated_folder': app.config['GENERATED_FOLDER']
+    })
+
+# Frontend served by Vercel - only API routes on this backend
+@app.route('/')
+def root():
+    return jsonify({
+        'status': 'TOABH API Server',
+        'message': 'Frontend is served by Vercel. Use /api/* endpoints.',
+        'health': '/api/categories'
     })
 
 if __name__ == '__main__':

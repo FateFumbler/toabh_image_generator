@@ -23,7 +23,7 @@ function cn(...inputs: ClassValue[]) {
 }
 
 interface GenerationSettings {
-  model: 'flux' | 'gemini';
+  model: 'flux' | 'gemini' | 'leonardo';
   resolution: '1k' | '2k' | '4k';
   aspect_ratio: '1:1' | '16:9' | '9:16' | '4:3' | '3:4';
   model_name: string;
@@ -259,6 +259,7 @@ export function GeneratePage() {
                 >
                   <option value="flux">FLUX 2 Pro</option>
                   <option value="gemini">Gemini</option>
+                  <option value="leonardo">Leonardo AI</option>
                 </select>
               </div>
 
@@ -600,6 +601,7 @@ export function GeneratePage() {
                   <li>• Use reference images for consistent character generation</li>
                   <li>• FLUX 2 Pro works best with detailed prompts</li>
                   <li>• Gemini supports up to 14 reference images per generation</li>
+                  <li>• Leonardo AI offers unique styles and fast generation</li>
                   <li>• Higher resolutions take longer but produce better quality</li>
                 </ul>
               </div>
