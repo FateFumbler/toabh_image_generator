@@ -214,8 +214,8 @@ export function GeneratePage() {
               className={cn(
                 "inline-flex items-center gap-2 px-6 py-2.5 rounded-lg font-medium transition-all",
                 selectedPrompts.size === 0
-                  ? "bg-slate-200 text-slate-400 cursor-not-allowed"
-                  : "bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:shadow-lg hover:shadow-indigo-500/25"
+                  ? "bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed"
+                  : "bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:shadow-lg hover:shadow-indigo-500/25 dark:from-indigo-700 dark:to-violet-700"
               )}
             >
               <Play className="w-4 h-4" />
