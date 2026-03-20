@@ -1159,7 +1159,9 @@ def generate_image_with_leonardo(prompt_text, reference_images=None, aspect_rati
             "prompt": prompt_text,
             "quantity": 1,
             "prompt_enhance": "OFF",
-        }
+            "style_ids": ["111dc692-d470-4eec-b791-3475abac4c46"]  # Required for Nano Banana Pro
+        },
+        "public": False
     }
     
     # Add reference images for img2img if provided
@@ -1193,22 +1195,27 @@ def generate_image_with_leonardo(prompt_text, reference_images=None, aspect_rati
             
             if upload_response.status_code == 200:
                 upload_data = upload_response.json()
-                uploaded_images = upload_data.get('upload_images', [])
-                if uploaded_images:
-                    ref_image_id = uploaded_images[0].get('id')
-                    if ref_image_id:
-                        # Add reference image guidance
-                        generation_payload["parameters"]["guidances"] = {
-                            "image_reference": [
-                                {
-                                    "image": {
-                                        "id": ref_image_id,
-                                        "type": "UPLOADED"
-                                    },
-                                    "strength": "MID"
-                                }
-                            ]
-                        }
+                
+                # Handle error responses (list format)
+                if isinstance(upload_data, list) and len(upload_data) > 0:
+                    print(f"[LEONARDO WARNING] Reference image upload error: {upload_data[0].get('message', 'Unknown')}")
+                else:
+                    uploaded_images = upload_data.get('upload_images', [])
+                    if uploaded_images:
+                        ref_image_id = uploaded_images[0].get('id')
+                        if ref_image_id:
+                            # Add reference image guidance
+                            generation_payload["parameters"]["guidances"] = {
+                                "image_reference": [
+                                    {
+                                        "image": {
+                                            "id": ref_image_id,
+                                            "type": "UPLOADED"
+                                        },
+                                        "strength": "MID"
+                                    }
+                                ]
+                            }
             else:
                 print(f"[LEONARDO WARNING] Reference image upload failed: {upload_response.status_code}")
         except Exception as e:
@@ -1234,7 +1241,15 @@ def generate_image_with_leonardo(prompt_text, reference_images=None, aspect_rati
             raise Exception(f"Leonardo creation failed: {error_msg}")
         
         create_data = create_response.json()
-        generation_id = create_data.get('generations_by_pk', {}).get('id')
+        
+        # Handle error responses (Leonardo returns a list for errors)
+        if isinstance(create_data, list) and len(create_data) > 0:
+            error_msg = create_data[0].get('message', 'Unknown error')
+            print(f"[LEONARDO ERROR] Create generation failed: {error_msg}")
+            raise Exception(f"Leonardo creation failed: {error_msg}")
+        
+        # Success response: {'generate': {'generationId': '...'}}
+        generation_id = create_data.get('generate', {}).get('generationId')
         
         if not generation_id:
             print(f"[LEONARDO ERROR] No generation ID returned: {create_data}")
@@ -1263,6 +1278,13 @@ def generate_image_with_leonardo(prompt_text, reference_images=None, aspect_rati
                 continue
             
             poll_data = poll_response.json()
+            
+            # Handle error responses (list format)
+            if isinstance(poll_data, list) and len(poll_data) > 0:
+                error_msg = poll_data[0].get('message', 'Unknown error')
+                raise Exception(f"Leonardo poll failed: {error_msg}")
+            
+            # Success response structure for v2
             gen_data = poll_data.get('generations_by_pk', {})
             status = gen_data.get('status', '')
             
