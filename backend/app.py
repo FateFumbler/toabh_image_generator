@@ -1175,8 +1175,11 @@ def generate_image_with_leonardo(prompt_text, reference_images=None, aspect_rati
         "public": False
     }
     
-    # Add reference images for img2img if provided
-    # v2 API uses guidances.image_reference for control images
+    # Add reference images for Character Reference
+    # Leonardo API uses controlnets with preprocessorId for reference images:
+    #   133 = Character Reference (face consistency)
+    #   67 = Style Reference
+    # This uses the v1 API endpoint for controlnets
     if reference_images and len(reference_images) > 0:
         ref_path = reference_images[0]  # Use first reference image
         try:
@@ -1193,9 +1196,9 @@ def generate_image_with_leonardo(prompt_text, reference_images=None, aspect_rati
                 'webp': 'image/webp'
             }.get(ext, 'image/png')
             
-            # Upload to Leonardo
+            # Upload to Leonardo v1 init-images endpoint
             upload_response = requests.post(
-                f"{api_url}/init-images",
+                "https://cloud.leonardo.ai/api/rest/v1/init-images",
                 headers={
                     "Authorization": f"Bearer {api_key}",
                     "Content-Type": mime_type
@@ -1215,18 +1218,17 @@ def generate_image_with_leonardo(prompt_text, reference_images=None, aspect_rati
                     if uploaded_images:
                         ref_image_id = uploaded_images[0].get('id')
                         if ref_image_id:
-                            # Add reference image guidance
-                            generation_payload["parameters"]["guidances"] = {
-                                "image_reference": [
-                                    {
-                                        "image": {
-                                            "id": ref_image_id,
-                                            "type": "UPLOADED"
-                                        },
-                                        "strength": "MID"
-                                    }
-                                ]
-                            }
+                            # Add Character Reference using controlnets (preprocessorId 133)
+                            # This goes at the TOP LEVEL of generation_payload, not in parameters
+                            generation_payload["controlnets"] = [
+                                {
+                                    "initImageId": ref_image_id,
+                                    "initImageType": "UPLOADED",
+                                    "preprocessorId": 133,  # Character Reference
+                                    "strengthType": "High"
+                                }
+                            ]
+                            print(f"[LEONARDO] Added Character Reference: {ref_image_id}")
             else:
                 print(f"[LEONARDO WARNING] Reference image upload failed: {upload_response.status_code}")
         except Exception as e:
