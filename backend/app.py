@@ -1151,12 +1151,23 @@ def generate_image_with_leonardo(prompt_text, reference_images=None, aspect_rati
     
     # Prepare generation payload for v2 API with Nano Banana Pro (gemini-image-2)
     # Nano Banana Pro model ID: gemini-image-2
+    
+    # Ensure male gender for male-oriented prompts (Leonardo needs explicit gender)
+    prompt_to_use = prompt_text
+    male_keywords = ['menswear', 'man ', ' man', 'male ', ' male', 'boy ', ' boy', 
+                     'gentleman', 'guy ', ' guy', 'masculine', 'sir ', ' sir',
+                     'he ', ' he', 'his ', 'his']
+    if any(kw in prompt_text.lower() for kw in male_keywords):
+        # Add explicit male specification if not already present
+        if 'male' not in prompt_text.lower() and 'man' not in prompt_text.lower()[:30]:
+            prompt_to_use = prompt_text + ", male model, man"
+    
     generation_payload = {
         "model": "gemini-image-2",  # Nano Banana Pro
         "parameters": {
             "width": width,
             "height": height,
-            "prompt": prompt_text,
+            "prompt": prompt_to_use,
             "quantity": 1,
             "prompt_enhance": "OFF",
             "style_ids": ["111dc692-d470-4eec-b791-3475abac4c46"]  # Required for Nano Banana Pro
