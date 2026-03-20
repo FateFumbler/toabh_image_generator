@@ -1291,8 +1291,8 @@ def generate_image_with_leonardo(prompt_text, reference_images=None, aspect_rati
             print(f"[LEONARDO] Poll {poll_count}: status={status}")
             
             if status == 'COMPLETE':
-                # Get the generated image URL
-                generations = gen_data.get('generations', [])
+                # Get the generated image URL - v1 returns generated_images
+                generations = gen_data.get('generated_images', gen_data.get('generations', []))
                 if not generations:
                     raise Exception("Leonardo returned no generations data")
                 
