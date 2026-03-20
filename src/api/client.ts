@@ -406,7 +406,7 @@ export function getImageUrl(filePath: string): string {
   
   // For static files (/static/), use the Flask backend tunnel URL
   // Hardcoded fallback for production - update this if tunnel changes
-  const tunnelUrl = import.meta.env.VITE_API_URL || 'https://let-fairfield-your-objective.trycloudflare.com';
+  const tunnelUrl = import.meta.env.VITE_API_URL || 'https://welding-heaven-resistant-aviation.trycloudflare.com';
   const path = filePath.startsWith('/') ? filePath : '/' + filePath;
   
   if (filePath.startsWith('/static/')) {

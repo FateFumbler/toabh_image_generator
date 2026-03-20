@@ -159,9 +159,12 @@ class Category(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def to_dict(self):
+        # Count prompts with this category name
+        prompt_count = Prompt.query.filter_by(category=self.name).count()
         return {
             'id': self.id,
-            'name': self.name
+            'name': self.name,
+            'prompt_count': prompt_count
         }
 
 class Character(db.Model):

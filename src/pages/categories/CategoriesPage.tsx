@@ -159,6 +159,9 @@ export function CategoriesPage() {
                   <div className="flex items-center gap-3">
                     <Folder className="w-5 h-5 text-slate-400" />
                     <span className="font-medium text-slate-900">{category.name}</span>
+                    {category.prompt_count !== undefined && (
+                      <span className="text-sm text-slate-400">({category.prompt_count})</span>
+                    )}
                   </div>
                   <div className="flex items-center gap-2">
                     <button

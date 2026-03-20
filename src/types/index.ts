@@ -16,6 +16,7 @@ export interface Prompt {
 export interface Category {
   id: number;
   name: string;
+  prompt_count?: number;
 }
 
 export interface Character {
