@@ -177,7 +177,7 @@ export function SettingsPage() {
                 </InputField>
 
                 <InputField label="Language" description="Select your preferred language">
-                  <select className="w-full max-w-xs px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
+                  <select className="w-full max-w-xs px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
                     <option value="en">English</option>
                   </select>
                 </InputField>
@@ -575,6 +575,16 @@ function InputField({ label, description, children }: InputFieldProps) {
   return (
     <div className="space-y-2">
       <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">{label}</label>
+      {children}
+      {description && <p className="text-xs text-slate-500 dark:text-slate-400">{description}</p>}
+    </div>
+  );
+}
+"text-xs text-slate-500 dark:text-slate-400">{description}</p>}
+    </div>
+  );
+}
+te-300">{label}</label>
       {children}
       {description && <p className="text-xs text-slate-500 dark:text-slate-400">{description}</p>}
     </div>
