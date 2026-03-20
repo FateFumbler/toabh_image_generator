@@ -1175,11 +1175,9 @@ def generate_image_with_leonardo(prompt_text, reference_images=None, aspect_rati
         "public": False
     }
     
-    # Add reference images for Character Reference
-    # Leonardo API uses controlnets with preprocessorId for reference images:
-    #   133 = Character Reference (face consistency)
-    #   67 = Style Reference
-    # This uses the v1 API endpoint for controlnets
+    # Add reference images for img2img
+    # Use init_image_id + init_strength for Image-to-Image
+    # This works on more models than controlnets (Character Reference)
     if reference_images and len(reference_images) > 0:
         ref_path = reference_images[0]  # Use first reference image
         try:
@@ -1218,17 +1216,11 @@ def generate_image_with_leonardo(prompt_text, reference_images=None, aspect_rati
                     if uploaded_images:
                         ref_image_id = uploaded_images[0].get('id')
                         if ref_image_id:
-                            # Add Character Reference using controlnets (preprocessorId 133)
-                            # This goes at the TOP LEVEL of generation_payload, not in parameters
-                            generation_payload["controlnets"] = [
-                                {
-                                    "initImageId": ref_image_id,
-                                    "initImageType": "UPLOADED",
-                                    "preprocessorId": 133,  # Character Reference
-                                    "strengthType": "High"
-                                }
-                            ]
-                            print(f"[LEONARDO] Added Character Reference: {ref_image_id}")
+                            # Use init_image_id + init_strength for img2img
+                            # init_strength of 0.5-0.7 gives good balance of prompt adherence and image similarity
+                            generation_payload["init_image_id"] = ref_image_id
+                            generation_payload["init_strength"] = 0.65
+                            print(f"[LEONARDO] Added img2img reference: {ref_image_id}, strength: 0.65")
             else:
                 print(f"[LEONARDO WARNING] Reference image upload failed: {upload_response.status_code}")
         except Exception as e:
