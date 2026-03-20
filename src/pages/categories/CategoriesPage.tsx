@@ -105,8 +105,8 @@ export function CategoriesPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Categories</h1>
-          <p className="text-slate-600 mt-1">Manage prompt categories</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Categories</h1>
+          <p className="text-slate-600 dark:text-slate-400 mt-1">Manage prompt categories</p>
         </div>
         <button
           onClick={() => setShowAddModal(true)}
@@ -140,7 +140,7 @@ export function CategoriesPage() {
         <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
           {categories.length === 0 ? (
             <div className="text-center py-12">
-              <Folder className="w-12 h-12 text-slate-400 dark:text-slate-500 mx-auto mb-4" />
+              <Folder className="w-12 h-12 text-slate-400 dark:text-indigo-400 mx-auto mb-4" />
               <p className="text-slate-600 dark:text-slate-400">No categories yet</p>
               <button
                 onClick={() => setShowAddModal(true)}
@@ -157,7 +157,7 @@ export function CategoriesPage() {
                   className="flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
                 >
                   <div className="flex items-center gap-3">
-                    <Folder className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+                    <Folder className="w-5 h-5 text-slate-400 dark:text-indigo-400" />
                     <span className="font-medium text-slate-900 dark:text-white">{category.name}</span>
                     {category.prompt_count !== undefined && (
                       <span className="text-sm text-slate-400 dark:text-slate-500">({category.prompt_count})</span>
@@ -166,14 +166,14 @@ export function CategoriesPage() {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => openEditModal(category)}
-                      className="p-2 text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/50 rounded-lg transition-colors"
+                      className="p-2 text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/50 rounded-lg transition-colors"
                       title="Edit"
                     >
                       <Edit2 className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => setShowDeleteConfirm(category.id)}
-                      className="p-2 text-slate-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/50 rounded-lg transition-colors"
+                      className="p-2 text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/50 rounded-lg transition-colors"
                       title="Delete"
                     >
                       <Trash2 className="w-4 h-4" />
