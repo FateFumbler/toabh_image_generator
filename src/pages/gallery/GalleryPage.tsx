@@ -46,6 +46,7 @@ export function GalleryPage() {
   // Filter state
   const [characterFilter, setCharacterFilter] = useState<string>('all');
   const [modelFilter, setModelFilter] = useState<string>('all');
+  const [genderFilter, setGenderFilter] = useState<string>('all');
 
   // Modal states
   const [previewImage, setPreviewImage] = useState<api.GeneratedImage | null>(null);
@@ -107,6 +108,7 @@ export function GalleryPage() {
     }
     if (characterFilter !== 'all' && image.character_name !== characterFilter) return false;
     if (modelFilter !== 'all' && image.model_used !== modelFilter) return false;
+    if (genderFilter !== 'all' && image.prompt_gender?.toLowerCase() !== genderFilter) return false;
     return true;
   });
 
@@ -306,7 +308,7 @@ export function GalleryPage() {
     
     // For static files (/static/), use the Flask backend tunnel URL
     // Hardcoded fallback for production - update this if tunnel changes
-    const tunnelUrl = import.meta.env.VITE_API_URL || 'https://let-fairfield-your-objective.trycloudflare.com';
+    const tunnelUrl = import.meta.env.VITE_API_URL || 'https://welding-heaven-resistant-aviation.trycloudflare.com';
     const path = filePath.startsWith('/') ? filePath : '/' + filePath;
     
     if (filePath.startsWith('/static/')) {
@@ -544,6 +546,54 @@ export function GalleryPage() {
               <List className="w-5 h-5" />
             </button>
           </div>
+        </div>
+
+        {/* Gender Filter Toggles */}
+        <div className="flex items-center gap-2 mt-4">
+          <span className="text-sm font-medium text-slate-700">Gender:</span>
+          <div className="inline-flex rounded-lg border border-slate-200 overflow-hidden">
+            <button
+              onClick={() => setGenderFilter('all')}
+              className={cn(
+                "px-4 py-2 text-sm font-medium transition-colors",
+                genderFilter === 'all'
+                  ? "bg-indigo-600 text-white"
+                  : "bg-white text-slate-600 hover:bg-slate-50"
+              )}
+            >
+              ALL
+            </button>
+            <button
+              onClick={() => setGenderFilter('female')}
+              className={cn(
+                "px-4 py-2 text-sm font-medium transition-colors border-l border-slate-200",
+                genderFilter === 'female'
+                  ? "bg-indigo-600 text-white"
+                  : "bg-white text-slate-600 hover:bg-slate-50"
+              )}
+            >
+              FEMALE
+            </button>
+            <button
+              onClick={() => setGenderFilter('male')}
+              className={cn(
+                "px-4 py-2 text-sm font-medium transition-colors border-l border-slate-200",
+                genderFilter === 'male'
+                  ? "bg-indigo-600 text-white"
+                  : "bg-white text-slate-600 hover:bg-slate-50"
+              )}
+            >
+              MALE
+            </button>
+          </div>
+          {genderFilter !== 'all' && (
+            <button
+              onClick={() => setGenderFilter('all')}
+              className="text-xs text-slate-400 hover:text-slate-600 ml-2"
+            >
+              Clear
+            </button>
+          )}
         </div>
 
         {/* Filter Panel */}
