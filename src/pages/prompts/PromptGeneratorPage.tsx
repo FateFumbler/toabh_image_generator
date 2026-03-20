@@ -332,8 +332,8 @@ export function PromptGeneratorPage() {
               "w-full mt-4 py-3 rounded-lg font-medium flex items-center justify-center gap-2",
               "transition-all duration-200",
               uploadedFiles.length === 0 || isGenerating
-                ? "bg-slate-100 text-slate-400 cursor-not-allowed"
-                : "bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:shadow-lg hover:shadow-indigo-500/25"
+                ? "bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed"
+                : "bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:shadow-lg hover:shadow-indigo-500/25 dark:from-indigo-700 dark:to-violet-700"
             )}
           >
             {isGenerating ? (
